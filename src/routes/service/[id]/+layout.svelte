@@ -1,8 +1,7 @@
 <script lang="ts">
-	import '../app.css';
 	let { children } = $props();
 </script>
 
-<div class="min-h-screen bg-white py-4" data-vaul-drawer-wrapper>
+<div class="mx-auto max-w-screen-sm p-6">
 	{@render children()}
 </div>
