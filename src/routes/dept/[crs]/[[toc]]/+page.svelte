@@ -139,6 +139,7 @@
 
 	async function operator(o) {
 		selectedOperator = o;
+		maxTrainsReached = false;
 		if (o !== null) {
 			const response = await fetch(`/api/dept/${data.board.crs}/15/${o}/null`);
 			const resData = await response.json();
