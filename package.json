@@ -34,7 +34,10 @@
 		"vite": "^5.4.11"
 	},
 	"dependencies": {
+		"bits-ui": "^0.22.0",
+		"dayjs": "^1.11.13",
 		"lucide-svelte": "^0.471.0",
+		"ssgoi": "^2.0.0",
 		"svelte-inview": "^4.0.4",
 		"throttle-typescript": "^1.1.0",
 		"uk-railway-stations": "^1.8.0",

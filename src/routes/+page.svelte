@@ -57,7 +57,7 @@
 		});
 	}
 
-	onMount(() => {
+	onMount(async () => {
 		if (localStorage.coords) {
 			coords = JSON.parse(localStorage.coords);
 		}
@@ -68,7 +68,8 @@
 	});
 </script>
 
-<div class="full flex flex-col justify-center px-4">
+<div class="full mx-auto flex max-w-screen-md flex-col justify-center px-4">
+	<div class="py-8 text-3xl font-bold">When is my train?</div>
 	<button
 		class="mb-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-zinc-200 px-4 drop-shadow"
 		onclick={updateLocation}><Locate size={20} /> Update location</button
