@@ -18,7 +18,7 @@
 	const destination: string = data.locations![data.locations!.length - 1].locationName!;
 </script>
 
-<div class="px-4" in:fade={{ duration: 100 }}>
+<div class="px-4" in:fade={{ duration: 200 }}>
 	{#if drawer}
 		{#if header}
 			{@render header()}
