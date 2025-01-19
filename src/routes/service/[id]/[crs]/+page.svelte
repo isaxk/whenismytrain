@@ -48,7 +48,9 @@
 		onservicedetails={() => {}}
 	/>
 </div>
-<div class="flex flex-grow flex-col overflow-y-scroll pl-4 pt-4">
+<div
+	class="flex flex-grow flex-col overflow-y-scroll pl-4 pr-4 pt-4 [scrollbar-gutter:stable] [scrollbar-width:thin]"
+>
 	{#each data.locations ?? [] as location, i}
 		<div class="group relative">
 			<div
