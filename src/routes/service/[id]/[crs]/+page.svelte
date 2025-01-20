@@ -14,6 +14,7 @@
 		drawer = false,
 		header
 	}: { data: PageData; drawer?: boolean; header?: Snippet } = $props();
+	console.log(data);
 
 	const destination: string = data.locations![data.locations!.length - 1].locationName!;
 </script>
@@ -39,8 +40,9 @@
 	{/if}
 	<TrainCard
 		id={data.serviceID}
+		isCancelled={data.cancelReason !== undefined}
 		destination={data.destination.name ?? ''}
-		platform={data.focus?.platform ?? ''}
+		platform={data.focus?.platform ?? null}
 		operator={data.operatorCode!}
 		etd={data.focus?.et ?? data.focus?.at ?? ''}
 		std={data.focus?.st ?? ''}

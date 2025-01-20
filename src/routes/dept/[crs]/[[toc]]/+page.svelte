@@ -4,7 +4,7 @@
 	import type { definitions } from '$lib/types/api';
 	import { MediaQuery, SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { flip } from 'svelte/animate';
-	import { fade } from 'svelte/transition';
+	import { fade, slide } from 'svelte/transition';
 	import { scrollY } from 'svelte/reactivity/window';
 	import Spinner from '$lib/components/spinner.svelte';
 	import TrainCard from '$lib/components/train-card.svelte';
@@ -32,17 +32,38 @@
 	import { inview } from 'svelte-inview';
 	import Skeleton from '$lib/components/skeleton.svelte';
 	import Columns_4 from 'lucide-svelte/icons/columns-4';
+	import Refresher from '$lib/components/refresher.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	let trains = $state(new SvelteMap(data.trainServices));
+	let trains: SvelteMap<string, definitions['ServiceItem']> = $state(new SvelteMap([]));
+	let board: definitions['StationBoard'] | null = $state(null);
 	let pinned = $state(false);
+	let operators: SvelteSet<string> = $state(new SvelteSet([]));
+	let operatorStartTimes: SvelteMap<string, string | null> = $state(new SvelteMap([]));
 
-	$inspect(trains);
+	$effect(() => {
+		Array.from(trains.values()).forEach((t) => {
+			if (!operators.has(t.operatorCode!)) {
+				operators.add(t.operatorCode!);
+				if (!operatorStartTimes.has(t.operatorCode!)) {
+					operatorStartTimes.set(t.operatorCode!, t.atd ?? t.etd ?? t.std ?? null);
+				}
+			}
+		});
+	});
+
+	$inspect(operatorStartTimes);
+
+	data.board.then((d) => {
+		trains = new SvelteMap([...d.trainServices]);
+		board = d.board;
+	});
 
 	const md = new MediaQuery('min-width: 768px');
 
 	let loading = $state(false);
+	let refreshing = $state(false);
 	let drawerOpen = $state(false);
 
 	function sortByLiveDepart([, a], [, b]) {
@@ -52,28 +73,24 @@
 		else return 1;
 	}
 
-	let sorted = $derived(new SvelteMap([...trains].sort(sortByLiveDepart)));
-
-	const operators = $derived.by(() => {
-		const o = new Set<string>([]);
-		data.board.trainServices?.map((b) => {
-			o.add(b.operatorCode);
-		});
-		return Array.from(o);
-	});
+	let sorted: SvelteMap<string, definitions['ServiceItem']> = $derived(
+		trains.size > 0 ? new SvelteMap([...trains].sort(sortByLiveDepart)) : new SvelteMap([])
+	);
 
 	const handleScroll = async () => {
-		loading = true;
-		const endOfPage =
-			window.innerHeight + (scrollY.current ?? 0) >= document.body.offsetHeight - 100;
-		if (endOfPage) await later();
-		loading = false;
+		// const endOfPage =
+		// 	window.innerHeight + (scrollY.current ?? 0) >= document.body.offsetHeight - 100;
+		// if (endOfPage) await later();
 	};
 
 	let maxTrainsReached = $state(false);
+
 	let fetchCount = $state(0);
 
 	const later = throttle(async () => {
+		if (loading) return;
+
+		if (!board) return;
 		const arr = Array.from(sorted);
 
 		if (maxTrainsReached) return;
@@ -81,14 +98,15 @@
 			maxTrainsReached = true;
 			return;
 		}
+		loading = true;
 
-		const [, lastTrain] = arr[arr.length - 1];
+		const [, lastTrain] = arr.length > 0 ? arr[arr.length - 1] : [null, null];
 
 		const response = await fetch(
-			`/api/dept/${data.board.crs}/15/${selectedOperator}/${lastTrain.etd ?? lastTrain.std}`
+			`/api/dept/${board.crs}/15/${selectedOperator}/${lastTrain?.etd ?? lastTrain?.std ?? null}`
 		);
 		const resData: definitions['StationBoard'] = await response.json();
-		if (resData.trainServices?.length < 1) {
+		if ((resData.trainServices?.length ?? 0) < 1) {
 			maxTrainsReached = true;
 		}
 		let newTrain = false;
@@ -97,71 +115,91 @@
 			trains.set(t.rid, t);
 		});
 		if (!newTrain) maxTrainsReached = true;
+		loading = false;
 	}, 200);
 
 	async function handleServiceDetails(id: string) {
-		// for some reason pushState won't accept proxied arrays
+		if (!board) return;
 		drawerOpen = true;
-		const response = await preloadData(`/service/${id}/${data.board.crs}`);
+		const response = await preloadData(`/service/${id}/${board.crs}`);
 		if (response.type === 'loaded' && response.status === 200) {
-			pushState(`/service/${id}/${data.board.crs}`, { selected: response.data });
+			pushState(`/service/${id}/${board.crs}`, { selected: response.data });
 		}
 	}
-
-	onMount(() => {
-		const old = new Set(JSON.parse(localStorage.getItem('pins') ?? '[]'));
-		if (old.has(data.board.crs)) {
-			pinned = true;
-		}
-	});
 
 	$effect(() => {
-		// if (!page.state.selected) {
-		// 	drawerOpen = false;
-		// }
-		// if (filtered.size < 10 && !maxTrainsReached) {
-		// 	later();
-		// }
-		// if (selectedOperators.size == operators.length) {
-		// 	selectedOperators = new SvelteSet<string>([]);
-		// }
+		if (!page.state.selected) {
+			drawerOpen = false;
+		}
 	});
 
-	function togglePin() {
-		const old = new Set(JSON.parse(localStorage.getItem('pins') ?? '[]'));
-		if (pinned) old.delete(data.board.crs);
-		else old.add(data.board.crs);
-		localStorage.setItem(`pins`, JSON.stringify(Array.from(old)));
-		pinned = !pinned;
-	}
+	let selectedOperator: string | null = $state(null);
 
-	let selectedOperator = $state(null);
+	async function operator(o: string | null) {
+		if (!board) return;
 
-	async function operator(o) {
 		selectedOperator = o;
 		maxTrainsReached = false;
+
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+
+		const arr = Array.from(sorted.values());
+
+		let startTime: string | null = o ? (operatorStartTimes.get(o) ?? null) : null;
+		if (o && arr.length > 0) {
+			arr.forEach((t) => {
+				if ((t.operatorCode ?? '' === o) && startTime === null) {
+					startTime = t.atd ?? t.etd ?? t.std ?? 'null';
+				}
+			});
+		}
+		console.log('startTime', startTime);
+
 		if (o !== null) {
-			const response = await fetch(`/api/dept/${data.board.crs}/15/${o}/null`);
+			loading = true;
+			const response = await fetch(`/api/dept/${board.crs}/15/${o}/${startTime}`);
 			const resData = await response.json();
 			trains = new SvelteMap(
-				resData.trainServices!.map((t: definitions['ServiceItem']) => [t.rid, t])
+				resData.trainServices?.map((t: definitions['ServiceItem']) => [t.rid, t]) ?? []
 			);
 		} else {
-			const response = await fetch(`/api/dept/${data.board.crs}/15/null/null`);
+			const response = await fetch(`/api/dept/${board.crs}/15/null/${startTime}`);
 			const resData = await response.json();
 			console.log(resData);
 			trains = new SvelteMap(
-				resData.trainServices!.map((t: definitions['ServiceItem']) => [t.rid, t])
+				resData.trainServices?.map((t: definitions['ServiceItem']) => [t.rid, t]) ?? []
 			);
 		}
+
+		loading = false;
+		if (trains.size < 2) {
+			later();
+		}
+	}
+
+	async function onRefresh() {
+		await operator(selectedOperator);
 	}
 </script>
 
 <svelte:window onscroll={handleScroll} />
 
+<svelte:head>
+	{#await data.board}
+		<title>Departures</title>
+	{:then { board }}
+		<title>{board.locationName} -Departures</title>
+	{/await}</svelte:head
+>
+
 <div class="mx-auto min-h-screen md:flex md:max-w-screen-lg">
-	<div class="sticky top-0 z-10 bg-white py-4 md:min-w-96 md:max-w-96">
-		<div class="flex items-center gap-4 px-4 md:items-center md:pb-2">
+	<div
+		class={[
+			'pt-ios-top fixed right-0 top-0 z-10 w-full max-w-full bg-white transition-all md:sticky md:min-w-96 md:max-w-96',
+			(scrollY.current ?? 0) > 5 && 'border-b border-zinc-300 drop-shadow'
+		]}
+	>
+		<div class="flex h-14 items-start justify-between gap-4 px-4 md:items-center md:pb-2">
 			<a
 				href="/"
 				class={[
@@ -170,9 +208,19 @@
 			>
 				<ArrowLeft size={20} />
 			</a>
-			<div class="flex-grow text-center text-2xl font-bold md:pr-10 md:text-left md:text-4xl">
-				{data.board.locationName}
-			</div>
+			{#await data.board}
+				<Skeleton class="h-8 w-52" />
+			{:then { board }}
+				<div
+					in:fade={{ duration: 250 }}
+					class="flex h-full flex-grow flex-col items-center justify-center"
+				>
+					<div class="-mb-0.5 text-xs">Departures</div>
+					<div class="flex-grow text-center text-xl font-bold md:pr-10 md:text-left md:text-4xl">
+						{board.locationName}
+					</div>
+				</div>
+			{/await}
 			<button
 				onclick={async () => {
 					await window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -185,12 +233,12 @@
 				<RefreshCw />
 			</button>
 		</div>
-		{#if operators.length > 1}
-			<div class="mt-4 flex gap-2 overflow-x-scroll border-t border-zinc-300/50 px-4 py-2">
+		{#if operators.size > 0}
+			<div class="flex gap-2 overflow-x-scroll px-2 pb-4">
 				<div
 					class={[
 						'h-full overflow-hidden transition-all duration-200',
-						selectedOperator ? 'w-7 opacity-100' : 'w-0 opacity-0'
+						selectedOperator && operators.size > 1 ? 'w-9 pl-2 opacity-100' : 'w-0 pl-0 opacity-0'
 					]}
 				>
 					<button
@@ -199,10 +247,12 @@
 						><X size={18} /></button
 					>
 				</div>
-				{#each operators.filter((o) => (selectedOperator ? o === selectedOperator : true)) as o (o)}
+				{#each Array.from(operators).filter( (o) => (selectedOperator ? o === selectedOperator : true) ) as o (o)}
 					<button
 						animate:flip={{ duration: 250 }}
-						onclick={() => operator(o)}
+						onclick={() => {
+							if (operators.size > 1) operator(o);
+						}}
 						class="flex h-7 items-center text-nowrap rounded-lg px-2 text-sm"
 						style:color={operatorList[o]?.text}
 						style:background={operatorList[o]?.bg}
@@ -213,42 +263,76 @@
 			</div>
 		{/if}
 	</div>
-	<div class="md:flex-grow">
-		<div class="flex flex-col gap-2 pr-4 md:pt-4">
-			{#each sorted as [id, train], i (id)}
-				<div
-					class="flex items-center"
-					animate:flip={{ duration: 200 }}
-					out:fade={{ duration: 150 }}
-					in:fade={{ duration: 150 }}
-				>
-					<div class="flex min-w-8 justify-center text-sm sm:min-w-12 md:text-base">
-						{Array.from(sorted).findIndex(([i]) => i === id) + 1}
+
+	<div class="h-ios-top"></div>
+	<div class="h-28"></div>
+	<Refresher {onRefresh}>
+		<div class="md:flex-grow">
+			{#await data.board}
+				<div class="flex flex-col gap-2 pl-4 pr-4 md:pl-0 md:pt-4">
+					{#each Array(10)}
+						<Skeleton class="h-[88px]" />
+					{/each}
+				</div>
+			{:then}
+				{#if sorted}
+					<div
+						in:fade|global={{ duration: 300 }}
+						class="flex flex-col gap-2 pl-4 pr-4 md:pl-0 md:pt-4"
+					>
+						{#if refreshing}
+							<div transition:slide={{ duration: 150 }} class="flex w-full justify-center">
+								<Spinner />
+							</div>
+						{/if}
+						{#each sorted as [id, train], i (id)}
+							<div
+								class="flex items-center"
+								animate:flip={{ duration: 200 }}
+								out:fade={{ duration: 150 }}
+								in:fade={{ duration: 150 }}
+							>
+								<div class="hidden min-w-8 justify-center text-sm sm:min-w-12 md:flex md:text-base">
+									{Array.from(sorted).findIndex(([i]) => i === id) + 1}
+								</div>
+								<TrainCard
+									{id}
+									isCancelled={train.isCancelled ?? false}
+									destination={train.destination![0].locationName!}
+									operator={train.operatorCode!}
+									platform={train.platform!}
+									etd={train.etd ?? train.atd ?? ''}
+									std={train.std ?? ''}
+									onservicedetails={handleServiceDetails}
+								/>
+							</div>
+						{/each}
 					</div>
-					<TrainCard
-						{id}
-						destination={train.destination![0].locationName!}
-						operator={train.operatorCode!}
-						platform={train.platform!}
-						etd={train.etd ?? train.atd}
-						std={train.std ?? ''}
-						onservicedetails={handleServiceDetails}
-					/>
-				</div>
-			{/each}
+					<div class="flex h-32 items-center justify-center px-4">
+						{#if loading && !maxTrainsReached}
+							<div in:fade={{ duration: 200 }} class="flex h-20 items-center justify-center">
+								<Spinner />
+							</div>
+						{:else if maxTrainsReached}
+							<div
+								in:fade={{ duration: 200 }}
+								class="flex h-20 items-center justify-center text-center"
+							>
+								Refer to a timetable or dedicated journey planner app to see further trains.
+							</div>
+						{:else}
+							<button
+								in:fade={{ duration: 200 }}
+								class="flex h-11 w-full items-center justify-center rounded-lg bg-blue-500 text-center text-white placeholder-gray-300 drop-shadow-xl transition-all duration-300 hover:brightness-105"
+								onclick={later}>Later trains</button
+							>
+							<div class="h-10"></div>
+						{/if}
+					</div>
+				{/if}
+			{/await}
 		</div>
-		<div class="h-20 px-4" use:inview oninview_enter={later}>
-			{#if loading && !maxTrainsReached}
-				<div class="flex h-20 items-center justify-center">
-					<Spinner />
-				</div>
-			{:else if maxTrainsReached}
-				<div class="flex h-20 items-center justify-center text-center">
-					Refer to a timetable or dedicated journey planner app to see further trains.
-				</div>
-			{/if}
-		</div>
-	</div>
+	</Refresher>
 </div>
 
 {#if md.current}
@@ -312,9 +396,9 @@
 		}}
 	>
 		<Drawer.Portal>
-			<Drawer.Overlay class="fixed inset-0 z-20 bg-black/80" />
+			<Drawer.Overlay class="pointer-events-auto fixed inset-0 z-20 bg-black/80" />
 			<Drawer.Content
-				class="fixed bottom-0 left-0 right-0 z-20 h-[95%] rounded-t-lg bg-white px-0 py-4 outline-none"
+				class="mt-ios-top h-drawer fixed bottom-0 left-0 right-0 z-40 rounded-t-lg bg-white px-0 py-4 outline-none"
 			>
 				<div class="flex h-full flex-col">
 					{#if page.state.selected}

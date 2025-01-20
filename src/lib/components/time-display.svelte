@@ -3,7 +3,7 @@
 	import dayjs from 'dayjs';
 	import duration from 'dayjs/plugin/duration';
 
-	let { et, st, small = false } = $props();
+	let { et, st, small = false, isCancelled } = $props();
 
 	dayjs.extend(duration);
 
@@ -28,13 +28,13 @@
 </script>
 
 <div class="flex flex-col items-end font-mono">
-	{#if diffDuration < 0.5}
+	{#if isCancelled}
+		<div class={['text-red-600', small ? 'text-md' : 'text-lg']}>Cancelled</div>
+		<div class="text-xs line-through">{displayST}</div>
+	{:else if diffDuration < 0.5}
 		<div class={['text-green-600', small ? 'text-md' : 'text-lg']}>{displayET}</div>
 	{:else if et === 'Delayed'}
 		<div class={['text-red-600', small ? 'text-md' : 'text-lg']}>?</div>
-		<div class="text-xs">{displayST}</div>
-	{:else if et === 'Cancelled'}
-		<div class={['text-red-600', small ? 'text-md' : 'text-lg']}>Cancelled</div>
 		<div class="text-xs">{displayST}</div>
 	{:else}
 		<div class={[small ? 'text-md' : 'text-lg', color(et, st)]}>{displayET}</div>

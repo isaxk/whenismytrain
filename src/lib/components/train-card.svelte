@@ -16,15 +16,17 @@
 		platform,
 		etd,
 		std,
+		isCancelled,
 		details = null,
 		onservicedetails
 	}: {
 		id: string;
 		destination: string;
 		operator: string;
-		platform: string;
+		platform: string | null;
 		etd: string;
 		std: string;
+		isCancelled: boolean;
 		details?: definitions['ServiceDetails'] | null;
 		onservicedetails: (id: string) => void;
 	} = $props();
@@ -46,13 +48,18 @@
 					platform ? 'bg-zinc-100' : 'bg-zinc-50 text-zinc-400'
 				]}
 			>
-				<div class={['font-bold', platform?.length > 2 ? 'text-md' : 'max-w-lg']}>
+				<div class={['font-bold', (platform ?? '?').length > 2 ? 'text-md' : 'max-w-lg']}>
 					{platform ?? '?'}
 				</div>
 			</div>
 		</div>
 		<div class="flex-grow text-left">
-			<div class="line-clamp-2 overflow-hidden text-ellipsis pb-1 text-xl font-semibold leading-6">
+			<div
+				class={[
+					'line-clamp-2 overflow-hidden text-ellipsis pb-1 text-xl font-semibold leading-6',
+					isCancelled && 'line-through'
+				]}
+			>
 				{destination}
 			</div>
 			<div
@@ -63,7 +70,7 @@
 				{operatorList[operator]?.name ?? ''}
 			</div>
 		</div>
-		<TimeDisplay et={etd} st={std} />
+		<TimeDisplay {isCancelled} et={etd} st={std} />
 	</div>
 	<!-- <div class="h-3 w-full">
 		{#if serviceDetails}

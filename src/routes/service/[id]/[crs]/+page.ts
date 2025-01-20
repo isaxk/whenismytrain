@@ -10,7 +10,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
 	let passedFocus = false;
 	let lastToBePast: number | null = null;
 
-	service.locations = service.locations?.filter((l) => !l.isPass) ?? [];
+	service.locations = service.locations?.filter((l) => !l.isPass && l.crs) ?? [];
 	const locations = service.locations.map((l, i) => {
 		let order = 'previous';
 		if (l.crs && l.crs === crs) {
@@ -31,13 +31,13 @@ export const load: PageLoad = async ({ params, fetch }) => {
 			platform: l.platform,
 			st: l.std ?? l.sta,
 			at: l.atd ?? l.ata,
-			et: l.etd ?? l.eta
+			et: l.etd ?? l.eta,
+			isCancelled: l.isCancelled
 		};
 	});
 
 	const destination = locations[locations.length - 1];
 	const focus = locations.find((l) => l.crs === crs);
-	console.log(focus);
 
 	return { ...service, serviceID: id, locations, lastToBePast, destination, focus };
 };

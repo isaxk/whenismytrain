@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	const day = date !== 'null' ? dayjs(date) : dayjs();
 	const dateF = day.format('YYYYMMDDTHHmmss');
-	console.log(toc);
+	console.log(day);
 
 	const url = `https://api1.raildata.org.uk/1010-live-departure-board---staff-version1_0/LDBSVWS/api/20220120/GetDepartureBoardByCRS/${crs}/${dateF}?numRows=20${toc !== 'null' ? '&filterToc=' + toc : ''}`;
 	console.log(url);

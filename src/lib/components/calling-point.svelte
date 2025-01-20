@@ -26,7 +26,7 @@
 		<div
 			class={[
 				'flex h-7 w-7 items-center justify-center rounded-full font-normal',
-				platform.length > 2 ? 'text-xs' : 'text-sm',
+				platform?.length > 2 ? 'text-xs' : 'text-sm',
 				type === 'previous' ? 'bg-zinc-200 text-neutral-500' : 'bg-zinc-300 text-black'
 			]}
 		>

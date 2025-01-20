@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import ClosestSuggestion from '$lib/components/closest-suggestion.svelte';
 	import ExtraSuggestion from '$lib/components/extra-suggestion.svelte';
 	import PinnedStation from '$lib/components/pinned-station.svelte';
@@ -66,9 +67,11 @@
 		}
 		updateLocation();
 	});
+
+	let value = $state('');
 </script>
 
-<div class="full mx-auto flex max-w-screen-md flex-col justify-center px-4">
+<div class="full pt-ios-top mx-auto flex max-w-screen-md flex-col justify-center px-4">
 	<div class="py-8 text-3xl font-bold">When is my train?</div>
 	<button
 		class="mb-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-zinc-200 px-4 drop-shadow"
@@ -83,12 +86,12 @@
 		</div>
 	{:else}{/if}
 	<div class="pt-6">
-		<div class="pb-2 text-xl font-medium text-black">Pinned stations:</div>
-		<div class="flex flex-col gap-2">
-			{#each pins as pin}
-				<PinnedStation crs={pin} />
-			{/each}
-		</div>
+		<input type="text" bind:value />
+		<button
+			onclick={() => {
+				goto('/dept/' + value);
+			}}>Go</button
+		>
 	</div>
 </div>
 

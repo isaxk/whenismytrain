@@ -6,9 +6,9 @@
 	let idk: HTMLDivElement;
 
 	onMount(() => {
-		idk.addEventListener('touchstart', (e) => {
-			e.preventDefault();
-		});
+		// idk.addEventListener('touchstart', (e) => {
+		// 	e.preventDefault();
+		// });
 	});
 </script>
 
