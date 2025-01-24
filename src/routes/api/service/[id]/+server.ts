@@ -18,7 +18,6 @@ export const GET: RequestHandler = async ({ params }) => {
 	const data: definitions['ServiceDetails'] = await response.json();
 
 	data.locations?.filter((l) => !l.isPass);
-	console.log(data);
 
 	return json(data);
 };

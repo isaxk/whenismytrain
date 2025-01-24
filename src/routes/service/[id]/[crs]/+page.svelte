@@ -8,6 +8,7 @@
 	import { Dialog } from 'bits-ui';
 	import type { Snippet } from 'svelte';
 	import { fade } from 'svelte/transition';
+	import { Accordion } from 'bits-ui';
 
 	let {
 		data,
@@ -19,7 +20,7 @@
 	const destination: string = data.locations![data.locations!.length - 1].locationName!;
 </script>
 
-<div class="px-4" in:fade={{ duration: 200 }}>
+<div class={['w-full', !drawer && 'md:max-w-96']} in:fade={{ duration: 200 }}>
 	{#if drawer}
 		{#if header}
 			{@render header()}
@@ -38,33 +39,38 @@
 			<div class="w-10"></div>
 		</div>
 	{/if}
-	<TrainCard
-		id={data.serviceID}
-		isCancelled={data.cancelReason !== undefined}
-		destination={data.destination.name ?? ''}
-		platform={data.focus?.platform ?? null}
-		operator={data.operatorCode!}
-		etd={data.focus?.et ?? data.focus?.at ?? ''}
-		std={data.focus?.st ?? ''}
-		details={data}
-		onservicedetails={() => {}}
-	/>
+	<div class="px-4 pt-2">
+		<TrainCard
+			disruptionCode={data.cancelReason?.Value ?? null}
+			id={data.serviceID}
+			isCancelled={data.cancelReason !== undefined}
+			destination={data.destination.name ?? ''}
+			platform={data.focus?.platform ?? null}
+			operator={data.operatorCode!}
+			etd={data.focus?.et ?? data.focus?.at ?? ''}
+			std={data.focus?.st ?? ''}
+			details={data}
+			onservicedetails={() => {}}
+		/>
+	</div>
 </div>
-<div
+<Accordion.Root
 	class="flex flex-grow flex-col overflow-y-scroll pl-4 pr-4 pt-4 [scrollbar-gutter:stable] [scrollbar-width:thin]"
 >
 	{#each data.locations ?? [] as location, i}
 		<div class="group relative">
 			<div
 				class={[
-					'absolute bottom-0 left-[70px] top-0 flex w-2 items-center bg-zinc-400 drop-shadow group-first:top-6 group-first:items-start group-first:rounded-t-full group-last:bottom-5 group-last:items-end group-last:rounded-b-full'
+					'absolute bottom-0 left-[70px] group-last:h-7 top-0 flex w-2 bg-zinc-400 drop-shadow group-first:top-6 group-first:items-start group-first:rounded-t-full group-last:bottom-7 group-last:items-end group-last:rounded-b-full'
 				]}
-			>
+			></div>
+			<div class="absolute top-0 left-[70px] flex h-14 w-2 items-center">
 				<div class="h-2 w-5 rounded-l-full rounded-r-full bg-zinc-400 pl-4"></div>
 			</div>
 			<CallingPoint
 				{i}
 				platform={location.platform}
+				crs={location.crs}
 				name={location.name}
 				st={location.st}
 				et={location.at ?? location.et}
@@ -79,4 +85,4 @@
 			{/if}
 		</div>
 	{/each}
-</div>
+</Accordion.Root>

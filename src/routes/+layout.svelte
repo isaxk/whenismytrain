@@ -13,7 +13,6 @@
 </script>
 
 <div class="min-h-screen bg-white" data-vaul-drawer-wrapper>
-	<div class="fixed bottom-0 left-0 top-0 w-5" bind:this={idk}></div>
 	{@render children()}
 </div>
 

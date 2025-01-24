@@ -1,25 +1,25 @@
-<script>
+<script lang="ts">
 	import { scrollY } from 'svelte/reactivity/window';
 	import { fade } from 'svelte/transition';
 
-	export let resistance = 0.1;
-	export let onRefresh = () => {};
 
-	let startY = 0;
-	let currentY = 0;
-	let pulling = false;
-	let rotateDeg = 0;
-	let shouldRefresh = false;
-	let translateY = 0;
-	let atTop = false;
+	let {resistance=0.1, onRefresh =()=>{},refreshing=false,children} = $props();
 
-	const touchStart = (event) => {
+	let startY = $state(0);
+	let currentY = $state(0);
+	let pulling = $state(false);
+	let rotateDeg = $state(0);
+	let shouldRefresh = $state(false);
+	let translateY = $state(0);
+	let atTop = $state(false);
+
+	const touchStart = (event: TouchEvent) => {
 		startY = event.touches[0].clientY;
 		if ((scrollY.current ?? 0) < 50) atTop = true;
 		else atTop = false;
 	};
 
-	const touchMove = (event) => {
+	const touchMove = (event: TouchEvent) => {
 		currentY = event.touches[0].clientY;
 
 		if (currentY - startY > 20 && atTop) {
@@ -37,6 +37,7 @@
 		}
 	};
 
+
 	const touchEnd = () => {
 		if (shouldRefresh) {
 			rotateDeg = 0;
@@ -49,6 +50,16 @@
 		}
 	};
 
+	$effect(()=>{
+		if(refreshing) {
+			rotateDeg = 0;
+			translateY = 60;
+		}
+		else {
+			translateY = 0
+		}
+	})
+
 	const refresh = async () => {
 		await onRefresh();
 		translateY = 0;
@@ -57,12 +68,14 @@
 	};
 </script>
 
-<div on:touchstart={touchStart} on:touchmove={touchMove} on:touchend={touchEnd} class="refresher">
-	{#if pulling}
-		<div class="indicator" in:fade={{ duration: 200 }}>
+
+<div ontouchstart={touchStart} ontouchmove={touchMove} ontouchend={touchEnd} class="refresher">
+	
+	{#if pulling || refreshing}
+		<div class="fixed md:absolute top-[calc(135px+max(4px,env(safe-area-inset-top)))] md:top-7 left-0 right-0 duration-200" in:fade={{ duration: 200 }}>
 			<div
 				class="icon"
-				style={shouldRefresh
+				style={shouldRefresh || refreshing
 					? 'animation-play-state: running;'
 					: `transform: rotate(${rotateDeg}deg); opacity: ${rotateDeg / 270}; animation-play-state: paused;`}
 			></div>
@@ -70,7 +83,7 @@
 	{/if}
 
 	<div class="content-wrapper" style="transform: translateY({translateY}px)">
-		<slot />
+		{@render children()}
 	</div>
 </div>
 
@@ -79,15 +92,9 @@
 		background-color: transparent;
 		height: 100%;
 		position: relative;
+		width: 100%;
 	}
 
-	.indicator {
-		left: 0;
-		position: fixed;
-		right: 0;
-		top: 140px + env(safe-area-inset-top);
-		transition: 1s;
-	}
 
 	.icon {
 		animation: spin 1s linear infinite;

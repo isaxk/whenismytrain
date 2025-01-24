@@ -8,6 +8,7 @@
 	import { inview } from 'svelte-inview';
 	import { fade } from 'svelte/transition';
 	import TimeDisplay from './time-display.svelte';
+	import Disruption from './service/disruption.svelte';
 
 	let {
 		id,
@@ -17,6 +18,7 @@
 		etd,
 		std,
 		isCancelled,
+		disruptionCode = null,
 		details = null,
 		onservicedetails
 	}: {
@@ -27,9 +29,12 @@
 		etd: string;
 		std: string;
 		isCancelled: boolean;
+		disruptionCode: number | null;
 		details?: definitions['ServiceDetails'] | null;
 		onservicedetails: (id: string) => void;
 	} = $props();
+
+	console.log(disruptionCode)
 </script>
 
 <button
@@ -72,19 +77,7 @@
 		</div>
 		<TimeDisplay {isCancelled} et={etd} st={std} />
 	</div>
-	<!-- <div class="h-3 w-full">
-		{#if serviceDetails}
-			{@const list = serviceDetails.subsequentCallingPoints[0].callingPoint.slice(0, 5) ?? []}
-			<div
-				in:fade={{ duration: 75 }}
-				class="w-full overflow-x-hidden text-ellipsis text-nowrap text-left text-sm text-zinc-500"
-			>
-				{#each list as point, i}
-					<span>
-						{point.locationName}{#if i < list.length - 1},&nbsp;{/if}
-					</span>
-				{/each}
-			</div>
-		{/if}
-	</div> -->
+	{#if disruptionCode}
+	<Disruption code={disruptionCode} {isCancelled} />
+	{/if}
 </button>

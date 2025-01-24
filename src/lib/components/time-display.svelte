@@ -3,7 +3,7 @@
 	import dayjs from 'dayjs';
 	import duration from 'dayjs/plugin/duration';
 
-	let { et, st, small = false, isCancelled } = $props();
+	let { et, st, small = false, preview = false, isCancelled } = $props();
 
 	dayjs.extend(duration);
 
@@ -27,7 +27,7 @@
 	const displayET = $derived(dayjs(et).format('HH:mm'));
 </script>
 
-<div class="flex flex-col items-end font-mono">
+<div class={["flex items-end font-mono", preview ? 'flex-row' : 'flex-col']}>
 	{#if isCancelled}
 		<div class={['text-red-600', small ? 'text-md' : 'text-lg']}>Cancelled</div>
 		<div class="text-xs line-through">{displayST}</div>
