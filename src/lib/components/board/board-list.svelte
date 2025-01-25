@@ -30,7 +30,7 @@
 				destination={train.destination![0].locationName!}
 				operator={train.operatorCode!}
 				platform={train.platform!}
-				etd={train.etd ?? train.atd ?? ''}
+				etd={train.etd ?? train.atd ?? 'Delayed'}
 				std={train.std ?? ''}
 				onservicedetails={handleServiceDetails}
 			/>

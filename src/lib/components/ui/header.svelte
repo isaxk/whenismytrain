@@ -2,12 +2,15 @@
 	import type { Snippet } from 'svelte';
 	import { ArrowLeft, type Icon as IconType } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
+	import { Dialog } from 'bits-ui';
+	import { Drawer } from 'vaul-svelte';
 
 	let {
 		children,
 		title,
 		backHref = '/',
-        onBackClick,
+		type = 'normal',
+		onBackClick,
 		BackIcon = ArrowLeft,
 		actionHref,
 		ActionIcon,
@@ -15,8 +18,9 @@
 	}: {
 		children?: Snippet;
 		title?: string;
+		type?: 'normal' | 'dialog' | 'drawer';
 		backHref?: string;
-        onBackClick?: ()=>void;
+		onBackClick?: () => void;
 		BackIcon?: typeof IconType;
 		actionHref?: string;
 		ActionIcon?: typeof IconType;
@@ -24,20 +28,38 @@
 	} = $props();
 </script>
 
-<div class="flex h-14 items-center justify-between gap-3 px-4 md:h-max md:items-center pb-2 pt-1">
-	<a
-		href={onBackClick ? '#' : backHref}
-        onclick={onBackClick}
-		class={[
-			'flex min-h-10 min-w-10 flex-col items-center justify-center rounded-lg bg-zinc-300 text-xs transition-all'
-		]}
-	>
-		<BackIcon size={20} />
-	</a>
+<div class="flex h-14 items-center justify-between gap-3 px-4 pb-2 pt-1 md:h-max md:items-center">
+	{#if type === 'dialog'}
+		<Dialog.Close
+			class={[
+				'flex min-h-10 min-w-10 flex-col items-center justify-center rounded-lg bg-zinc-300 text-xs transition-all'
+			]}
+		>
+			<BackIcon size={20} />
+		</Dialog.Close>
+	{:else if type === 'drawer'}
+		<Drawer.Close
+			class={[
+				'flex min-h-10 min-w-10 flex-col items-center justify-center rounded-lg bg-zinc-300 text-xs transition-all'
+			]}
+		>
+			<BackIcon size={20} />
+		</Drawer.Close>
+	{:else}
+		<a
+			href={onBackClick ? '#' : backHref}
+			onclick={onBackClick}
+			class={[
+				'flex min-h-10 min-w-10 flex-col items-center justify-center rounded-lg bg-zinc-300 text-xs transition-all'
+			]}
+		>
+			<BackIcon size={20} />
+		</a>
+	{/if}
 	{#if children}
 		{@render children()}
 	{:else if title}
-		<div class=" font-medium h-full flex items-center">{title}</div>
+		<div class=" flex h-full items-center font-semibold">{title}</div>
 	{/if}
 	{#if ActionIcon}
 		<button

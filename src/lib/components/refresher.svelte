@@ -108,7 +108,6 @@
 	}
 
 	.content-wrapper {
-		background-color: #fff;
 		transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 	}
 

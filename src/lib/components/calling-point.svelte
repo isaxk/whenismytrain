@@ -6,7 +6,7 @@
 	import Preview from './board/preview.svelte';
 	import { slide } from 'svelte/transition';
 
-	let { i, crs, name, et, platform, st, type = 'past' } = $props();
+	let { i, crs, name, et, platform, st, type = 'past', isCancelled, destCrs } = $props();
 
 	let elm: HTMLDivElement;
 </script>
@@ -46,11 +46,11 @@
 				</div>
 			</div>
 			<div class="flex flex-col items-end">
-				<TimeDisplay {et} {st} small isCancelled={false} />
+				<TimeDisplay {et} {st} small {isCancelled} />
 			</div>
 		</Accordion.Trigger>
 	</Accordion.Header>
 	<Accordion.Content class="pl-[90px]" transition={slide} transitionConfig={{duration:200}}>
-		<Preview {crs} date={et ?? st} />
+		<Preview {crs} date={et ?? st} {destCrs}/>
 	</Accordion.Content>
 </Accordion.Item>

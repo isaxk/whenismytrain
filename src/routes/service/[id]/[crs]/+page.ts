@@ -1,5 +1,6 @@
 import type { PageLoad } from '../$types';
 import { type definitions } from '$lib/types/api';
+import type ServiceDetailsLocation from '$lib/types/extensions';
 
 export const load: PageLoad = async ({ params, fetch }) => {
 	const { id, crs } = params;
@@ -10,8 +11,10 @@ export const load: PageLoad = async ({ params, fetch }) => {
 	let passedFocus = false;
 	let lastToBePast: number | null = null;
 
+	console.log(service)
+
 	service.locations = service.locations?.filter((l) => !l.isPass && l.crs) ?? [];
-	const locations = service.locations.map((l, i) => {
+	const locations: ServiceDetailsLocation[] = service.locations.map((l, i) => {
 		let order = 'previous';
 		if (l.crs && l.crs === crs) {
 			passedFocus = true;
@@ -36,7 +39,8 @@ export const load: PageLoad = async ({ params, fetch }) => {
 		};
 	});
 
-	const destination = locations[locations.length - 1];
+	const notCancelled = locations.filter((l) => !l.isCancelled);
+	const destination = notCancelled[notCancelled.length - 1] ?? locations[locations.length-1];
 	const focus = locations.find((l) => l.crs === crs);
 
 	return { ...service, serviceID: id, locations, lastToBePast, destination, focus };

@@ -2,34 +2,15 @@
 	import { goto } from '$app/navigation';
 	import ClosestSuggestion from '$lib/components/closest-suggestion.svelte';
 	import ExtraSuggestion from '$lib/components/extra-suggestion.svelte';
+	import Search from '$lib/components/home/search.svelte';
 	import PinnedStation from '$lib/components/pinned-station.svelte';
+	import { distance } from '$lib/utils';
 	import { Locate } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import StationsListJSON from 'uk-railway-stations';
 
-	function distance(lat1: number, lon1: number, lat2: number, lon2: number, unit: 'K' | 'N') {
-		var radlat1 = (Math.PI * lat1) / 180;
-		var radlat2 = (Math.PI * lat2) / 180;
-		var theta = lon1 - lon2;
-		var radtheta = (Math.PI * theta) / 180;
-		var dist =
-			Math.sin(radlat1) * Math.sin(radlat2) +
-			Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
-		if (dist > 1) {
-			dist = 1;
-		}
-		dist = Math.acos(dist);
-		dist = (dist * 180) / Math.PI;
-		dist = dist * 60 * 1.1515;
-		if (unit == 'K') {
-			dist = dist * 1.609344;
-		}
-		if (unit == 'N') {
-			dist = dist * 0.8684;
-		}
-		return dist;
-	}
+	
 
 	let pins = $state(new SvelteSet([]));
 
@@ -71,28 +52,25 @@
 	let value = $state('');
 </script>
 
-<div class="full pt-ios-top mx-auto flex max-w-screen-md flex-col justify-center px-4">
+<div class="full mx-auto flex max-w-screen-md flex-col justify-center px-4 pt-ios-top">
 	<div class="py-8 text-3xl font-bold">When is my train?</div>
-	<button
-		class="mb-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-zinc-200 px-4 drop-shadow"
-		onclick={updateLocation}><Locate size={20} /> Update location</button
-	>
-	{#if closestStation && geoStations.length > 0}
-		<div class="flex h-[400px] flex-grow flex-col gap-2">
-			<ClosestSuggestion {...closestStation} />
-			{#each geoStations.slice(1, 4) as extra}
-				<ExtraSuggestion {...extra} />
-			{/each}
-		</div>
-	{:else}{/if}
-	<div class="pt-6">
-		<input type="text" bind:value />
-		<button
-			onclick={() => {
-				goto('/dept/' + value);
-			}}>Go</button
-		>
-	</div>
-</div>
 
-<input type="text" />
+	<Search>
+		{#snippet whenEmpty()}
+			{#if closestStation && geoStations.length > 0}
+				<div class="flex h-[400px] flex-grow flex-col gap-2">
+					<ClosestSuggestion {...closestStation} />
+					{#each geoStations.slice(1, 4) as extra}
+						<ExtraSuggestion {...extra} />
+					{/each}
+				</div>
+			{:else}{/if}
+			<button
+				class="my-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-zinc-200 px-4 drop-shadow"
+				onclick={updateLocation}><Locate size={20} /> Update location</button
+			>
+		{/snippet}
+	</Search>
+
+	<div class="pt-6"></div>
+</div>

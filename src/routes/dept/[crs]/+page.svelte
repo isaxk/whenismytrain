@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, preloadData, pushState, replaceState } from '$app/navigation';
+	import { goto, onNavigate, preloadData, pushState, replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import BoardList from '$lib/components/board/board-list.svelte';
 	import OperatorsList from '$lib/components/operators-list.svelte';
@@ -13,13 +13,13 @@
 	import { getTrainServices } from '$lib/utils/api';
 	import { flyAndScale } from '$lib/utils/transitions';
 	import { Dialog } from 'bits-ui';
-	import { ArrowUpRight, RotateCw, X } from 'lucide-svelte';
+	import { AlertCircle, ArrowUpRight, RotateCw, X } from 'lucide-svelte';
 	import { MediaQuery, SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { fade } from 'svelte/transition';
 	import { throttle } from 'throttle-typescript';
 	import { Drawer } from 'vaul-svelte';
 	import ServiceDetails from '../../service/[id]/[crs]/+page.svelte';
-	import type { PageData } from './[[TOC]]/$types';
+	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
@@ -40,9 +40,12 @@
 	let selectedOperator: string | null = $state(null);
 	const md = new MediaQuery('min-width: 768px');
 
-	data.board.then((d) => {
-		trains = new SvelteMap([...d.trainServices]);
-		board = d.board;
+	$effect(() => {
+		data.board.then((d) => {
+			operators = new SvelteSet([]);
+			trains = new SvelteMap([...d.trainServices]);
+			board = d.board;
+		});
 	});
 
 	// Update operators
@@ -57,9 +60,11 @@
 		});
 	});
 
-	// close the drawer on history back
+	// open/close the drawer based on page state
 	$effect(() => {
-		if (!page.state.selected) {
+		if (page.state.selected) {
+			drawerOpen = true;
+		} else {
 			drawerOpen = false;
 		}
 	});
@@ -141,6 +146,10 @@
 	async function onRefresh() {
 		await operator(selectedOperator);
 	}
+
+	onNavigate(() => {
+		page.state.selected = null;
+	});
 </script>
 
 <svelte:head>
@@ -151,10 +160,71 @@
 	{/await}
 </svelte:head>
 
+{#snippet disruption(messages: definitions['NRCCMessage'][])}
+	{#if messages && messages.length > 0}
+		<div class="hidden items-center gap-2 px-4 pt-4 text-lg font-medium md:flex">
+			<AlertCircle size={22} /> Disruption
+		</div>
+		<div class="flex flex-col gap-2 px-4 pt-4">
+			{#each messages.toSorted((a) => {
+				if (a.severity === 'Major') {
+					return -1;
+				} else {
+					return 1;
+				}
+			}) as message}
+				<Dialog.Root>
+					<Dialog.Trigger
+						class={[
+							'prose rounded-lg border px-2 py-2 text-left text-sm',
+							message.severity === 'Normal' && 'bg-blue-00/80 border-blue-300',
+							message.severity === 'Major' && 'border-red-300 bg-red-100/80',
+							message.severity === 'Minor' && 'border-amber-300 bg-amber-100/80',
+							message.severity === 'Severe' && 'border-black bg-red-950/95 text-white'
+						]}
+					>
+						<div class="line-clamp-1 leading-5 md:line-clamp-2">
+							{@html message.xhtmlMessage}
+						</div>
+					</Dialog.Trigger>
+					<Dialog.Portal>
+						<Dialog.Overlay
+							class="fixed inset-0 z-20 bg-black/80"
+							transition={fade}
+							transitionConfig={{ duration: 150 }}
+						/>
+						<Dialog.Content
+							transition={flyAndScale}
+							class="fixed left-1/2 top-1/2 z-40 h-max w-[480px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-lg bg-zinc-50 pt-2"
+						>
+							<Header title="{message.severity} Disruption" type="dialog" BackIcon={X} />
+
+							<div class="px-4 pb-4 pt-1">
+								<div
+									class={[
+										'prose rounded border p-2',
+										message.severity === 'Normal' && 'bg-blue-00/80 border-blue-300',
+										message.severity === 'Major' && 'border-red-300 bg-red-100/80',
+										message.severity === 'Minor' && 'border-amber-300 bg-amber-100/80',
+										message.severity === 'Severe' && 'border-black bg-red-950/95 text-white'
+									]}
+								>
+									{@html message.xhtmlMessage}
+								</div>
+							</div>
+						</Dialog.Content>
+					</Dialog.Portal>
+				</Dialog.Root>
+			{/each}
+		</div>
+	{/if}
+{/snippet}
+
 <div class="mx-auto min-h-screen md:flex md:max-w-screen-lg">
 	<ComboSidetopbar>
 		<Header
 			ActionIcon={RotateCw}
+			onBackClick={() => history.back()}
 			onActionClick={() => {
 				operator(selectedOperator);
 			}}
@@ -164,11 +234,11 @@
 			{:then { board }}
 				<div
 					in:fade={{ duration: 250 }}
-					class="flex h-full min-w-0 overflow-hidden text-ellipsis flex-grow flex-col items-center justify-center"
+					class="flex h-full min-w-0 flex-grow flex-col items-center justify-center overflow-hidden text-ellipsis"
 				>
 					<div class="-mb-0.5 text-xs md:text-base md:font-medium md:text-zinc-600">Departures</div>
 					<div
-						class="flex-grow w-full text-center text-2xl min-w-0 overflow-hidden text-nowrap text-ellipsis font-bold md:hidden md:pr-10 md:text-left md:text-4xl"
+						class="w-full min-w-0 flex-grow overflow-hidden text-ellipsis text-nowrap text-center text-2xl font-bold md:hidden md:pr-10 md:text-left md:text-4xl"
 					>
 						{board.locationName}
 					</div>
@@ -185,15 +255,27 @@
 		</div>
 		<div class="h-3 md:h-0"></div>
 		<OperatorsList operators={Array.from(operators)} {selectedOperator} onselect={operator} />
+
+		{#if md.current}
+			{#await data.board then { board }}
+				{@render disruption(board.nrccMessages ?? [])}
+			{/await}
+		{/if}
 	</ComboSidetopbar>
 
 	{#if !md.current}
 		<div class="h-ios-top"></div>
-		<div class="h-28"></div>
+		<div class="h-24"></div>
 	{/if}
 
 	<Refresher {onRefresh} {refreshing}>
 		<div class="md:flex-grow">
+			{#if !md.current}
+				{#await data.board then { board }}
+					{@render disruption(board.nrccMessages ?? [])}
+				{/await}
+				<div class="h-6"></div>
+			{/if}
 			{#await data.board}
 				<div class="flex flex-col gap-2 pl-4 pr-4 md:pl-0 md:pt-4">
 					{#each Array(10)}
@@ -201,7 +283,7 @@
 					{/each}
 				</div>
 			{:then}
-				{#if sorted}
+				{#if sorted && sorted.size > 0}
 					<BoardList list={sorted} {handleServiceDetails} />
 					<div class="flex h-32 items-center justify-center px-4">
 						{#if maxTrainsReached}
@@ -224,6 +306,8 @@
 							<div class="h-10"></div>
 						{/if}
 					</div>
+				{:else if sorted.size === 0}
+					<div class="p-4">No services found</div>
 				{/if}
 			{/await}
 		</div>
@@ -245,9 +329,9 @@
 						title="Service Details"
 						ActionIcon={ArrowUpRight}
 						onActionClick={() => {
-							goto(`/service/${page.state.selected?.serviceID}/${board?.crs}`).then(() =>
-								replaceState('', { selected: null })
-							);
+							let id = page.state.selected?.serviceID
+							replaceState('', { selected: null });
+							goto(`/service/${id}/${board?.crs}`);
 						}}
 					/>
 				{/snippet}
@@ -292,7 +376,7 @@
 			/>
 			<Dialog.Content
 				transition={flyAndScale}
-				class="fixed left-1/2 top-1/2 z-40 h-[80%] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white"
+				class="fixed left-1/2 top-1/2 z-40 h-[80%] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-zinc-50"
 			>
 				{@render serviceContent()}
 			</Dialog.Content>
@@ -311,7 +395,7 @@
 		<Drawer.Portal>
 			<Drawer.Overlay class="pointer-events-auto fixed inset-0 z-20 bg-black/80" />
 			<Drawer.Content
-				class="fixed bottom-0 left-0 right-0 z-40 mt-ios-top h-drawer rounded-t-lg bg-white px-0 pb-5  outline-none"
+				class="fixed bottom-0 left-0 right-0 z-40 mt-ios-top h-drawer rounded-t-lg bg-zinc-50 px-0 pb-5  outline-none"
 			>
 				{@render serviceContent()}
 			</Drawer.Content>

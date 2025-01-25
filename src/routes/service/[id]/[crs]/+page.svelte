@@ -9,6 +9,10 @@
 	import type { Snippet } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { Accordion } from 'bits-ui';
+	import Disruption from '$lib/components/service/disruption.svelte';
+	import Header from '$lib/components/ui/header.svelte';
+	import { scrollY } from 'svelte/reactivity/window';
+	import { operatorList } from '$lib/data/operators';
 
 	let {
 		data,
@@ -18,71 +22,93 @@
 	console.log(data);
 
 	const destination: string = data.locations![data.locations!.length - 1].locationName!;
+
+	$inspect(data);
 </script>
 
-<div class={['w-full', !drawer && 'md:max-w-96']} in:fade={{ duration: 200 }}>
-	{#if drawer}
-		{#if header}
-			{@render header()}
-		{/if}
-	{:else}
-		<div class="flex items-center gap-2 pb-2">
-			<a
-				href={data.focus ? `/dept/${data.focus.crs}` : '/'}
-				class={[
-					'flex min-h-10 min-w-10 flex-col items-center justify-center rounded-lg bg-zinc-300 text-xs transition-all'
-				]}
-			>
-				<ArrowLeft size={20} />
-			</a>
-			<div class="flex-grow text-center text-xl font-semibold">Service Details</div>
-			<div class="w-10"></div>
-		</div>
-	{/if}
-	<div class="px-4 pt-2">
-		<TrainCard
-			disruptionCode={data.cancelReason?.Value ?? null}
-			id={data.serviceID}
-			isCancelled={data.cancelReason !== undefined}
-			destination={data.destination.name ?? ''}
-			platform={data.focus?.platform ?? null}
-			operator={data.operatorCode!}
-			etd={data.focus?.et ?? data.focus?.at ?? ''}
-			std={data.focus?.st ?? ''}
-			details={data}
-			onservicedetails={() => {}}
-		/>
-	</div>
-</div>
-<Accordion.Root
-	class="flex flex-grow flex-col overflow-y-scroll pl-4 pr-4 pt-4 [scrollbar-gutter:stable] [scrollbar-width:thin]"
->
-	{#each data.locations ?? [] as location, i}
-		<div class="group relative">
-			<div
-				class={[
-					'absolute bottom-0 left-[70px] group-last:h-7 top-0 flex w-2 bg-zinc-400 drop-shadow group-first:top-6 group-first:items-start group-first:rounded-t-full group-last:bottom-7 group-last:items-end group-last:rounded-b-full'
-				]}
-			></div>
-			<div class="absolute top-0 left-[70px] flex h-14 w-2 items-center">
-				<div class="h-2 w-5 rounded-l-full rounded-r-full bg-zinc-400 pl-4"></div>
-			</div>
-			<CallingPoint
-				{i}
-				platform={location.platform}
-				crs={location.crs}
-				name={location.name}
-				st={location.st}
-				et={location.at ?? location.et}
-				type={location.order}
-			/>
-			{#if data.lastToBePast === i}
+{#if data && data.focus}
+	<div class={['w-full', !drawer && 'md:max-w-96']} in:fade={{ duration: 200 }}>
+		<div class={['top-0 md:sticky', !drawer && 'pt-ios-top']}>
+			{#if drawer}
+				{#if header}
+					{@render header()}
+					<div class="h-1"></div>
+				{/if}
+			{:else}
 				<div
-					class="absolute -bottom-3 left-[61px] z-40 rounded-full border-2 border-zinc-600 bg-white p-0.5 text-zinc-600 drop-shadow-2xl"
+					class={[
+						'fixed left-0 right-0 top-0 z-40 bg-zinc-50 pb-1 pt-ios-top md:static md:pt-0',
+						(scrollY.current ?? 0) > 5 && 'border-b drop-shadow md:border-none md:drop-shadow-none'
+					]}
 				>
-					<Train size={18} />
+					<Header
+						onBackClick={() => {
+							history.back();
+						}}
+						title="Service Details"
+					/>
 				</div>
+				<div class="pt-ios-top md:hidden"><div class="h-3"></div></div>
 			{/if}
+			<div class="px-4">
+				<TrainCard
+					disruptionCode={null}
+					id={data.serviceID}
+					isCancelled={data.destination.isCancelled ?? false}
+					destination={data.destination.name ?? ''}
+					platform={data.focus?.platform ?? null}
+					operator={data.operatorCode!}
+					etd={data.focus?.et ?? data.focus?.at ?? 'Delayed'}
+					std={data.focus?.st ?? ''}
+					details={data}
+					onservicedetails={() => {}}
+				/>
+				<div class="h-2"></div>
+				<Disruption
+					isCancelled={data.destination.isCancelled}
+					code={data.cancelReason?.Value ?? data.delayReason?.Value ?? null}
+				/>
+			</div>
 		</div>
-	{/each}
-</Accordion.Root>
+	</div>
+	<Accordion.Root
+		class="flex flex-grow flex-col overflow-y-scroll pl-4 pr-4 pt-4 [scrollbar-gutter:stable] [scrollbar-width:thin]"
+	>
+		{#each data.locations ?? [] as location, i}
+			<div class="group relative">
+				<div
+					style:background={operatorList[data.operatorCode].bg}
+					class={[
+						'absolute -bottom-3 left-[70px] top-0 z-30 flex w-2 bg-zinc-400 drop-shadow group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-7 group-last:items-end'
+					]}
+				></div>
+				<div class="absolute left-[70px] top-0 flex h-14 w-2 items-center">
+					<div
+						style:background={operatorList[data.operatorCode].bg}
+						class="h-2 w-5 rounded-l-full rounded-r-full pl-4"
+					></div>
+				</div>
+				<CallingPoint
+					{i}
+					platform={location.platform}
+					crs={location.crs}
+					name={location.name}
+					st={location.st}
+					et={location.at ?? location.et ?? location.st}
+					type={location.order}
+					isCancelled={location.isCancelled ?? false}
+					destCrs={data.destination.crs}
+				/>
+				{#if data.lastToBePast === i}
+					<div
+						style:border-color={operatorList[data.operatorCode].bg}
+						style:color={operatorList[data.operatorCode].bg}
+						class="absolute -bottom-3 left-[61px] z-40 rounded-full border-2 border-zinc-600 bg-white p-0.5 text-zinc-600 drop-shadow-2xl"
+					>
+						<Train size={18} strokeWidth={2.5} />
+					</div>
+				{/if}
+			</div>
+		{/each}
+	</Accordion.Root>
+{/if}

@@ -2,7 +2,9 @@
 import { type definitions } from '$lib/types/api';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ params, fetch }) => {
+export const load: PageLoad<{
+	board: Promise<definitions["StationBoard"]>
+}> = async ({ params, fetch }) => {
 	const crs = params.crs;
 
 	async function board() {
@@ -10,7 +12,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
 		const board: definitions['StationBoard'] = await response.json();
 
 		const trainServices = new Map(
-			board.trainServices!.map((t: definitions['ServiceItem']) => [t.rid, t])
+			board.trainServices?.map((t: definitions['ServiceItem']) => [t.rid, t]) ?? []
 		);
 		return { board, trainServices };
 	}
