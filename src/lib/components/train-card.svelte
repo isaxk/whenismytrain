@@ -34,7 +34,7 @@
 		onservicedetails: (id: string) => void;
 	} = $props();
 
-	console.log(disruptionCode)
+	console.log(disruptionCode);
 </script>
 
 <button
@@ -42,14 +42,19 @@
 		onservicedetails(id);
 	}}
 	use:inview
-	class="flex w-full min-w-0 flex-col items-center gap-2 rounded-lg border bg-white p-4 drop-shadow"
+	class="relative flex w-full min-w-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border bg-white p-4 drop-shadow"
 >
-	<div class="flex w-full items-center gap-4">
+	<div
+		class="absolute bottom-1 flex items-center left-1 top-1 w-1.5 rounded-lg text-xs"
+		style:background={operatorList[operator].bg}
+	>
+	</div>
+	<div class="flex w-full items-center gap-3 pl-1">
 		<div class={['flex flex-col items-center']}>
-			<div class="text-[12px] font-light">Platform</div>
+			<div class="text-[10px] font-light">Platform</div>
 			<div
 				class={[
-					'flex h-9 w-9 items-center justify-center rounded-full border drop-shadow-sm',
+					'flex h-8 w-8 items-center justify-center rounded-full border drop-shadow-sm',
 					platform ? 'bg-zinc-100' : 'bg-zinc-50 text-zinc-400'
 				]}
 			>
@@ -61,23 +66,17 @@
 		<div class="flex-grow text-left">
 			<div
 				class={[
-					'line-clamp-2 overflow-hidden text-ellipsis pb-1 text-xl font-semibold leading-6',
+					'line-clamp-2 overflow-hidden text-ellipsis text-xl font-semibold leading-6',
 					isCancelled && 'line-through'
 				]}
 			>
 				{destination}
 			</div>
-			<div
-				class="w-max rounded px-2 py-0.5 text-[10px]"
-				style:color={operatorList[operator]?.text}
-				style:background={operatorList[operator]?.bg}
-			>
-				{operatorList[operator]?.name ?? ''}
-			</div>
+			<div class="text-xs text-zinc-600">{operatorList[operator].name}</div>
 		</div>
 		<TimeDisplay {isCancelled} et={etd} st={std} />
 	</div>
 	{#if disruptionCode}
-	<Disruption code={disruptionCode} {isCancelled} />
+		<Disruption code={disruptionCode} {isCancelled} />
 	{/if}
 </button>

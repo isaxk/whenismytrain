@@ -4,13 +4,6 @@
 	import { fade } from 'svelte/transition';
 	let { children, data } = $props();
 
-	let idk: HTMLDivElement;
-
-	onMount(() => {
-		// idk.addEventListener('touchstart', (e) => {
-		// 	e.preventDefault();
-		// });
-	});
 </script>
 
 {#key data.url}

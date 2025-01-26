@@ -50,7 +50,7 @@
 				</div>
 				<div class="pt-ios-top md:hidden"><div class="h-3"></div></div>
 			{/if}
-			<div class="px-4">
+			<div class="flex flex-col gap-2 px-4">
 				<TrainCard
 					disruptionCode={null}
 					id={data.serviceID}
@@ -63,7 +63,6 @@
 					details={data}
 					onservicedetails={() => {}}
 				/>
-				<div class="h-2"></div>
 				<Disruption
 					isCancelled={data.destination.isCancelled}
 					code={data.cancelReason?.Value ?? data.delayReason?.Value ?? null}

@@ -43,13 +43,13 @@
 	const displayET = $derived(dayjs(et).format('HH:mm'));
 </script>
 
-<div class={['flex items-end font-mono', preview ? 'flex-row' : 'flex-col']}>
+<div class={['flex items-end font-mono pl-1', preview ? 'flex-row' : 'flex-col']}>
 	{#if isCancelled}
 		<div class={['text-red-600', preview ? 'text-xs' : small ? 'text-md' : 'text-lg']}>
 			Cancelled
 		</div>
 		{#if !preview}
-			<div class="text-xs line-through">{displayST}</div>
+			<div class="text-xs line-through -mt-1">{displayST}</div>
 		{/if}
 	{:else if diffDuration < 0.5}
 		<div class={['text-nowrap text-green-600', small ? 'text-md' : 'text-lg']}>
@@ -69,7 +69,7 @@
 			{/if}
 		</div>
 		{#if fromNow < 40 && !small}
-			<div class="text-xs">
+			<div class="text-xs -mt-1">
 				{displayET}
 			</div>
 		{/if}
@@ -77,7 +77,7 @@
 		{#if !preview}
 			<div class={['text-red-600', small ? 'text-md' : 'text-lg']}>?</div>
 		{/if}
-		<div class="text-xs">{displayST}</div>
+		<div class="text-xs -mt-1">{displayST}</div>
 	{:else}
 		<div class={['text-nowrap', small ? 'text-md' : 'text-lg', color(et, st)]}>
 			{#if fromNow < 40 && !small}
@@ -91,7 +91,7 @@
 			{/if}
 		</div>
 		{#if !preview}
-		<div class="flex items-center justify-end gap-1 text-right">
+		<div class="flex items-center justify-end -mt-1 gap-1 text-right">
 			<div class="text-xs font-light text-zinc-700 line-through">{displayST}</div>
 			{#if !small}
 				<div class="text-[13px]">{displayET}</div>

@@ -9,6 +9,11 @@ export const operatorList = {
 		bg: '#773dbd',
 		text: '#fff'
 	},
+	CS: {
+		name: 'Caledonian Sleeper',
+		bg: '#12282E',
+		text: '#fff'
+	},
 	HX: {
 		name: 'Heathrow Express',
 		bg: '#532E63',
