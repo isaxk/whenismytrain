@@ -58,7 +58,7 @@
 					<span class="text-black">
 						{displayET}
 					</span>
-				{:else if fromNow < -1}
+				{:else if fromNow < -2}
 					<span class="text-black">
 						{Math.abs(Math.round(fromNow))}
 						<span class="-ml-1.5 font-sans text-base font-light"> mins ago</span>

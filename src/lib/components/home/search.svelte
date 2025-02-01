@@ -142,8 +142,8 @@
 							onmousedown={() => select(results[i].item)}
 							class="flex w-full items-center gap-2 border-b px-4 py-2 text-left text-zinc-800 last:border-none"
 						>
-							<div class="flex-grow">
-								<div class="text-xl font-medium">
+							<div class="flex-grow min-w-0">
+								<div class="text-xl font-medium text-nowrap text-ellipsis overflow-hidden">
 									<Highlighter value={result.stationName} />
 								</div>
 								<div class="text-xs">
@@ -207,8 +207,8 @@
 			onclick={() => (clearable && crs!==null ? (crs = null) : (focused = true))}
 		>
 			{#if crs && selected}
-				<div class="flex-grow">
-					<div class="text-xl font-semibold">
+				<div class="flex-grow min-w-0">
+					<div class="text-xl font-semibold overflow-hidden text-ellipsis text-nowrap">
 						{selected.stationName}
 					</div>
 					<div class="text-sm">{selected.crsCode}</div>

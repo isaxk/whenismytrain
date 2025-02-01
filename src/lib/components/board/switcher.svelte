@@ -61,19 +61,19 @@
 				to = from;
 				from = temp;
 			}}
-			class="absolute left-7 drop-shadow-sm top-[52px] flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200"
+			class="absolute left-5 drop-shadow-sm top-[52px] flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200"
 		>
 			<ArrowLeftRight size={16} />
 		</button>
-		<div class="min-w-14">
+		<div class="min-w-12">
 			{#if type === 'dept'}from{:else}at{/if}
 		</div>
 		<Search {drawer} bind:crs={from}></Search>
 	</div>
 	<div class="flex w-full items-center gap-2 text-right">
-		<div class="w-14 min-w-14">
+		<div class="w-12 min-w-12">
 			{#if type === 'dept'}to{:else}from{/if}
-			<div class="text-xs">(optional)</div>
+			<div class="text-[10px] text-zinc-700">(optional)</div>
 		</div>
 		<Search {drawer} bind:crs={to} clearable={true}></Search>
 	</div>

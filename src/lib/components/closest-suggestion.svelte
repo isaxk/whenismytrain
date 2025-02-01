@@ -11,7 +11,7 @@
 	<div class="flex gap-2 items-center w-full">
 		<div class="flex items-center flex-grow">
 			<div class="flex-grow">
-				<div class="text-3xl font-bold">
+				<div class="text-xl font-bold">
 					{stationName}
 				</div>
 				<div class="text-extralight -mt-1 text-lg">

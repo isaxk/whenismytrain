@@ -188,72 +188,75 @@
 			{#await data.board}
 				<Skeleton class="h-8 w-52" />
 			{:then { board }}
-				{#if !md.current}
-					<Drawer.Root>
-						<Drawer.Trigger
-							class="flex h-full min-w-0 flex-grow flex-col items-center justify-center overflow-hidden text-ellipsis"
-						>
-							{#if data.to}
-								<div
-									class="w-full -mt-0.5 min-w-0 overflow-hidden text-ellipsis text-nowrap text-center text-xl font-bold"
-								>
-									{board.locationName}
-								</div>
-								<div
-									class="w-full text-zinc-600 min-w-0 overflow-hidden text-ellipsis text-nowrap text-center text-sm -mt-1"
-								>
-									{data.type==='arr' ? 'from' : 'to'} {board.filterLocationName}
-								</div>
-							{:else}
-								<div
-									class="w-full min-w-0 flex-grow overflow-hidden text-ellipsis text-nowrap text-center text-2xl font-bold md:hidden md:pr-10 md:text-left md:text-4xl"
-								>
-									{board.locationName}
-								</div>
-							{/if}
-							<div class="flex gap-2 text-sm font-medium">
-								<div class="flex items-center gap-1">
-									{#if data.type === 'dept'}
-										<ArrowUpRight size={12} /> Departures
-									{:else}
-										<ArrowDownRight size={12} /> Arrivals
-									{/if}
-								</div>
-								<div class="flex items-center gap-1">
-									<Clock size={12} />
-									{data.date ? dayjs(data.date).format('HH:mm') : 'now'}
-								</div>
-								<button class="flex items-center gap-1 rounded bg-zinc-200 px-2 py-1 text-xs"
-									><Settings size={12} /> Options</button
-								>
-							</div>
-						</Drawer.Trigger>
-
-						<Drawer.Portal>
-							<Drawer.Overlay class="fixed inset-0 z-40 bg-black/80" />
-							<Drawer.Content
-								class="fixed bottom-0 left-0 right-0 z-50 flex h-drawer flex-col rounded-t-lg bg-zinc-50 pt-3"
+				<div in:fade={{duration:200}} class="w-full">
+					{#if !md.current}
+						<Drawer.Root>
+							<Drawer.Trigger
+								class="flex h-full w-full min-w-0 flex-grow flex-col items-center justify-center overflow-hidden text-ellipsis"
 							>
-								<Header BackIcon={X} type="drawer" title="Board Options"></Header>
-								<div class="h-full min-h-0 flex-grow px-4 pb-ios-bottom">
-									<Switcher
-										drawer
-										from={data.from}
-										to={data.to}
-										type={data.type}
-										value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
-									/>
+								{#if data.to}
+									<div
+										class="-mt-0.5 w-full min-w-0 overflow-hidden text-ellipsis text-nowrap text-center text-xl font-bold"
+									>
+										{board.locationName}
+									</div>
+									<div
+										class="-mt-1 w-full min-w-0 overflow-hidden text-ellipsis text-nowrap text-center text-sm text-zinc-600"
+									>
+										{data.type === 'arr' ? 'from' : 'to'}
+										{board.filterLocationName}
+									</div>
+								{:else}
+									<div
+										class="w-full min-w-0 flex-grow overflow-hidden text-ellipsis text-nowrap text-center text-2xl font-bold md:hidden md:pr-10 md:text-left md:text-4xl"
+									>
+										{board.locationName}
+									</div>
+								{/if}
+								<div class="flex gap-2 text-sm font-medium">
+									<div class="flex items-center gap-1">
+										{#if data.type === 'dept'}
+											<ArrowUpRight size={12} /> Departures
+										{:else}
+											<ArrowDownRight size={12} /> Arrivals
+										{/if}
+									</div>
+									<div class="flex items-center gap-1">
+										<Clock size={12} />
+										{data.date ? dayjs(data.date).format('HH:mm') : 'now'}
+									</div>
+									<button class="flex items-center gap-1 rounded bg-zinc-200 px-2 py-1 text-xs"
+										><Settings size={12} /> Options</button
+									>
 								</div>
-							</Drawer.Content>
-						</Drawer.Portal>
-					</Drawer.Root>
-				{:else}
-					<div class="w-full">
-						<a href="/" class="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-300"
-							><Home /></a
-						>
-					</div>
-				{/if}
+							</Drawer.Trigger>
+
+							<Drawer.Portal>
+								<Drawer.Overlay class="fixed inset-0 z-40 bg-black/80" />
+								<Drawer.Content
+									class="fixed bottom-0 left-0 right-0 z-50 flex h-drawer flex-col rounded-t-lg bg-zinc-50 pt-3"
+								>
+									<Header BackIcon={X} type="drawer" title="Board Options"></Header>
+									<div class="h-full min-h-0 flex-grow px-4 pb-ios-bottom">
+										<Switcher
+											drawer
+											from={data.from}
+											to={data.to}
+											type={data.type}
+											value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
+										/>
+									</div>
+								</Drawer.Content>
+							</Drawer.Portal>
+						</Drawer.Root>
+					{:else}
+						<div class="w-full">
+							<a href="/" class="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-300"
+								><Home /></a
+							>
+						</div>
+					{/if}
+				</div>
 			{/await}
 		</Header>
 
@@ -278,7 +281,7 @@
 			</div> -->
 			<div class="h-3 md:h-0"></div>
 
-			<div class="md:pb-4 md:pt-4">
+			<div class="md:pb-4 md:pt-4" in:fade={{ duration: 200 }}>
 				{#if md.current}
 					<div class="h-[350px] rounded-lg border-zinc-100 bg-white/95 p-4 drop-shadow">
 						<Switcher

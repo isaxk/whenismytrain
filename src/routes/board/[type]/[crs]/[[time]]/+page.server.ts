@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 	const time = params.time ?? null;
 	const type = params.type ?? null;
 
-	const [from, to] = list.length === 7 ? list.split('-') : [list, null];
+	const [from, to] = list.includes('-') ? list.split('-') : [list, null];
 	console.log(from, to)
 
 	const date = time ? dayjs().format('YYYY-MM-DD') + 'T' + time?.replaceAll(':', '') : null;
@@ -27,10 +27,10 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 		return { board, trainServices };
 	}
 	if (['dept', 'arr'].includes(type)) {
-		if (AllStationsJSON.some((s) => s.crsCode === from || s.crsCode === to)) {
+		if (AllStationsJSON.some((s) => s.crsCode === from) && AllStationsJSON.some((s) => s.crsCode === to)) {
 			return { board: board(), date, type: type as 'dept' | 'arr', from, to };
 		} else {
-			error(404, `Could not find station for crs either code: '${from}' or '${to}`);
+			error(404, `Could not find station for crs either code: '${from}' or '${to}'`);
 		}
 	} else {
 		error(400, `Invalid board type: '${type}'`);

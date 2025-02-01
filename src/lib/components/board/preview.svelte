@@ -17,11 +17,16 @@
 	onMount(async () => {
 		const newDate = dayjs(date).add(2, 'minutes');
 		const response = await getTrainServices(crs, null, newDate.toISOString(), 10);
-		data = new SvelteMap(response.filter(([, t]) => t.destination![0].crs !== destCrs));
+		data = new SvelteMap(
+			response.filter(([, t]) => t.destination![0].crs !== destCrs && (t.etd ?? t.std ?? '') > date)
+		);
 	});
 </script>
 
-<a href="/board/dept/{crs}/{dayjs(date).format('HH:mm')}" class="flex h-40 flex-col rounded-md border bg-zinc-100 drop-shadow-sm">
+<a
+	href="/board/dept/{crs}/{dayjs(date).format('HH:mm')}"
+	class="flex h-40 flex-col rounded-md border bg-zinc-100 drop-shadow-sm"
+>
 	<div class="flex px-2 py-2">
 		<div class="flex-grow font-medium">Transfer departures:</div>
 		<div class="rounded bg-blue-500 p-1 text-white"><ArrowUpRight size={16} /></div>
@@ -32,7 +37,10 @@
 				in:fade={{ duration: 200 }}
 				class={['flex w-full items-center py-0.5 pl-0.5 pr-2', i % 2 === 0 && 'bg-zinc-200/50']}
 			>
-				<div class="h-full w-1 rounded-sm" style:background={operatorList[train.operatorCode].bg}></div>
+				<div
+					class="h-full w-1 rounded-sm"
+					style:background={operatorList[train.operatorCode].bg}
+				></div>
 				<div class="w-2"></div>
 				<div class="flex-grow">
 					{train.destination![0].locationName ?? ''}
