@@ -49,7 +49,7 @@
 		style:background={operatorList[operator].bg}
 	>
 	</div>
-	<div class="flex w-full items-center gap-3 pl-1">
+	<div class="flex w-full items-center gap-3 md:gap-4 pl-2">
 		<div class={['flex flex-col items-center']}>
 			<div class="text-[10px] font-light">Platform</div>
 			<div

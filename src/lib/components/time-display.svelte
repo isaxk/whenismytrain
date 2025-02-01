@@ -22,9 +22,9 @@
 		}, 2000);
 	});
 
-	onDestroy(()=>{
+	onDestroy(() => {
 		clearInterval(interval);
-	})
+	});
 
 	function color(et: string, st: string) {
 		if (diffDuration < 0) {
@@ -43,18 +43,22 @@
 	const displayET = $derived(dayjs(et).format('HH:mm'));
 </script>
 
-<div class={['flex items-end font-mono pl-1', preview ? 'flex-row' : 'flex-col']}>
+<div class={['flex items-end pl-1 font-mono', preview ? 'flex-row' : 'flex-col']}>
 	{#if isCancelled}
 		<div class={['text-red-600', preview ? 'text-xs' : small ? 'text-md' : 'text-lg']}>
 			Cancelled
 		</div>
 		{#if !preview}
-			<div class="text-xs line-through -mt-1">{displayST}</div>
+			<div class="-mt-1 text-xs line-through">{displayST}</div>
 		{/if}
 	{:else if diffDuration < 0.5}
 		<div class={['text-nowrap text-green-600', small ? 'text-md' : 'text-lg']}>
 			{#if fromNow < 40 && !small}
-				{#if fromNow < -1}
+				{#if fromNow < -40}
+					<span class="text-black">
+						{displayET}
+					</span>
+				{:else if fromNow < -1}
 					<span class="text-black">
 						{Math.abs(Math.round(fromNow))}
 						<span class="-ml-1.5 font-sans text-base font-light"> mins ago</span>
@@ -69,7 +73,7 @@
 			{/if}
 		</div>
 		{#if fromNow < 40 && !small}
-			<div class="text-xs -mt-1">
+			<div class="-mt-1 text-xs">
 				{displayET}
 			</div>
 		{/if}
@@ -77,11 +81,20 @@
 		{#if !preview}
 			<div class={['text-red-600', small ? 'text-md' : 'text-lg']}>?</div>
 		{/if}
-		<div class="text-xs -mt-1">{displayST}</div>
+		<div class="-mt-1 text-xs">{displayST}</div>
 	{:else}
 		<div class={['text-nowrap', small ? 'text-md' : 'text-lg', color(et, st)]}>
 			{#if fromNow < 40 && !small}
-				{#if fromNow < 1}
+				{#if fromNow < -40}
+					<span class="text-black">
+						{displayET}
+					</span>
+				{:else if fromNow < -1}
+					<span class="text-black">
+						{Math.abs(Math.round(fromNow))}
+						<span class="-ml-1.5 font-sans text-base font-light"> mins ago</span>
+					</span>
+				{:else if fromNow < 1}
 					now
 				{:else}
 					{Math.round(fromNow)} <span class="-ml-1.5 font-sans text-base font-light"> mins</span>
@@ -91,12 +104,12 @@
 			{/if}
 		</div>
 		{#if !preview}
-		<div class="flex items-center justify-end -mt-1 gap-1 text-right">
-			<div class="text-xs font-light text-zinc-700 line-through">{displayST}</div>
-			{#if !small}
-				<div class="text-[13px]">{displayET}</div>
-			{/if}
-		</div>
+			<div class="-mt-1 flex items-center justify-end gap-1 text-right">
+				<div class="text-xs font-light text-zinc-700 line-through">{displayST}</div>
+				{#if !small}
+					<div class="text-[13px]">{displayET}</div>
+				{/if}
+			</div>
 		{/if}
 	{/if}
 </div>

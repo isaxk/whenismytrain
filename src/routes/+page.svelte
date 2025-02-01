@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import Switcher from '$lib/components/board/switcher.svelte';
 	import ClosestSuggestion from '$lib/components/closest-suggestion.svelte';
 	import ExtraSuggestion from '$lib/components/extra-suggestion.svelte';
 	import Search from '$lib/components/home/search.svelte';
@@ -9,8 +10,6 @@
 	import { onMount } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import StationsListJSON from 'uk-railway-stations';
-
-	
 
 	let pins = $state(new SvelteSet([]));
 
@@ -52,25 +51,12 @@
 	let value = $state('');
 </script>
 
-<div class="full mx-auto flex max-w-screen-md flex-col justify-center px-4 pt-ios-top">
+<div
+	class="full mx-auto flex min-h-screen max-w-screen-md flex-col justify-center px-4 pt-ios-top"
+>
 	<div class="py-8 text-3xl font-bold">When is my train?</div>
 
-	<Search>
-		{#snippet whenEmpty()}
-			{#if closestStation && geoStations.length > 0}
-				<div class="flex h-[400px] flex-grow flex-col gap-2">
-					<ClosestSuggestion {...closestStation} />
-					{#each geoStations.slice(1, 4) as extra}
-						<ExtraSuggestion {...extra} />
-					{/each}
-				</div>
-			{:else}{/if}
-			<button
-				class="my-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-zinc-200 px-4 drop-shadow"
-				onclick={updateLocation}><Locate size={20} /> Update location</button
-			>
-		{/snippet}
-	</Search>
+	<Switcher drawer={false}/>
 
 	<div class="pt-6"></div>
 </div>

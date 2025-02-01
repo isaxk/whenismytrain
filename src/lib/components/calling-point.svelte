@@ -5,6 +5,7 @@
 	import Header from './ui/header.svelte';
 	import Preview from './board/preview.svelte';
 	import { slide } from 'svelte/transition';
+	import { foreign } from '$lib/data/foreign';
 
 	let { i, crs, name, et, platform, st, type = 'past', isCancelled, destCrs } = $props();
 
@@ -20,7 +21,7 @@
 	]}
 >
 	<Accordion.Header class="contents h-full">
-		<Accordion.Trigger class="flex h-14 items-center gap-3 w-full text-left">
+		<Accordion.Trigger class="flex h-14 w-full items-center gap-3 text-left">
 			<div class="flex flex-col items-center px-3 text-[10px] font-light text-zinc-600">
 				<div>Platform</div>
 				<div
@@ -50,7 +51,9 @@
 			</div>
 		</Accordion.Trigger>
 	</Accordion.Header>
-	<Accordion.Content class="pl-[90px]" transition={slide} transitionConfig={{duration:200}}>
-		<Preview {crs} date={et ?? st} {destCrs}/>
-	</Accordion.Content>
+	{#if type === 'subsequent' && !foreign.includes(crs)}
+		<Accordion.Content class="pl-[90px]" transition={slide} transitionConfig={{ duration: 200 }}>
+			<Preview {crs} date={et ?? st} {destCrs} />
+		</Accordion.Content>
+	{/if}
 </Accordion.Item>

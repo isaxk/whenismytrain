@@ -4,10 +4,9 @@
 	import TrainCard from '../train-card.svelte';
 	import { flip } from 'svelte/animate';
 
-	let { list, handleServiceDetails } = $props();
+	let { list, handleServiceDetails, type } = $props();
 
-    console.log(list);
-
+	console.log(list);
 </script>
 
 <div
@@ -25,13 +24,17 @@
 			</div>
 			<TrainCard
 				{id}
-                disruptionCode={train.cancelReason?.Value ?? null}
+				disruptionCode={train.cancelReason?.Value ?? null}
 				isCancelled={train.isCancelled ?? false}
-				destination={train.destination![0].locationName!}
+				destination={type === 'dept'
+					? train.destination![0].locationName!
+					: train.origin![0].locationName!}
 				operator={train.operatorCode!}
 				platform={train.platform!}
-				etd={train.etd ?? train.atd ?? 'Delayed'}
-				std={train.std ?? ''}
+				etd={type === 'dept'
+					? (train.etd ?? train.atd ?? 'Delayed')
+					: (train.eta ?? train.ata ?? train.sta)}
+				std={(type === 'dept' ? train.std : train.sta) ?? ''}
 				onservicedetails={handleServiceDetails}
 			/>
 		</div>

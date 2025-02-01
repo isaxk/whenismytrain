@@ -14,6 +14,11 @@ export const operatorList = {
 		bg: '#12282E',
 		text: '#fff'
 	},
+	ES: {
+		name: 'Eurostar',
+		bg: '#F6C544',
+		text: '#fff'
+	},
 	HX: {
 		name: 'Heathrow Express',
 		bg: '#532E63',

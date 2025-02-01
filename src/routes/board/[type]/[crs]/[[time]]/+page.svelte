@@ -13,13 +13,27 @@
 	import { getTrainServices } from '$lib/utils/api';
 	import { flyAndScale } from '$lib/utils/transitions';
 	import { Dialog } from 'bits-ui';
-	import { AlertCircle, ArrowUpRight, RotateCw, X } from 'lucide-svelte';
+	import {
+		AlertCircle,
+		ArrowDownRight,
+		ArrowUpRight,
+		Calendar,
+		Calendar1,
+		Clock,
+		Edit,
+		Home,
+		RotateCw,
+		Settings,
+		X
+	} from 'lucide-svelte';
 	import { MediaQuery, SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { fade } from 'svelte/transition';
 	import { throttle } from 'throttle-typescript';
 	import { Drawer } from 'vaul-svelte';
-	import ServiceDetails from '../../service/[id]/[crs]/+page.svelte';
+	import ServiceDetails from '../../../../service/[id]/[crs]/+page.svelte';
 	import type { PageData } from './$types';
+	import Switcher from '$lib/components/board/switcher.svelte';
+	import dayjs from 'dayjs';
 
 	let { data }: { data: PageData } = $props();
 
@@ -32,6 +46,8 @@
 		trains.size > 0 ? new SvelteMap([...trains].sort(sortByLiveDepart)) : new SvelteMap([])
 	);
 
+	$inspect(operators)
+
 	// state
 	let loadingLaterTrains = $state(false);
 	let refreshing = $state(false);
@@ -42,6 +58,7 @@
 
 	$effect(() => {
 		data.board.then((d) => {
+			console.log(d);
 			operators = new SvelteSet([]);
 			trains = new SvelteMap([...d.trainServices]);
 			board = d.board;
@@ -88,7 +105,8 @@
 			board.crs!,
 			lastTrain?.etd ?? lastTrain?.std ?? null,
 			15,
-			selectedOperator
+			selectedOperator,
+			data.type
 		);
 
 		let newTrain = false;
@@ -134,7 +152,7 @@
 			});
 		}
 
-		trains = new SvelteMap(await getTrainServices(board.crs!, startTime, 15, o));
+		trains = new SvelteMap(await getTrainServices(board.crs!, data.date, 15, o, data.type));
 
 		refreshing = false;
 		if (trains.size < 2) {
@@ -232,17 +250,58 @@
 			{#await data.board}
 				<Skeleton class="h-8 w-52" />
 			{:then { board }}
-				<div
-					in:fade={{ duration: 250 }}
-					class="flex h-full min-w-0 flex-grow flex-col items-center justify-center overflow-hidden text-ellipsis"
-				>
-					<div class="-mb-0.5 text-xs md:text-base md:font-medium md:text-zinc-600">Departures</div>
-					<div
-						class="w-full min-w-0 flex-grow overflow-hidden text-ellipsis text-nowrap text-center text-2xl font-bold md:hidden md:pr-10 md:text-left md:text-4xl"
-					>
-						{board.locationName}
+				{#if !md.current}
+					<Drawer.Root>
+						<Drawer.Trigger
+							class="flex h-full min-w-0 flex-grow flex-col items-center justify-center overflow-hidden text-ellipsis"
+						>
+							<div
+								class="w-full min-w-0 flex-grow overflow-hidden text-ellipsis text-nowrap text-center text-2xl font-bold md:hidden md:pr-10 md:text-left md:text-4xl"
+							>
+								{board.locationName}
+							</div>
+							<div class="flex gap-2 text-sm">
+								<div class="flex items-center gap-1">
+									{#if data.type === 'dept'}
+										<ArrowUpRight size={12} /> Departures
+									{:else}
+										<ArrowDownRight size={12} /> Arrivals
+									{/if}
+								</div>
+								<div class="flex items-center gap-1">
+									<Clock size={12} />
+									{data.date ? dayjs(data.date).format('HH:mm') : 'now'}
+								</div>
+								<button class="flex items-center gap-1 rounded bg-zinc-200 px-2 py-1 text-xs"
+									><Settings size={12} /> Options</button
+								>
+							</div>
+						</Drawer.Trigger>
+
+						<Drawer.Portal>
+							<Drawer.Overlay class="fixed inset-0 z-40 bg-black/80" />
+							<Drawer.Content
+								class="fixed bottom-0 left-0 right-0 z-50 flex h-drawer flex-col rounded-t-lg bg-zinc-50 pt-3"
+							>
+								<Header BackIcon={X} type="drawer" title="Board Options"></Header>
+								<div class="pb-ios-bottom h-full min-h-0 flex-grow px-4">
+									<Switcher
+										drawer
+										crs={board.crs}
+										type={data.type}
+										value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
+									/>
+								</div>
+							</Drawer.Content>
+						</Drawer.Portal>
+					</Drawer.Root>
+				{:else}
+					<div class="w-full">
+						<a href="/" class="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-300"
+							><Home /></a
+						>
 					</div>
-				</div>
+				{/if}
 			{/await}
 		</Header>
 
@@ -250,7 +309,22 @@
 			{#await data.board}
 				<Skeleton class="h-12 w-52" />
 			{:then { board }}
-				<div class="text-4xl font-bold">{board.locationName}</div>
+				<div class="flex flex-col">
+					<div class="text-4xl font-bold">{board.locationName}</div>
+					<div class="flex gap-2 text-base">
+						<div class="flex items-center gap-1">
+							{#if data.type === 'dept'}
+								<ArrowUpRight size={12} /> Departures
+							{:else}
+								<ArrowDownRight size={12} /> Arrivals
+							{/if}
+						</div>
+						<div class="flex items-center gap-1">
+							<Clock size={12} />
+							{data.date ? dayjs(data.date).format('HH:mm') : 'now'}
+						</div>
+					</div>
+				</div>
 			{/await}
 		</div>
 		<div class="h-3 md:h-0"></div>
@@ -265,7 +339,7 @@
 
 	{#if !md.current}
 		<div class="h-ios-top"></div>
-		<div class="h-24"></div>
+		<div class="h-28"></div>
 	{/if}
 
 	<Refresher {onRefresh} {refreshing}>
@@ -284,7 +358,7 @@
 				</div>
 			{:then}
 				{#if sorted && sorted.size > 0}
-					<BoardList list={sorted} {handleServiceDetails} />
+					<BoardList list={sorted} {handleServiceDetails} type={data.type} />
 					<div class="flex h-32 items-center justify-center px-4">
 						{#if maxTrainsReached}
 							<div
@@ -329,7 +403,7 @@
 						title="Service Details"
 						ActionIcon={ArrowUpRight}
 						onActionClick={() => {
-							let id = page.state.selected?.serviceID
+							let id = page.state.selected?.serviceID;
 							replaceState('', { selected: null });
 							goto(`/service/${id}/${board?.crs}`);
 						}}
@@ -339,7 +413,7 @@
 		{:else}
 			<div class="flex items-center justify-between px-4 pt-1">
 				<Skeleton class="h-10 w-10" />
-				<div class="font-medium">Service Details</div>
+				<div class="font-semibold">Service Details</div>
 				<Skeleton class="h-10 w-10" />
 			</div>
 			<div class="p-4">

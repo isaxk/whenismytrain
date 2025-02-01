@@ -27,7 +27,7 @@
 </script>
 
 {#if data && data.focus}
-	<div class={['w-full', !drawer && 'md:max-w-96']} in:fade={{ duration: 200 }}>
+	<div class={['w-full', !drawer && 'md:max-w-96']} in:fade|global={{ duration: 250 }}>
 		<div class={['top-0 md:sticky', !drawer && 'pt-ios-top']}>
 			{#if drawer}
 				{#if header}

@@ -16,12 +16,12 @@
 
 	onMount(async () => {
 		const newDate = dayjs(date).add(2, 'minutes');
-		const response = await getTrainServices(crs, newDate.toISOString(), 8);
+		const response = await getTrainServices(crs, newDate.toISOString(), 10);
 		data = new SvelteMap(response.filter(([, t]) => t.destination![0].crs !== destCrs));
 	});
 </script>
 
-<a href="/dept/{crs}" class="flex h-40 flex-col rounded-md border bg-zinc-100 drop-shadow-sm">
+<a href="/board/dept/{crs}/{dayjs(date).format('HH:mm')}" class="flex h-40 flex-col rounded-md border bg-zinc-100 drop-shadow-sm">
 	<div class="flex px-2 py-2">
 		<div class="flex-grow font-medium">Transfer departures:</div>
 		<div class="rounded bg-blue-500 p-1 text-white"><ArrowUpRight size={16} /></div>

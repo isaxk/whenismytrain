@@ -28,7 +28,7 @@
 	} = $props();
 </script>
 
-<div class="flex h-14 items-center justify-between gap-3 px-4 pb-2 pt-1 md:h-max md:items-center">
+<div class="flex min-h-14 items-start justify-between gap-3 px-4 pb-2 pt-1 md:h-max md:items-center">
 	{#if type === 'dialog'}
 		<Dialog.Close
 			class={[
@@ -59,7 +59,7 @@
 	{#if children}
 		{@render children()}
 	{:else if title}
-		<div class=" flex h-full items-center font-semibold">{title}</div>
+		<div class=" flex min-h-10 items-center font-semibold">{title}</div>
 	{/if}
 	{#if ActionIcon}
 		<button
