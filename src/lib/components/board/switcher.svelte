@@ -1,19 +1,33 @@
 <script lang="ts">
-	import { ArrowDownRight, ArrowUpRight, CalendarSync, RotateCcw } from 'lucide-svelte';
+	import {
+		ArrowDownRight,
+		ArrowLeftRight,
+		ArrowUpRight,
+		CalendarSync,
+		RotateCcw,
+		X
+	} from 'lucide-svelte';
 	import Search from '../home/search.svelte';
 	import Switchbar from '../ui/switchbar.svelte';
 	import dayjs from 'dayjs';
 	import { goto } from '$app/navigation';
 	import { Drawer } from 'vaul-svelte';
 
-	let { drawer = false, value = dayjs().format('HH:mm'), type = 'dept', crs = null } = $props();
+	let {
+		drawer = false,
+		value = dayjs().format('HH:mm'),
+		type = 'dept',
+		from = null,
+		to = null
+	} = $props();
 
 	function go() {
+		const list = from + (to ? `-${to}` : '');
 		requestAnimationFrame(() => {
 			if (value !== dayjs().format('HH:mm')) {
-				goto(`/board/${type}/${crs}/${value}`);
+				goto(`/board/${type}/${list}/${value}`);
 			} else {
-				goto(`/board/${type}/${crs}`);
+				goto(`/board/${type}/${list}`);
 			}
 		});
 	}
@@ -36,13 +50,35 @@
 			<input type="time" bind:value class="h-full w-full bg-transparent px-2" />
 		</div>
 		<button
-			class="flex h-11 items-center gap-1 justify-center rounded-lg bg-blue-500 px-4 text-white"
+			class="flex h-11 items-center justify-center gap-1 rounded-lg bg-blue-500 px-4 text-white"
 			onclick={() => (value = dayjs().format('HH:mm'))}><CalendarSync size={20} /> now</button
 		>
 	</div>
-	<Search {drawer} bind:crs></Search>
+	<div class="relative flex w-full items-center gap-2 text-right">
+		<button
+			onclick={() => {
+				const temp = to;
+				to = from;
+				from = temp;
+			}}
+			class="absolute left-7 drop-shadow-sm top-[52px] flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200"
+		>
+			<ArrowLeftRight size={16} />
+		</button>
+		<div class="min-w-14">
+			{#if type === 'dept'}from{:else}at{/if}
+		</div>
+		<Search {drawer} bind:crs={from}></Search>
+	</div>
+	<div class="flex w-full items-center gap-2 text-right">
+		<div class="w-14 min-w-14">
+			{#if type === 'dept'}to{:else}from{/if}
+			<div class="text-xs">(optional)</div>
+		</div>
+		<Search {drawer} bind:crs={to} clearable={true}></Search>
+	</div>
 	<div class="flex-grow"></div>
-	{#if crs}
+	{#if from && to!==from}
 		{#if drawer}
 			<Drawer.Close
 				onclick={go}

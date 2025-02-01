@@ -2,6 +2,7 @@
 	import { goto, onNavigate, preloadData, pushState, replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import BoardList from '$lib/components/board/board-list.svelte';
+	import Switcher from '$lib/components/board/switcher.svelte';
 	import OperatorsList from '$lib/components/operators-list.svelte';
 	import Refresher from '$lib/components/refresher.svelte';
 	import Skeleton from '$lib/components/skeleton.svelte';
@@ -13,14 +14,12 @@
 	import { getTrainServices } from '$lib/utils/api';
 	import { flyAndScale } from '$lib/utils/transitions';
 	import { Dialog } from 'bits-ui';
+	import dayjs from 'dayjs';
 	import {
 		AlertCircle,
 		ArrowDownRight,
 		ArrowUpRight,
-		Calendar,
-		Calendar1,
 		Clock,
-		Edit,
 		Home,
 		RotateCw,
 		Settings,
@@ -32,8 +31,7 @@
 	import { Drawer } from 'vaul-svelte';
 	import ServiceDetails from '../../../../service/[id]/[crs]/+page.svelte';
 	import type { PageData } from './$types';
-	import Switcher from '$lib/components/board/switcher.svelte';
-	import dayjs from 'dayjs';
+	import DisruptionList from '$lib/components/board/disruption-list.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -46,8 +44,6 @@
 		trains.size > 0 ? new SvelteMap([...trains].sort(sortByLiveDepart)) : new SvelteMap([])
 	);
 
-	$inspect(operators)
-
 	// state
 	let loadingLaterTrains = $state(false);
 	let refreshing = $state(false);
@@ -56,6 +52,7 @@
 	let selectedOperator: string | null = $state(null);
 	const md = new MediaQuery('min-width: 768px');
 
+	// update after data.board promise resolves
 	$effect(() => {
 		data.board.then((d) => {
 			console.log(d);
@@ -102,7 +99,8 @@
 		const [, lastTrain] = arr.length > 0 ? arr[arr.length - 1] : [null, null];
 
 		const response = await getTrainServices(
-			board.crs!,
+			data.from,
+			data.to,
 			lastTrain?.etd ?? lastTrain?.std ?? null,
 			15,
 			selectedOperator,
@@ -152,7 +150,7 @@
 			});
 		}
 
-		trains = new SvelteMap(await getTrainServices(board.crs!, data.date, 15, o, data.type));
+		trains = new SvelteMap(await getTrainServices(data.from, data.to, data.date, 15, o, data.type));
 
 		refreshing = false;
 		if (trains.size < 2) {
@@ -178,66 +176,6 @@
 	{/await}
 </svelte:head>
 
-{#snippet disruption(messages: definitions['NRCCMessage'][])}
-	{#if messages && messages.length > 0}
-		<div class="hidden items-center gap-2 px-4 pt-4 text-lg font-medium md:flex">
-			<AlertCircle size={22} /> Disruption
-		</div>
-		<div class="flex flex-col gap-2 px-4 pt-4">
-			{#each messages.toSorted((a) => {
-				if (a.severity === 'Major') {
-					return -1;
-				} else {
-					return 1;
-				}
-			}) as message}
-				<Dialog.Root>
-					<Dialog.Trigger
-						class={[
-							'prose rounded-lg border px-2 py-2 text-left text-sm',
-							message.severity === 'Normal' && 'bg-blue-00/80 border-blue-300',
-							message.severity === 'Major' && 'border-red-300 bg-red-100/80',
-							message.severity === 'Minor' && 'border-amber-300 bg-amber-100/80',
-							message.severity === 'Severe' && 'border-black bg-red-950/95 text-white'
-						]}
-					>
-						<div class="line-clamp-1 leading-5 md:line-clamp-2">
-							{@html message.xhtmlMessage}
-						</div>
-					</Dialog.Trigger>
-					<Dialog.Portal>
-						<Dialog.Overlay
-							class="fixed inset-0 z-20 bg-black/80"
-							transition={fade}
-							transitionConfig={{ duration: 150 }}
-						/>
-						<Dialog.Content
-							transition={flyAndScale}
-							class="fixed left-1/2 top-1/2 z-40 h-max w-[480px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-lg bg-zinc-50 pt-2"
-						>
-							<Header title="{message.severity} Disruption" type="dialog" BackIcon={X} />
-
-							<div class="px-4 pb-4 pt-1">
-								<div
-									class={[
-										'prose rounded border p-2',
-										message.severity === 'Normal' && 'bg-blue-00/80 border-blue-300',
-										message.severity === 'Major' && 'border-red-300 bg-red-100/80',
-										message.severity === 'Minor' && 'border-amber-300 bg-amber-100/80',
-										message.severity === 'Severe' && 'border-black bg-red-950/95 text-white'
-									]}
-								>
-									{@html message.xhtmlMessage}
-								</div>
-							</div>
-						</Dialog.Content>
-					</Dialog.Portal>
-				</Dialog.Root>
-			{/each}
-		</div>
-	{/if}
-{/snippet}
-
 <div class="mx-auto min-h-screen md:flex md:max-w-screen-lg">
 	<ComboSidetopbar>
 		<Header
@@ -255,12 +193,25 @@
 						<Drawer.Trigger
 							class="flex h-full min-w-0 flex-grow flex-col items-center justify-center overflow-hidden text-ellipsis"
 						>
-							<div
-								class="w-full min-w-0 flex-grow overflow-hidden text-ellipsis text-nowrap text-center text-2xl font-bold md:hidden md:pr-10 md:text-left md:text-4xl"
-							>
-								{board.locationName}
-							</div>
-							<div class="flex gap-2 text-sm">
+							{#if data.to}
+								<div
+									class="w-full -mt-0.5 min-w-0 overflow-hidden text-ellipsis text-nowrap text-center text-xl font-bold"
+								>
+									{board.locationName}
+								</div>
+								<div
+									class="w-full text-zinc-600 min-w-0 overflow-hidden text-ellipsis text-nowrap text-center text-sm -mt-1"
+								>
+									{data.type==='arr' ? 'from' : 'to'} {board.filterLocationName}
+								</div>
+							{:else}
+								<div
+									class="w-full min-w-0 flex-grow overflow-hidden text-ellipsis text-nowrap text-center text-2xl font-bold md:hidden md:pr-10 md:text-left md:text-4xl"
+								>
+									{board.locationName}
+								</div>
+							{/if}
+							<div class="flex gap-2 text-sm font-medium">
 								<div class="flex items-center gap-1">
 									{#if data.type === 'dept'}
 										<ArrowUpRight size={12} /> Departures
@@ -284,10 +235,11 @@
 								class="fixed bottom-0 left-0 right-0 z-50 flex h-drawer flex-col rounded-t-lg bg-zinc-50 pt-3"
 							>
 								<Header BackIcon={X} type="drawer" title="Board Options"></Header>
-								<div class="pb-ios-bottom h-full min-h-0 flex-grow px-4">
+								<div class="h-full min-h-0 flex-grow px-4 pb-ios-bottom">
 									<Switcher
 										drawer
-										crs={board.crs}
+										from={data.from}
+										to={data.to}
 										type={data.type}
 										value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
 									/>
@@ -305,10 +257,8 @@
 			{/await}
 		</Header>
 
-		<div class="hidden pb-3 pl-4 pt-2 md:flex md:pt-2">
-			{#await data.board}
-				<Skeleton class="h-12 w-52" />
-			{:then { board }}
+		{#await data.board then { board }}
+			<!-- <div class="hidden pb-3 pl-4 pt-2 md:flex md:pt-2">
 				<div class="flex flex-col">
 					<div class="text-4xl font-bold">{board.locationName}</div>
 					<div class="flex gap-2 text-base">
@@ -325,16 +275,29 @@
 						</div>
 					</div>
 				</div>
-			{/await}
-		</div>
-		<div class="h-3 md:h-0"></div>
-		<OperatorsList operators={Array.from(operators)} {selectedOperator} onselect={operator} />
+			</div> -->
+			<div class="h-3 md:h-0"></div>
 
-		{#if md.current}
-			{#await data.board then { board }}
-				{@render disruption(board.nrccMessages ?? [])}
-			{/await}
-		{/if}
+			<div class="md:pb-4 md:pt-4">
+				{#if md.current}
+					<div class="h-[350px] rounded-lg border-zinc-100 bg-white/95 p-4 drop-shadow">
+						<Switcher
+							drawer={false}
+							from={data.from}
+							to={data.to}
+							type={data.type}
+							value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
+						/>
+					</div>
+					<div class="h-4"></div>
+				{/if}
+
+				<OperatorsList operators={Array.from(operators)} {selectedOperator} onselect={operator} />
+			</div>
+			{#if md.current}
+				<DisruptionList messages={board.nrccMessages ?? []} />
+			{/if}
+		{/await}
 	</ComboSidetopbar>
 
 	{#if !md.current}
@@ -346,7 +309,7 @@
 		<div class="md:flex-grow">
 			{#if !md.current}
 				{#await data.board then { board }}
-					{@render disruption(board.nrccMessages ?? [])}
+					<DisruptionList messages={board.nrccMessages ?? []} />
 				{/await}
 				<div class="h-6"></div>
 			{/if}

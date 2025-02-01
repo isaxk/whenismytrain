@@ -78,7 +78,7 @@
 				<div
 					style:background={operatorList[data.operatorCode].bg}
 					class={[
-						'absolute -bottom-3 left-[70px] top-0 z-30 flex w-2 bg-zinc-400 drop-shadow group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-7 group-last:items-end'
+						'absolute -bottom-3 left-[70px] top-0 z-30 flex w-2 bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-7 group-last:items-end'
 					]}
 				></div>
 				<div class="absolute left-[70px] top-0 flex h-14 w-2 items-center">

@@ -16,7 +16,7 @@
 
 	onMount(async () => {
 		const newDate = dayjs(date).add(2, 'minutes');
-		const response = await getTrainServices(crs, newDate.toISOString(), 10);
+		const response = await getTrainServices(crs, null, newDate.toISOString(), 10);
 		data = new SvelteMap(response.filter(([, t]) => t.destination![0].crs !== destCrs));
 	});
 </script>

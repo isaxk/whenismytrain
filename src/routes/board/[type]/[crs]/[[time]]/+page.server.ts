@@ -1,20 +1,23 @@
 import { type definitions } from '$lib/types/api';
 import dayjs from 'dayjs';
-import type { PageServerLoad } from '../../../../dept/[crs]/[[time]]/$types';
+import type { PageServerLoad } from './$types';
 import AllStationsJSON from 'uk-railway-stations';
 import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params, fetch }) => {
-	const crs = params.crs;
+	const list = params.crs;
 	const time = params.time ?? null;
 	const type = params.type ?? null;
+
+	const [from, to] = list.length === 7 ? list.split('-') : [list, null];
+	console.log(from, to)
 
 	const date = time ? dayjs().format('YYYY-MM-DD') + 'T' + time?.replaceAll(':', '') : null;
 	console.log(date);
 
 	async function board() {
 		const response = await fetch(
-			type === 'dept' ? `/api/dept/${crs}/15/null/${date}` : `/api/arr/${crs}/15/null/${date}`
+			type === 'dept' ? `/api/dept/${from}/${to}/15/null/${date}` : `/api/arr/${from}/${to}/15/null/${date}`
 		);
 		const board: definitions['StationBoard'] = await response.json();
 
@@ -23,13 +26,13 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 		);
 		return { board, trainServices };
 	}
-
-	if(AllStationsJSON.some(s => s.crsCode === crs)) {
-		return { board: board(), date, type };
+	if (['dept', 'arr'].includes(type)) {
+		if (AllStationsJSON.some((s) => s.crsCode === from || s.crsCode === to)) {
+			return { board: board(), date, type: type as 'dept' | 'arr', from, to };
+		} else {
+			error(404, `Could not find station for crs either code: '${from}' or '${to}`);
+		}
+	} else {
+		error(400, `Invalid board type: '${type}'`);
 	}
-	else {
-		error(404,`Could not find station for crs code: ${crs}`)
-	}
-
-	
 };
