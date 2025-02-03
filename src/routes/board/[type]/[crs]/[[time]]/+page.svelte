@@ -32,6 +32,7 @@
 	import ServiceDetails from '../../../../service/[id]/[crs]/+page.svelte';
 	import type { PageData } from './$types';
 	import DisruptionList from '$lib/components/board/disruption-list.svelte';
+	import LastUpdated from '$lib/components/last-updated.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -50,6 +51,7 @@
 	let drawerOpen = $state(false);
 	let maxTrainsReached = $state(false);
 	let selectedOperator: string | null = $state(null);
+	let generatedAt = $state(dayjs());
 	const md = new MediaQuery('min-width: 768px');
 
 	// update after data.board promise resolves
@@ -151,6 +153,7 @@
 		}
 
 		trains = new SvelteMap(await getTrainServices(data.from, data.to, data.date, 15, o, data.type));
+		generatedAt = dayjs();
 
 		refreshing = false;
 		if (trains.size < 2) {
@@ -188,7 +191,7 @@
 			{#await data.board}
 				<Skeleton class="h-8 w-52" />
 			{:then { board }}
-				<div in:fade={{duration:200}} class="w-full">
+				<div in:fade={{ duration: 200 }} class="w-full">
 					{#if !md.current}
 						<Drawer.Root>
 							<Drawer.Trigger
@@ -250,10 +253,12 @@
 							</Drawer.Portal>
 						</Drawer.Root>
 					{:else}
-						<div class="w-full">
+						<div class="w-full flex items-center">
 							<a href="/" class="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-300"
 								><Home /></a
 							>
+							<div class="flex-grow"></div>
+							<LastUpdated date={generatedAt} />
 						</div>
 					{/if}
 				</div>
@@ -305,7 +310,7 @@
 
 	{#if !md.current}
 		<div class="h-ios-top"></div>
-		<div class="h-28"></div>
+		<div class="h-[100px]"></div>
 	{/if}
 
 	<Refresher {onRefresh} {refreshing}>
@@ -324,6 +329,11 @@
 				</div>
 			{:then}
 				{#if sorted && sorted.size > 0}
+					{#if !md.current}
+						<div class="flex items-center justify-end pb-1 pr-5">
+							<LastUpdated date={generatedAt} />
+						</div>
+					{/if}
 					<BoardList list={sorted} {handleServiceDetails} type={data.type} />
 					<div class="flex h-32 items-center justify-center px-4">
 						{#if maxTrainsReached}
@@ -416,7 +426,7 @@
 			/>
 			<Dialog.Content
 				transition={flyAndScale}
-				class="fixed left-1/2 top-1/2 z-40 h-[80%] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-zinc-50"
+				class="fixed left-1/2 top-1/2 z-40 h-[90%] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-zinc-50"
 			>
 				{@render serviceContent()}
 			</Dialog.Content>

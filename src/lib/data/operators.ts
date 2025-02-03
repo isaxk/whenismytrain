@@ -1,4 +1,4 @@
-export const operatorList = {
+export const operatorList: Record<string, { name: string; bg: string; text: string }> = {
 	GW: {
 		name: 'Great Western Railway',
 		bg: '#0b2d27',

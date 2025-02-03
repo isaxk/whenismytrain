@@ -15,6 +15,7 @@
 		destination,
 		operator,
 		platform,
+		state = 'far',
 		etd,
 		std,
 		isCancelled,
@@ -26,6 +27,7 @@
 		destination: string;
 		operator: string;
 		platform: string | null;
+		state: 'far' | 'here' | 'gone';
 		etd: string;
 		std: string;
 		isCancelled: boolean;
@@ -45,11 +47,10 @@
 	class="relative flex w-full min-w-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border bg-white p-4 drop-shadow"
 >
 	<div
-		class="absolute bottom-1 flex items-center left-1 top-1 w-1.5 rounded-lg text-xs"
+		class="absolute bottom-1 left-1 top-1 flex w-1.5 items-center rounded-lg text-xs"
 		style:background={operatorList[operator].bg}
-	>
-	</div>
-	<div class="flex w-full items-center gap-3 md:gap-4 pl-2">
+	></div>
+	<div class="flex w-full items-center gap-3 pl-2 md:gap-4">
 		<div class={['flex flex-col items-center']}>
 			<div class="text-[10px] font-light">Platform</div>
 			<div
@@ -72,9 +73,18 @@
 			>
 				{destination}
 			</div>
-			<div class="text-xs text-zinc-600">{operatorList[operator].name}</div>
+			<div class="text-xs -mb-1 text-zinc-800">
+				{#if state === 'here'}
+					Arrived
+				{:else if state === 'gone'}
+					Departed
+				{/if}
+			</div>
 		</div>
-		<TimeDisplay {isCancelled} et={etd} st={std} />
+		<div class="flex flex-col items-end">
+			
+			<TimeDisplay {isCancelled} et={etd} st={std} />
+		</div>
 	</div>
 	{#if disruptionCode}
 		<Disruption code={disruptionCode} {isCancelled} />

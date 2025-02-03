@@ -1,34 +1,51 @@
 <script lang="ts">
 	import CallingPoint from '$lib/components/calling-point.svelte';
-	import TrainCard from '$lib/components/train-card.svelte';
-	import { ArrowLeft, ArrowUpRight, ArrowUpRightSquare, Train, X } from 'lucide-svelte';
-	import type { PageData } from './$types';
-	import { Drawer } from 'vaul-svelte';
-	import { goto, replaceState } from '$app/navigation';
-	import { Dialog } from 'bits-ui';
-	import type { Snippet } from 'svelte';
-	import { fade } from 'svelte/transition';
-	import { Accordion } from 'bits-ui';
 	import Disruption from '$lib/components/service/disruption.svelte';
+	import TrainCard from '$lib/components/train-card.svelte';
 	import Header from '$lib/components/ui/header.svelte';
-	import { scrollY } from 'svelte/reactivity/window';
 	import { operatorList } from '$lib/data/operators';
+	import type { ServiceDetailsLocation } from '$lib/types/extentions';
+	import { strToMins } from '$lib/utils';
+	import { Accordion } from 'bits-ui';
+	import dayjs from 'dayjs';
+	import { Train } from 'lucide-svelte';
+	import { onDestroy, onMount, type Snippet } from 'svelte';
+	import { scrollY } from 'svelte/reactivity/window';
+	import { fade } from 'svelte/transition';
+	import type { PageData } from './$types';
+	import PositionIndicator from '$lib/components/service/position-indicator.svelte';
+	import { invalidateAll, preloadData } from '$app/navigation';
+	import LastUpdated from '$lib/components/last-updated.svelte';
 
 	let {
 		data,
 		drawer = false,
 		header
 	}: { data: PageData; drawer?: boolean; header?: Snippet } = $props();
-	console.log(data);
+
+	$inspect(data);
 
 	const destination: string = data.locations![data.locations!.length - 1].locationName!;
 
-	$inspect(data);
+	let currentAccordion = $state('');
+	let now: dayjs.Dayjs | null = $state(null);
+	let interval;
+
+	onMount(() => {
+		interval = setInterval(async () => {
+			const response = await fetch(`/api/service/${data.id}/${data.crs}`);
+			now = dayjs();
+			data = { ...(await response.json()), crs: data.crs, id: data.id };
+		}, 15000);
+	});
+	onDestroy(() => {
+		clearInterval(interval);
+	});
 </script>
 
 {#if data && data.focus}
 	<div class={['w-full', !drawer && 'md:max-w-96']} in:fade|global={{ duration: 250 }}>
-		<div class={['top-0 md:sticky', !drawer && 'pt-ios-top']}>
+		<div class={['top-0 pb-2 md:sticky', !drawer && 'pt-ios-top']}>
 			{#if drawer}
 				{#if header}
 					{@render header()}
@@ -52,17 +69,30 @@
 			{/if}
 			<div class="flex flex-col gap-2 px-4">
 				<TrainCard
+					state="far"
 					disruptionCode={null}
 					id={data.serviceID}
 					isCancelled={data.destination.isCancelled ?? false}
 					destination={data.destination.name ?? ''}
 					platform={data.focus?.platform ?? null}
 					operator={data.operatorCode!}
-					etd={data.focus?.et ?? data.focus?.at ?? 'Delayed'}
-					std={data.focus?.st ?? ''}
+					etd={data.focus?.atd ?? data.focus?.etd ?? 'Delayed'}
+					std={data.focus?.std ?? ''}
 					details={data}
 					onservicedetails={() => {}}
 				/>
+				<div class="flex items-center gap-2">
+					<div
+						class="w-max rounded-md px-2 py-1 text-xs"
+						style:color={operatorList[data.operatorCode!].text}
+						style:background={operatorList[data.operatorCode!].bg}
+					>
+						{operatorList[data.operatorCode!].name}
+					</div>
+					<div class="flex-grow"></div>
+					<LastUpdated date={data.generatedAt} />
+				</div>
+
 				<Disruption
 					isCancelled={data.destination.isCancelled}
 					code={data.cancelReason?.Value ?? data.delayReason?.Value ?? null}
@@ -71,42 +101,47 @@
 		</div>
 	</div>
 	<Accordion.Root
-		class="flex flex-grow flex-col overflow-y-scroll pl-4 pr-4 pt-4 [scrollbar-gutter:stable] [scrollbar-width:thin]"
+		bind:value={currentAccordion}
+		class="flex flex-grow flex-col overflow-y-scroll pl-4 pr-4 pt-2 [scrollbar-gutter:stable] [scrollbar-width:thin]"
 	>
 		{#each data.locations ?? [] as location, i}
 			<div class="group relative">
 				<div
-					style:background={operatorList[data.operatorCode].bg}
+					style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
 					class={[
-						'absolute -bottom-3 left-[70px] top-0 z-30 flex w-2 bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-7 group-last:items-end'
+						'absolute -bottom-3 left-[70px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
 					]}
 				></div>
-				<div class="absolute left-[70px] top-0 flex h-14 w-2 items-center">
+				<div class="absolute left-[70px] top-0 z-30 flex h-16 w-2 items-center">
 					<div
-						style:background={operatorList[data.operatorCode].bg}
-						class="h-2 w-5 rounded-l-full rounded-r-full pl-4"
+						style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+						class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
 					></div>
 				</div>
+				{#if data.currentLocation === i + 1}
+					<PositionIndicator
+						a={location.atd ?? location.etd ?? location.std}
+						b={data.locations[i + 1].ata ?? data.locations[i + 1].eta ?? data.locations[i + 1].sta}
+						{now}
+						state={data.locations[i + 1].state}
+						color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+					/>
+				{/if}
 				<CallingPoint
 					{i}
 					platform={location.platform}
 					crs={location.crs}
 					name={location.name}
-					st={location.st}
-					et={location.at ?? location.et ?? location.st}
+					std={location.std}
+					sta={location.sta}
+					etd={location.etd}
+					atd={location.atd}
+					ata={location.ata}
+					eta={location.eta}
 					type={location.order}
 					isCancelled={location.isCancelled ?? false}
 					destCrs={data.destination.crs}
 				/>
-				{#if data.lastToBePast === i}
-					<div
-						style:border-color={operatorList[data.operatorCode].bg}
-						style:color={operatorList[data.operatorCode].bg}
-						class="absolute -bottom-3 left-[61px] z-40 rounded-full border-2 border-zinc-600 bg-white p-0.5 text-zinc-600 drop-shadow-2xl"
-					>
-						<Train size={18} strokeWidth={2.5} />
-					</div>
-				{/if}
 			</div>
 		{/each}
 	</Accordion.Root>

@@ -23,6 +23,7 @@
 				{i + 1}
 			</div>
 			<TrainCard
+				state={train.ataSpecified ? (train.atdSpecified ? 'gone' : 'here') : 'far'}
 				{id}
 				disruptionCode={train.cancelReason?.Value ?? null}
 				isCancelled={train.isCancelled ?? false}
