@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { MediaQuery } from 'svelte/reactivity';
 	import { scrollY } from 'svelte/reactivity/window';
 	import { fade } from 'svelte/transition';
 
-
-	let {resistance=0.1, onRefresh =()=>{},refreshing=false,children} = $props();
+	let { resistance = 0.1, onRefresh = () => {}, refreshing = false, children } = $props();
 
 	let startY = $state(0);
 	let currentY = $state(0);
@@ -37,7 +37,6 @@
 		}
 	};
 
-
 	const touchEnd = () => {
 		if (shouldRefresh) {
 			rotateDeg = 0;
@@ -50,15 +49,14 @@
 		}
 	};
 
-	$effect(()=>{
-		if(refreshing) {
+	$effect(() => {
+		if (refreshing) {
 			rotateDeg = 0;
 			translateY = 60;
+		} else {
+			translateY = 0;
 		}
-		else {
-			translateY = 0
-		}
-	})
+	});
 
 	const refresh = async () => {
 		await onRefresh();
@@ -66,26 +64,35 @@
 		pulling = false;
 		shouldRefresh = false;
 	};
+
+	const md = new MediaQuery('min-width: 768px');
 </script>
 
-
-<div ontouchstart={touchStart} ontouchmove={touchMove} ontouchend={touchEnd} class="refresher">
-	
-	{#if pulling || refreshing}
-		<div class="fixed md:absolute top-[calc(135px+max(4px,env(safe-area-inset-top)))] md:top-7 left-0 right-0 duration-200" in:fade={{ duration: 200 }}>
-			<div
-				class="icon"
-				style={shouldRefresh || refreshing
-					? 'animation-play-state: running;'
-					: `transform: rotate(${rotateDeg}deg); opacity: ${rotateDeg / 270}; animation-play-state: paused;`}
-			></div>
-		</div>
-	{/if}
-
-	<div class="content-wrapper" style="transform: translateY({translateY}px)">
+{#if md.current}
+	<div class="">
 		{@render children()}
 	</div>
-</div>
+{:else}
+	<div ontouchstart={touchStart} ontouchmove={touchMove} ontouchend={touchEnd} class="refresher">
+		{#if pulling || refreshing}
+			<div
+				class="fixed left-0 right-0 top-[calc(200px+max(4px,env(safe-area-inset-top)))] duration-200 md:absolute md:top-7"
+				in:fade={{ duration: 200 }}
+			>
+				<div
+					class="icon"
+					style={shouldRefresh || refreshing
+						? 'animation-play-state: running;'
+						: `transform: rotate(${rotateDeg}deg); opacity: ${rotateDeg / 270}; animation-play-state: paused;`}
+				></div>
+			</div>
+		{/if}
+
+		<div class="content-wrapper" style="transform: translateY({translateY}px)">
+			{@render children()}
+		</div>
+	</div>
+{/if}
 
 <style>
 	.refresher {
@@ -94,7 +101,6 @@
 		position: relative;
 		width: 100%;
 	}
-
 
 	.icon {
 		animation: spin 1s linear infinite;

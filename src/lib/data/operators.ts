@@ -51,7 +51,7 @@ export const operatorList: Record<string, { name: string; bg: string; text: stri
 	},
 	LM: {
 		name: 'West Midlands Trains',
-		bg: 'linear-gradient(135deg, #1E4B45 0%, #1E4B45 74%, #EF8933 75%, #EF8933 100%)',
+		bg: '#1E4B45',
 		text: '#fff'
 	},
 	LO: {

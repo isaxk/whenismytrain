@@ -14,7 +14,8 @@
 		BackIcon = ArrowLeft,
 		actionHref,
 		ActionIcon,
-		onActionClick = () => {}
+		onActionClick = () => {},
+		actionSnippet
 	}: {
 		children?: Snippet;
 		title?: string;
@@ -25,10 +26,13 @@
 		actionHref?: string;
 		ActionIcon?: typeof IconType;
 		onActionClick?: () => void;
+		actionSnippet?: Snippet;
 	} = $props();
 </script>
 
-<div class="flex min-h-14 items-start justify-between gap-3 px-4 pb-2 pt-1 md:h-max md:items-center">
+<div
+	class="flex min-h-14 items-start justify-between gap-2 px-4 pb-2 pt-1 md:h-max md:items-center"
+>
 	{#if type === 'dialog'}
 		<Dialog.Close
 			class={[
@@ -72,6 +76,8 @@
 				}
 			}}><ActionIcon size={20} /></button
 		>
+	{:else if actionSnippet}
+		{@render actionSnippet()}
 	{:else}
 		<div class="w-10"></div>
 	{/if}

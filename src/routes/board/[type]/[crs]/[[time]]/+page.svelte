@@ -9,6 +9,7 @@
 	import Spinner from '$lib/components/spinner.svelte';
 	import ComboSidetopbar from '$lib/components/ui/combo-sidetopbar.svelte';
 	import Header from '$lib/components/ui/header.svelte';
+	import Saved from '../../../../(pages)/saved/+page.svelte';
 	import type { definitions } from '$lib/types/api';
 	import { sortByLiveDepart } from '$lib/utils';
 	import { getTrainServices } from '$lib/utils/api';
@@ -18,21 +19,32 @@
 	import {
 		AlertCircle,
 		ArrowDownRight,
+		ArrowLeft,
 		ArrowUpRight,
+		Bookmark,
+		Check,
 		Clock,
 		Home,
 		RotateCw,
+		Save,
 		Settings,
 		X
 	} from 'lucide-svelte';
 	import { MediaQuery, SvelteMap, SvelteSet } from 'svelte/reactivity';
-	import { fade } from 'svelte/transition';
+	import { crossfade, fade, fly, scale } from 'svelte/transition';
 	import { throttle } from 'throttle-typescript';
 	import { Drawer } from 'vaul-svelte';
 	import ServiceDetails from '../../../../service/[id]/[crs]/+page.svelte';
 	import type { PageData } from './$types';
 	import DisruptionList from '$lib/components/board/disruption-list.svelte';
 	import LastUpdated from '$lib/components/last-updated.svelte';
+	import { scrollY } from 'svelte/reactivity/window';
+	import { quadInOut, quartInOut } from 'svelte/easing';
+	import Title from '$lib/components/board/title.svelte';
+	import { savedBoards } from '$lib/data/saved.svelte';
+	import ServiceSaveToggle from '$lib/components/service/service-save-toggle.svelte';
+
+	const [send, receive] = crossfade({ duration: 250, easing: quadInOut });
 
 	let { data }: { data: PageData } = $props();
 
@@ -53,6 +65,13 @@
 	let selectedOperator: string | null = $state(null);
 	let generatedAt = $state(dayjs());
 	const md = new MediaQuery('min-width: 768px');
+
+	const saveIndex = $derived(
+		savedBoards.value.findIndex(
+			(b) =>
+				b.from === data.from && b.time === data.time && b.to === data.to && b.type === data.type
+		)
+	);
 
 	// update after data.board promise resolves
 	$effect(() => {
@@ -179,148 +198,153 @@
 	{/await}
 </svelte:head>
 
-<div class="mx-auto min-h-screen md:flex md:max-w-screen-lg">
+<div class="mx-auto min-h-screen md:flex md:max-w-screen-lg md:gap-10">
 	<ComboSidetopbar>
-		<Header
-			ActionIcon={RotateCw}
-			onBackClick={() => history.back()}
-			onActionClick={() => {
-				operator(selectedOperator);
-			}}
-		>
+		<div class="flex gap-2 px-4 pb-2">
+			<button
+				onclick={() => history.back()}
+				class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
+				><ArrowLeft size={20} /></button
+			>
+			<button
+				onclick={() => operator(selectedOperator)}
+				class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
+				><RotateCw size={20} /></button
+			>
 			{#await data.board}
 				<Skeleton class="h-8 w-52" />
 			{:then { board }}
-				<div in:fade={{ duration: 200 }} class="w-full">
-					{#if !md.current}
-						<Drawer.Root>
-							<Drawer.Trigger
-								class="flex h-full w-full min-w-0 flex-grow flex-col items-center justify-center overflow-hidden text-ellipsis"
-							>
-								{#if data.to}
-									<div
-										class="-mt-0.5 w-full min-w-0 overflow-hidden text-ellipsis text-nowrap text-center text-xl font-bold"
-									>
-										{board.locationName}
-									</div>
-									<div
-										class="-mt-1 w-full min-w-0 overflow-hidden text-ellipsis text-nowrap text-center text-sm text-zinc-600"
-									>
-										{data.type === 'arr' ? 'from' : 'to'}
-										{board.filterLocationName}
-									</div>
-								{:else}
-									<div
-										class="w-full min-w-0 flex-grow overflow-hidden text-ellipsis text-nowrap text-center text-2xl font-bold md:hidden md:pr-10 md:text-left md:text-4xl"
-									>
-										{board.locationName}
-									</div>
-								{/if}
-								<div class="flex gap-2 text-sm font-medium">
-									<div class="flex items-center gap-1">
-										{#if data.type === 'dept'}
-											<ArrowUpRight size={12} /> Departures
-										{:else}
-											<ArrowDownRight size={12} /> Arrivals
-										{/if}
-									</div>
-									<div class="flex items-center gap-1">
-										<Clock size={12} />
-										{data.date ? dayjs(data.date).format('HH:mm') : 'now'}
-									</div>
-									<button class="flex items-center gap-1 rounded bg-zinc-200 px-2 py-1 text-xs"
-										><Settings size={12} /> Options</button
-									>
-								</div>
-							</Drawer.Trigger>
-
-							<Drawer.Portal>
-								<Drawer.Overlay class="fixed inset-0 z-40 bg-black/80" />
-								<Drawer.Content
-									class="fixed bottom-0 left-0 right-0 z-50 flex h-drawer flex-col rounded-t-lg bg-zinc-50 pt-3"
-								>
-									<Header BackIcon={X} type="drawer" title="Board Options"></Header>
-									<div class="h-full min-h-0 flex-grow px-4 pb-ios-bottom">
-										<Switcher
-											drawer
-											from={data.from}
-											to={data.to}
-											type={data.type}
-											value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
-										/>
-									</div>
-								</Drawer.Content>
-							</Drawer.Portal>
-						</Drawer.Root>
-					{:else}
-						<div class="w-full flex items-center">
-							<a href="/" class="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-300"
-								><Home /></a
-							>
-							<div class="flex-grow"></div>
-							<LastUpdated date={generatedAt} />
-						</div>
-					{/if}
-				</div>
+				{#if !md.current}
+					<div class="min-w-0 flex-grow">
+						{#if (scrollY.current ?? 0) > 50}
+							<Title
+								locationName={board.locationName}
+								type={data.type}
+								date={data.date}
+								filter={board.filterLocationName ?? null}
+								compact
+							/>
+						{/if}
+					</div>
+				{:else}
+					<div class="flex w-full items-center">
+						<a href="/" class="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-300"
+							><Home /></a
+						>
+						<div class="flex-grow"></div>
+						<LastUpdated date={generatedAt} />
+					</div>
+				{/if}
 			{/await}
-		</Header>
+
+			{#if saveIndex !== -1}
+				<button
+					in:scale={{ start: 0.5 }}
+					onclick={() => {
+						savedBoards.value.splice(saveIndex, 1);
+					}}
+					class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-blue-500 text-white"
+				>
+					<Check size={20} />
+				</button>
+			{:else}
+				<button
+					onclick={() =>
+						(savedBoards.value = [
+							...savedBoards.value,
+							{
+								from: data.from,
+								time: data.time,
+								to: data.to,
+								type: data.type,
+								key: Date.now() + data.from + data.time + data.to + data.type
+							}
+						])}
+					class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
+					><Bookmark size={20} /></button
+				>
+			{/if}
+		</div>
 
 		{#await data.board then { board }}
-			<!-- <div class="hidden pb-3 pl-4 pt-2 md:flex md:pt-2">
-				<div class="flex flex-col">
-					<div class="text-4xl font-bold">{board.locationName}</div>
-					<div class="flex gap-2 text-base">
-						<div class="flex items-center gap-1">
-							{#if data.type === 'dept'}
-								<ArrowUpRight size={12} /> Departures
-							{:else}
-								<ArrowDownRight size={12} /> Arrivals
-							{/if}
-						</div>
-						<div class="flex items-center gap-1">
-							<Clock size={12} />
-							{data.date ? dayjs(data.date).format('HH:mm') : 'now'}
-						</div>
-					</div>
-				</div>
-			</div> -->
-			<div class="h-3 md:h-0"></div>
-
-			<div class="md:pb-4 md:pt-4" in:fade={{ duration: 200 }}>
-				{#if md.current}
-					<div class="h-[350px] rounded-lg border-zinc-100 bg-white/95 p-4 drop-shadow">
-						<Switcher
-							drawer={false}
-							from={data.from}
-							to={data.to}
-							type={data.type}
-							value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
-						/>
-					</div>
-					<div class="h-4"></div>
+			<div
+				class={[
+					'transition-all',
+					md.current
+						? 'h-full flex-grow overflow-y-scroll'
+						: (scrollY.current ?? 0) > 50
+							? 'h-2 duration-200'
+							: data.to
+								? 'h-[100px] pt-2 duration-300'
+								: 'h-20 pt-2 duration-300'
+				]}
+			>
+				{#if !md.current && (scrollY.current ?? 0) <= 50}
+					<Title
+						compact={false}
+						locationName={board.locationName}
+						type={data.type}
+						date={data.date}
+						filter={board.filterLocationName ?? null}
+					/>
 				{/if}
+				{#if md.current}
+					<div class="h-3 md:h-0"></div>
 
-				<OperatorsList operators={Array.from(operators)} {selectedOperator} onselect={operator} />
+					<div class="overflow-y-scroll px-1 md:pb-4 md:pt-4" in:fade={{ duration: 200 }}>
+						<div class="h-[350px] rounded-lg border-zinc-100 bg-white/95 p-4 drop-shadow">
+							<Switcher
+								drawer={false}
+								from={data.from}
+								to={data.to}
+								type={data.type}
+								value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
+							/>
+						</div>
+						<div class="mt-4 rounded-lg border bg-white p-2 drop-shadow-sm">
+							<Saved card />
+						</div>
+					</div>
+				{/if}
 			</div>
-			{#if md.current}
-				<DisruptionList messages={board.nrccMessages ?? []} />
+
+			{#if !md.current}
+				<OperatorsList operators={Array.from(operators)} {selectedOperator} onselect={operator} />
 			{/if}
 		{/await}
 	</ComboSidetopbar>
 
 	{#if !md.current}
 		<div class="h-ios-top"></div>
-		<div class="h-[100px]"></div>
+		<div class="h-[180px]"></div>
 	{/if}
 
 	<Refresher {onRefresh} {refreshing}>
 		<div class="md:flex-grow">
-			{#if !md.current}
-				{#await data.board then { board }}
-					<DisruptionList messages={board.nrccMessages ?? []} />
-				{/await}
-				<div class="h-6"></div>
-			{/if}
+			{#await data.board then { board }}
+				{#if md.current}
+					<div class="sticky top-0 z-20 flex w-full bg-zinc-50 pt-4">
+						<div class="min-w-0 flex-grow">
+							<OperatorsList
+								operators={Array.from(operators)}
+								{selectedOperator}
+								onselect={operator}
+							/>
+						</div>
+						{#if refreshing}
+							<div
+								transition:fade={{ duration: 200 }}
+								class="flex h-10 items-center justify-end overflow-hidden"
+							>
+								<div class="-mr-4 scale-75">
+									<Spinner />
+								</div>
+							</div>
+						{/if}
+					</div>
+				{/if}
+				<DisruptionList messages={board.nrccMessages ?? []} />
+			{/await}
 			{#await data.board}
 				<div class="flex flex-col gap-2 pl-4 pr-4 md:pl-0 md:pt-4">
 					{#each Array(10)}
@@ -376,14 +400,19 @@
 							page.state.selected = null;
 							history.back();
 						}}
-						title="Service Details"
 						ActionIcon={ArrowUpRight}
 						onActionClick={() => {
 							let id = page.state.selected?.serviceID;
 							replaceState('', { selected: null });
 							goto(`/service/${id}/${board?.crs}`);
 						}}
-					/>
+					>
+						<div class="w-10"></div>
+						<div class="flex h-10 flex-grow items-center justify-center font-medium">
+							Service Details
+						</div>
+						<ServiceSaveToggle id={page.state.selected?.serviceID} crs={data.from} />
+					</Header>
 				{/snippet}
 			</ServiceDetails>
 		{:else}

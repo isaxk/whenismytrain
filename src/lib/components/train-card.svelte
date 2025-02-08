@@ -44,12 +44,17 @@
 		onservicedetails(id);
 	}}
 	use:inview
-	class="relative flex w-full min-w-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border bg-white p-4 drop-shadow"
+	class={[
+		'relative flex w-full min-w-0 flex-col items-center justify-center gap-2 py-4',
+		details ? 'border-b px-0 pr-2' : 'px-4'
+	]}
 >
-	<div
-		class="absolute bottom-1 left-1 top-1 flex w-1.5 items-center rounded-lg text-xs"
-		style:background={operatorList[operator].bg}
-	></div>
+	{#if !details}
+		<div
+			class="absolute -bottom-1 left-0 top-0 z-40 flex w-1.5 items-center text-xs"
+			style:background={operatorList[operator].bg}
+		></div>
+	{/if}
 	<div class="flex w-full items-center gap-3 pl-2 md:gap-4">
 		<div class={['flex flex-col items-center']}>
 			<div class="text-[10px] font-light">Platform</div>
@@ -73,7 +78,7 @@
 			>
 				{destination}
 			</div>
-			<div class="text-xs -mb-1 text-zinc-800">
+			<div class="-mb-1 text-xs text-zinc-800">
 				{#if state === 'here'}
 					Arrived
 				{:else if state === 'gone'}
@@ -82,7 +87,6 @@
 			</div>
 		</div>
 		<div class="flex flex-col items-end">
-			
 			<TimeDisplay {isCancelled} et={etd} st={std} />
 		</div>
 	</div>

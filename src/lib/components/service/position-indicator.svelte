@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { operatorList } from '$lib/data/operators';
-	import { recieve, send } from '$lib/utils/transitions';
+	import { receive, send } from '$lib/utils/transitions';
 	import dayjs from 'dayjs';
 	import { Train } from 'lucide-svelte';
 	import { fly } from 'svelte/transition';
@@ -34,7 +34,7 @@
 
 {#snippet indicator()}
 	<div
-		in:recieve|global={{ key: 'indicator' }}
+		in:receive|global={{ key: 'indicator' }}
 		out:send|global={{ key: 'indicator' }}
 		style:border-color={color}
 		style:color

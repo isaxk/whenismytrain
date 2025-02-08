@@ -18,7 +18,8 @@
 		value = dayjs().format('HH:mm'),
 		type = 'dept',
 		from = null,
-		to = null
+		to = null,
+		suggestions = null
 	} = $props();
 
 	function go() {
@@ -61,7 +62,7 @@
 				to = from;
 				from = temp;
 			}}
-			class="absolute left-5 drop-shadow-sm top-[52px] flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200"
+			class="absolute left-5 top-[52px] flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 drop-shadow-sm"
 		>
 			<ArrowLeftRight size={16} />
 		</button>
@@ -77,8 +78,9 @@
 		</div>
 		<Search {drawer} bind:crs={to} clearable={true}></Search>
 	</div>
-	<div class="flex-grow"></div>
-	{#if from && to!==from}
+
+	{#if from && to !== from}
+		<div class="flex-grow"></div>
 		{#if drawer}
 			<Drawer.Close
 				onclick={go}
@@ -93,5 +95,7 @@
 			>
 			<div class="h-4"></div>
 		{/if}
+	{:else if suggestions}
+		{@render suggestions()}
 	{/if}
 </div>

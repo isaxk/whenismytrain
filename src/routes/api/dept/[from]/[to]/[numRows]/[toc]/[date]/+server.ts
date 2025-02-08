@@ -1,8 +1,8 @@
-
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import dayjs from 'dayjs';
 import type { definitions } from '$lib/types/api';
+import { PUBLIC_DEPARTURES_KEY } from '$env/static/public';
 
 export const GET: RequestHandler = async ({ params }) => {
 	const { from, to, toc, date, numRows } = params;
@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	const response = await fetch(url, {
 		headers: {
-			'x-apikey': 'NBN9o15uI8cGHkxFNTMOtS4ebhdoaG62P362QRcjVABdBCLt'
+			'x-apikey': PUBLIC_DEPARTURES_KEY
 		}
 	});
 

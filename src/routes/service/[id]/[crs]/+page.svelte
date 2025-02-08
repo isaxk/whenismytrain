@@ -16,6 +16,7 @@
 	import PositionIndicator from '$lib/components/service/position-indicator.svelte';
 	import { invalidateAll, preloadData } from '$app/navigation';
 	import LastUpdated from '$lib/components/last-updated.svelte';
+	import ServiceSaveToggle from '$lib/components/service/service-save-toggle.svelte';
 
 	let {
 		data,
@@ -23,7 +24,7 @@
 		header
 	}: { data: PageData; drawer?: boolean; header?: Snippet } = $props();
 
-	$inspect(data);
+	$inspect('data', data);
 
 	const destination: string = data.locations![data.locations!.length - 1].locationName!;
 
@@ -31,19 +32,29 @@
 	let now: dayjs.Dayjs | null = $state(null);
 	let interval;
 
+	async function refresh() {
+		const response = await fetch(`/api/service/${data.id}/${data.crs}`);
+		now = dayjs();
+		data = { ...(await response.json()), crs: data.crs, id: data.id };
+	}
+
 	onMount(() => {
-		interval = setInterval(async () => {
-			const response = await fetch(`/api/service/${data.id}/${data.crs}`);
-			now = dayjs();
-			data = { ...(await response.json()), crs: data.crs, id: data.id };
-		}, 15000);
+		interval = setInterval(refresh, 15000);
+		now = dayjs();
+
+		const genAt = dayjs(data.generatedAt);
+		const diff = Math.abs(genAt.diff(now, 'seconds'));
+		console.log(diff);
+		if (diff > 14) {
+			refresh();
+		}
 	});
 	onDestroy(() => {
 		clearInterval(interval);
 	});
 </script>
 
-{#if data && data.focus}
+{#if data && data !== undefined && data.focus}
 	<div class={['w-full', !drawer && 'md:max-w-96']} in:fade|global={{ duration: 250 }}>
 		<div class={['top-0 pb-2 md:sticky', !drawer && 'pt-ios-top']}>
 			{#if drawer}
@@ -63,7 +74,11 @@
 							history.back();
 						}}
 						title="Service Details"
-					/>
+					>
+						{#snippet actionSnippet()}
+							<ServiceSaveToggle id={data.serviceID} crs={data.focus.crs} />
+						{/snippet}
+					</Header>
 				</div>
 				<div class="pt-ios-top md:hidden"><div class="h-3"></div></div>
 			{/if}
@@ -104,45 +119,50 @@
 		bind:value={currentAccordion}
 		class="flex flex-grow flex-col overflow-y-scroll pl-4 pr-4 pt-2 [scrollbar-gutter:stable] [scrollbar-width:thin]"
 	>
-		{#each data.locations ?? [] as location, i}
-			<div class="group relative">
-				<div
-					style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-					class={[
-						'absolute -bottom-3 left-[70px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
-					]}
-				></div>
-				<div class="absolute left-[70px] top-0 z-30 flex h-16 w-2 items-center">
+		{#if data.locations}
+			{#each data.locations ?? [] as location, i}
+				<div class="group relative">
 					<div
 						style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-						class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
+						class={[
+							'absolute -bottom-3 left-[70px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+						]}
 					></div>
-				</div>
-				{#if data.currentLocation === i + 1}
-					<PositionIndicator
-						a={location.atd ?? location.etd ?? location.std}
-						b={data.locations[i + 1].ata ?? data.locations[i + 1].eta ?? data.locations[i + 1].sta}
-						{now}
-						state={data.locations[i + 1].state}
-						color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+					<div class="absolute left-[70px] top-0 z-30 flex h-16 w-2 items-center">
+						<div
+							style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+							class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
+						></div>
+					</div>
+					{#if data.currentLocation === i + 1}
+						{@const b = data !== undefined ? (data.locations[i + 1] ?? null) : null}
+						{#if b}
+							<PositionIndicator
+								a={location.atd ?? location.etd ?? location.std}
+								b={b ? (b.ata ?? b.eta ?? b.sta) : null}
+								{now}
+								state={b.state}
+								color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+							/>
+						{/if}
+					{/if}
+					<CallingPoint
+						{i}
+						platform={location.platform}
+						crs={location.crs}
+						name={location.name}
+						std={location.std}
+						sta={location.sta}
+						etd={location.etd}
+						atd={location.atd}
+						ata={location.ata}
+						eta={location.eta}
+						type={location.order}
+						isCancelled={location.isCancelled ?? false}
+						destCrs={data.destination.crs}
 					/>
-				{/if}
-				<CallingPoint
-					{i}
-					platform={location.platform}
-					crs={location.crs}
-					name={location.name}
-					std={location.std}
-					sta={location.sta}
-					etd={location.etd}
-					atd={location.atd}
-					ata={location.ata}
-					eta={location.eta}
-					type={location.order}
-					isCancelled={location.isCancelled ?? false}
-					destCrs={data.destination.crs}
-				/>
-			</div>
-		{/each}
+				</div>
+			{/each}
+		{/if}
 	</Accordion.Root>
 {/if}

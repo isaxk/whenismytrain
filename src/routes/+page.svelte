@@ -6,7 +6,7 @@
 	import Search from '$lib/components/home/search.svelte';
 	import PinnedStation from '$lib/components/pinned-station.svelte';
 	import { distance } from '$lib/utils';
-	import { Locate } from 'lucide-svelte';
+	import { ArrowUpRight, Locate } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import StationsListJSON from 'uk-railway-stations';
@@ -57,7 +57,30 @@
 		<div class="text-xl">The convinient UK Train times app</div>
 	</div>
 
-	<Switcher drawer={false} />
+	<Switcher drawer={false}>
+		{#snippet suggestions()}
+			<div class="mt-2 border-t pt-4">
+				{#if closestStation}
+					<div class="flex items-center rounded-lg border bg-white p-4 drop-shadow-sm">
+						<div class="flex-grow">
+							<div class="text-sm font-bold">Closest Station</div>
+							<div class="text-3xl font-semibold">
+								{closestStation.stationName}
+							</div>
+							<div>
+								{closestStation.crsCode} - {closestStation.distance.toFixed(2)}km
+							</div>
+						</div>
+						<a
+							href="/board/dept/{closestStation.crsCode}"
+							class="flex h-11 items-center gap-1 rounded-lg bg-blue-500 px-4 text-white drop-shadow"
+							><ArrowUpRight size={22} /></a
+						>
+					</div>
+				{/if}
+			</div>
+		{/snippet}
+	</Switcher>
 
 	<div class="pt-6"></div>
 </div>

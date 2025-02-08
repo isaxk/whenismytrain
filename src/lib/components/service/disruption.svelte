@@ -27,7 +27,10 @@
 			<AlertCircle size={20} />
 		</div>
 		{#if data}
-			<div class="line-clamp-2 flex-grow text-xs text-zinc-700" in:fade={{ duration: 200 }}>
+			<div
+				class="prose line-clamp-2 flex-grow text-xs text-zinc-700 prose-p:m-0"
+				in:fade={{ duration: 200 }}
+			>
 				{isCancelled ? data.cancReason : data.lateReason}
 			</div>
 		{:else}

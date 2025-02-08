@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 	const [from, to] = list.includes('-') ? list.split('-') : [list, null];
 	console.log(from, to);
 
-	const date = time ? dayjs().format('YYYY-MM-DD') + 'T' + time?.replaceAll(':', '') : null;
+	const date = time ? dayjs().format('YYYY-MM-DD') + 'T' + time?.replace(':', '') : null;
 	console.log(date);
 
 	async function board() {
@@ -33,7 +33,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 			AllStationsJSON.some((s) => s.crsCode === from) &&
 			(to ? AllStationsJSON.some((s) => s.crsCode === to) : true)
 		) {
-			return { board: board(), date, type: type as 'dept' | 'arr', from, to };
+			return { board: board(), date, time, type: type as 'dept' | 'arr', from, to };
 		} else {
 			error(404, `Could not find station for crs either code: '${from}' or '${to}'`);
 		}

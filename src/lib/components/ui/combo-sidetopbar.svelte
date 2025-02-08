@@ -13,7 +13,7 @@
 			'border-b border-zinc-300 drop-shadow md:border-none md:drop-shadow-none'
 	]}
 >
-	<div class="md:sticky top-0 left-0 pt-ios-top">
+	<div class="left-0 top-0 pt-ios-top md:sticky md:flex md:h-screen md:flex-col">
 		{@render children()}
 	</div>
 </div>

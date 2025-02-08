@@ -11,17 +11,17 @@
 
 <div
 	in:fade|global={{ duration: 300 }}
-	class="flex w-full flex-col gap-2 pl-4 pr-4 md:pl-0 md:pt-4"
+	class="flex w-full flex-col md:mt-4 md:overflow-hidden md:rounded-lg md:border md:drop-shadow-sm"
 >
 	{#each list as [id, train], i (id)}
 		<div
-			class="flex items-center"
+			class={[
+				'flex items-center border-t first:border-t-0',
+				i % 2 === 0 ? 'bg-white' : 'bg-zinc-50'
+			]}
 			animate:flip={{ duration: 200, easing: circInOut }}
 			transition:fade={{ duration: 200, easing: quartInOut }}
 		>
-			<div class="hidden min-w-8 justify-center text-sm sm:min-w-12 md:flex md:text-base">
-				{i + 1}
-			</div>
 			<TrainCard
 				state={train.ataSpecified ? (train.atdSpecified ? 'gone' : 'here') : 'far'}
 				{id}

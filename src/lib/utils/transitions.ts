@@ -1,4 +1,4 @@
-import { cubicOut } from 'svelte/easing';
+import { cubicOut, quadInOut } from 'svelte/easing';
 import { crossfade, type TransitionConfig } from 'svelte/transition';
 
 type FlyAndScaleParams = {
@@ -47,4 +47,4 @@ export function flyAndScale(node: Element, params?: FlyAndScaleParams): Transiti
 	};
 }
 
-export const [send, recieve] = crossfade({ duration: 200 });
+export const [send, receive] = crossfade({ duration: 200, easing: quadInOut });
