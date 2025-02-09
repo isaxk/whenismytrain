@@ -11,6 +11,8 @@
 	import { writable } from 'svelte/store';
 	import { onMount } from 'svelte';
 	import { quadInOut } from 'svelte/easing';
+	import dayjs from 'dayjs';
+	import { MediaQuery, SvelteMap } from 'svelte/reactivity';
 
 	let { card = false } = $props();
 
@@ -26,6 +28,29 @@
 	});
 
 	let value = $state('board');
+	let dates = $state(new SvelteMap([]));
+
+	const sortedServices = $derived.by(() => {
+		if (dates.size === savedServices.value.length) {
+			const withDate = savedServices.value.map((s, i) => {
+				return { date: dates.get(s.id + s.crs), service: s };
+			});
+			return withDate
+				.toSorted((a, b) => {
+					const dateA = a.date ? dayjs(a.date).unix() : 0;
+					const dateB = b.date ? dayjs(b.date).unix() : 0;
+					console.log(dateA, dateB, dateA - dateB);
+					if (dateA > dateB) {
+						return 1;
+					} else {
+						return -1;
+					}
+				})
+				.map((s) => s.service);
+		} else {
+			return savedServices.value;
+		}
+	});
 
 	$inspect(savedBoards.value);
 </script>
@@ -56,35 +81,41 @@
 		]}
 	/>
 
-	<div class="flex flex-col overflow-hidden pt-2" style:height="{heightTween.current}px">
+	<div
+		class="flex flex-col overflow-hidden pt-2"
+		style:height={card ? '100%' : `{${heightTween.current}px`}
+	>
 		<div bind:this={elm} class="pb-4">
 			{#if value === 'board'}
 				{#each savedBoards.value as save, i (save.key)}
 					<div
-						class="flex items-center gap-2 border-t py-2 first:border-t-0"
+						class={[
+							'flex items-center gap-2 border-t first:border-t-0',
+							card ? 'py-1.5' : 'h-[70px]'
+						]}
 						in:slide={{ duration: 200 }}
 						animate:flip={{ duration: 200 }}
 					>
 						<a
-							class="flex-grow"
+							class="min-w-0 flex-grow pr-2"
 							href="/board/{save.type ?? 'dept'}/{save.from}{save.to
 								? '-' + save.to
 								: null}/{save.time ?? null}"
 						>
-							<div class="text-lg font-semibold">
+							<div class={['font-semibold', card ? 'text-lg' : 'text-xl']}>
 								{AllStationsJSON.find((s) => s.crsCode === save.from)?.stationName}
 							</div>
-							<div class="-mt-1 flex items-center gap-1.5 text-sm">
+							<div class="-mt-1 flex w-full items-center gap-1.5 text-sm">
 								{#if save.to}
-									<div class="text-sm text-zinc-700">
+									<div class="overflow-hidden text-ellipsis text-nowrap text-sm text-zinc-700">
 										to {AllStationsJSON.find((s) => s.crsCode === save.to)?.stationName}
 									</div>
 								{/if}
 								<div class="flex items-center gap-1 font-medium">
 									{#if (save.type ?? 'dept') === 'arr'}
-										<ArrowDownRight size={12} /> Arrivals
+										<ArrowDownRight size={12} /> {save.to ? 'Arrv.' : 'Arrivals'}
 									{:else}
-										<ArrowUpRight size={12} /> Departures
+										<ArrowUpRight size={12} /> {save.to ? 'Dept.' : 'Departures'}
 									{/if}
 								</div>
 								{#if save.time}
@@ -96,7 +127,7 @@
 							</div>
 						</a>
 						<button
-							class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-200"
+							class="flex h-9 min-w-9 items-center justify-center rounded-lg bg-zinc-200"
 							onclick={() => {
 								savedBoards.value.splice(i, 1);
 							}}><X size={20} /></button
@@ -106,16 +137,22 @@
 								href="/board/{save.type ?? 'dept'}/{save.from}{save.to
 									? '-' + save.to
 									: null}/{save.time ?? null}"
-								class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 text-white"
+								class="flex h-9 min-w-9 items-center justify-center rounded-lg bg-blue-500 text-white"
 								><ArrowUpRight size={20} /></a
 							>
 						{/if}
 					</div>
 				{/each}
 			{:else if value === 'service'}
-				{#each savedServices.value as save, i (save.key)}
+				{#each sortedServices as save, i (save.key)}
 					<div class="group" in:slide={{ duration: 200 }} animate:flip={{ duration: 200 }}>
-						<SavedService {i} id={save.id} crs={save.crs} {card} />
+						<SavedService
+							onDate={(d: string) => dates.set(save.id + save.crs, d)}
+							{i}
+							id={save.id}
+							crs={save.crs}
+							{card}
+						/>
 					</div>
 				{/each}
 			{/if}

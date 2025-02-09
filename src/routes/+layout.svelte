@@ -20,7 +20,7 @@
 	>
 		{@render children()}
 		<div
-			class="fixed bottom-0 left-0 right-0 z-40 flex h-20 items-center justify-evenly border-t bg-white drop-shadow md:hidden"
+			class="fixed bottom-0 left-0 right-0 z-40 flex min-h-20 items-center justify-evenly border-t bg-white pb-ios-bottom pt-4 drop-shadow md:hidden"
 		>
 			<a href="/nearme"><MapPin /></a>
 			{#if data.url.includes('board')}

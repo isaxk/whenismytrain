@@ -24,14 +24,14 @@
 	}) as message}
 		<div
 			class={[
-				'prose rounded-lg border px-2 py-2 text-left text-sm prose-p:m-0',
+				'prose w-full  rounded-lg border px-2 py-2 text-left text-sm leading-5 prose-p:m-0',
 				message.severity === 'Normal' && 'bg-blue-00/80 border-blue-300',
 				message.severity === 'Major' && 'border-red-300 bg-red-100/80',
 				message.severity === 'Minor' && 'border-amber-300 bg-amber-100/80',
 				message.severity === 'Severe' && 'border-black bg-red-950/95 text-white'
 			]}
 		>
-			<div class="line-clamp-1 leading-5 md:line-clamp-2">
+			<div class="truncate">
 				{@html message.xhtmlMessage}
 			</div>
 		</div>
@@ -65,7 +65,7 @@
 {#if messages && messages.length > 0}
 	{#if md.current}
 		<Dialog.Root>
-			<Dialog.Trigger class="flex flex-col gap-2 px-4 pb-2 md:px-0 md:pt-0"
+			<Dialog.Trigger class="flex w-full flex-col gap-2 px-4 pb-2 md:px-0 md:pt-0"
 				>{@render trigger()}
 			</Dialog.Trigger>
 			<Dialog.Portal>
@@ -85,7 +85,7 @@
 		</Dialog.Root>
 	{:else}
 		<Drawer.Root>
-			<Drawer.Trigger class="flex flex-col gap-2 px-4 pb-2 md:px-0 md:pt-0"
+			<Drawer.Trigger class="flex w-full flex-col gap-2 px-4 pb-2 md:px-0 md:pt-0"
 				>{@render trigger()}</Drawer.Trigger
 			>
 			<Drawer.Portal>

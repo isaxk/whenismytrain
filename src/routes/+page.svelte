@@ -51,7 +51,7 @@
 	let value = $state('');
 </script>
 
-<div class="full mx-auto flex min-h-screen max-w-screen-sm flex-col justify-center px-4 pt-ios-top">
+<div class="full mx-auto min-h-screen max-w-screen-sm justify-center px-4 pt-ios-top">
 	<div class="py-8">
 		<div class="text-3xl font-bold">When is my train?</div>
 		<div class="text-xl">The convinient UK Train times app</div>

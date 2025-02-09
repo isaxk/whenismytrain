@@ -51,12 +51,12 @@
 		{#each geoStations.slice(0, 20) as station, i}
 			<a
 				in:fade|global={{ duration: 200 }}
-				class="flex items-center border-t px-4 py-3 first:border-none"
+				class="flex h-16 items-center border-t px-4 first:border-none"
 				href="/board/dept/{station.crsCode}"
 			>
 				<div class="flex-grow">
-					<div class="text-2xl font-medium">{station.stationName}</div>
-					<div>{station.crsCode} - {station.distance.toFixed(2)}km</div>
+					<div class="text-xl font-semibold">{station.stationName}</div>
+					<div class="-mt-1 text-sm">{station.crsCode} - {station.distance.toFixed(2)}km</div>
 				</div>
 				<button class="h-10 rounded-lg bg-blue-500 px-4 text-white drop-shadow"
 					><ArrowUpRight size={22} /></button

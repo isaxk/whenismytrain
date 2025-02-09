@@ -1,5 +1,5 @@
 import { PUBLIC_QUERY_SERVICES_KEY } from '$env/static/public';
-import { json } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { definitions } from '$lib/types/api';
 import type { ServiceDetailsLocation } from '$lib/types/extentions';
@@ -17,6 +17,10 @@ export const GET: RequestHandler = async ({ params }) => {
 	);
 
 	const data: definitions['ServiceDetails'] = await response.json();
+
+	if (data === null) {
+		error(400, 'Could not fetch service');
+	}
 	data.locations?.filter((l) => !l.isPass);
 
 	let passedFocus = false;

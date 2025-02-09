@@ -383,6 +383,7 @@
 				{:else if sorted.size === 0}
 					<div class="p-4">No services found</div>
 				{/if}
+				<div class="h-20 md:h-0"></div>
 			{/await}
 		</div>
 	</Refresher>

@@ -13,7 +13,7 @@ export default {
 			},
 			spacing: {
 				'ios-top': 'calc(4px + max(env(safe-area-inset-top), 8px))',
-				'ios-bottom': 'calc(4px + max(env(safe-area-inset-bottom), 2px))'
+				'ios-bottom': 'calc(4px + max(env(safe-area-inset-bottom), 8px))'
 			},
 			height: {
 				drawer: 'calc(96% - max(env(safe-area-inset-top), 4px))'
