@@ -31,9 +31,16 @@
 	let dates = $state(new SvelteMap([]));
 
 	const sortedServices = $derived.by(() => {
-		if (dates.size === savedServices.value.length) {
+		let allDates = true;
+		savedServices.value.forEach((s) => {
+			if (!dates.has(s.key)) {
+				allDates = false;
+			}
+		});
+
+		if (allDates) {
 			const withDate = savedServices.value.map((s, i) => {
-				return { date: dates.get(s.id + s.crs) ?? dayjs(), service: s };
+				return { date: dates.get(s.key) ?? dayjs(), service: s };
 			});
 			return withDate
 				.toSorted((a, b) => {
@@ -149,7 +156,7 @@
 				{#each sortedServices as save, i (save.key)}
 					<div class="group" in:slide={{ duration: 200 }} animate:flip={{ duration: 200 }}>
 						<SavedService
-							onDate={(d: string) => dates.set(save.id + save.crs, d)}
+							onDate={(d: string) => dates.set(save.key, d)}
 							{i}
 							id={save.id}
 							crs={save.crs}
