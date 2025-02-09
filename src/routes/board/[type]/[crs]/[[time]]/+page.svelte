@@ -409,7 +409,7 @@
 						}}
 					>
 						<div class="w-10"></div>
-						<div class="flex h-10 flex-grow items-center justify-center font-medium">
+						<div class="flex h-10 flex-grow items-center justify-center font-semibold">
 							Service Details
 						</div>
 						<ServiceSaveToggle id={page.state.selected?.serviceID} crs={data.from} />
