@@ -87,7 +87,7 @@
 			</div>
 		</div>
 		<div class="flex flex-col items-end">
-			<TimeDisplay {isCancelled} et={etd} st={std} />
+			<TimeDisplay {isCancelled} et={etd ?? 'Delayed'} st={std} />
 		</div>
 	</div>
 	{#if disruptionCode}

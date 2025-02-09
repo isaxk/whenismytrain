@@ -1,6 +1,5 @@
 import type { PageServerLoad } from './$types';
 import { type definitions } from '$lib/types/api';
-import type ServiceDetailsLocation from '$lib/types/extensions.ts';
 
 export const load: PageServerLoad = async ({ params, fetch }) => {
 	const { id, crs } = params;

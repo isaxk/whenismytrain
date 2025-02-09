@@ -33,11 +33,13 @@
 	const sortedServices = $derived.by(() => {
 		if (dates.size === savedServices.value.length) {
 			const withDate = savedServices.value.map((s, i) => {
-				return { date: dates.get(s.id + s.crs), service: s };
+				return { date: dates.get(s.id + s.crs) ?? dayjs(), service: s };
 			});
 			return withDate
 				.toSorted((a, b) => {
+					// @ts-ignore
 					const dateA = a.date ? dayjs(a.date).unix() : 0;
+					// @ts-ignore
 					const dateB = b.date ? dayjs(b.date).unix() : 0;
 					console.log(dateA, dateB, dateA - dateB);
 					if (dateA > dateB) {

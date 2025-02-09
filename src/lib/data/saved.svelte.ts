@@ -1,11 +1,5 @@
 import { browser } from '$app/environment';
 
-export type SavedBoard = {
-	from: string;
-	to: string | null;
-	time: string | null;
-};
-
 export class LocalStore<T> {
 	value = $state<T>() as T;
 	key = '';
@@ -40,5 +34,16 @@ export function localStore<T>(key: string, value: T) {
 	return new LocalStore(key, value);
 }
 
-export const savedBoards = localStore('saved-boards', []);
-export const savedServices = localStore('saved-services', []);
+type SavedBoard = {
+	from: string;
+	to: string | null;
+	time: string | null;
+	key: string;
+	type: 'dept' | 'arr';
+};
+
+export const savedBoards = localStore<SavedBoard[]>('saved-boards', []);
+export const savedServices = localStore<{ crs: string; id: string; key: string }[]>(
+	'saved-services',
+	[]
+);

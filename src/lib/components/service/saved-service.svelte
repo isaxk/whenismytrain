@@ -8,12 +8,13 @@
 	import { operatorList } from '$lib/data/operators';
 	import TimeDisplay from '../time-display.svelte';
 	import dayjs from 'dayjs';
+	import { type ServiceDetailsWithID } from '$lib/types/extentions';
 
 	let { i, id, crs, card = false, onDate } = $props();
 
 	const index = $derived(savedServices.value.findIndex((s) => s.id === id && s.crs === crs));
 
-	const data = new Promise(async (resolve, error) => {
+	const data = new Promise<ServiceDetailsWithID>(async (resolve, error) => {
 		const response = await fetch(`/api/service/${id}/${crs}`);
 		const data = await response.json();
 		if (response.status !== 200) {
@@ -24,12 +25,7 @@
 		}
 
 		onDate(
-			data.focus.atd ??
-				data.focus.etd ??
-				data.focus.std ??
-				data.focus.ata ??
-				data.focus.eta ??
-				data.focus.sta
+			data.focus.atd ?? data.focus.etd ?? data.focus.ata ?? data.focus.eta ?? dayjs().toISOString()
 		);
 
 		resolve(data);
@@ -41,17 +37,21 @@
 		<Skeleton class="h-full w-full" />
 	</div>
 {:then data}
+	{@const et = data.focus.atd ?? data.focus.etd ?? data.focus.ata ?? data.focus.eta}
 	<div
 		in:fade={{ duration: 200 }}
 		class={[
 			'relative flex min-h-14 items-center gap-2 border-t pl-4 group-first:border-t-0',
-			!card && 'h-[70px] '
+			!card && 'h-[70px]',
+			dayjs(et ?? dayjs()).diff(dayjs(), 'minutes') < -10 && 'text-zinc-500'
 		]}
 	>
-		<div
-			class="absolute bottom-0 left-0 top-0 w-1"
-			style:background={operatorList[data.operatorCode].bg}
-		></div>
+		{#if data.operatorCode}
+			<div
+				class="absolute bottom-0 left-0 top-0 w-1"
+				style:background={operatorList[data.operatorCode].bg}
+			></div>
+		{/if}
 		<a href="/service/{id}/{crs}" class="min-w-0 flex-grow">
 			<div class="overflow-hidden text-ellipsis text-nowrap font-semibold">
 				{data.destination.name}
@@ -64,19 +64,15 @@
 		<div class="flex items-center pr-1">
 			<TimeDisplay
 				small
-				isCancelled={data.isCancelled ?? false}
-				et={data.focus.atd ??
-					data.focus.etd ??
-					data.focus.std ??
-					data.focus.ata ??
-					data.focus.eta ??
-					data.focus.std}
+				saved
+				isCancelled={data.focus.isCancelled ?? false}
+				et={et ?? 'Delayed'}
 				st={data.focus.std ?? data.focus.sta}
 			/>
 		</div>
 
 		<button
-			class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-200"
+			class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-200 text-black"
 			onclick={() => {
 				savedServices.value.splice(index, 1);
 			}}><X size={20} /></button

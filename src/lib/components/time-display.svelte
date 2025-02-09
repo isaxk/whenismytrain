@@ -4,7 +4,7 @@
 	import duration from 'dayjs/plugin/duration';
 	import { onDestroy, onMount } from 'svelte';
 
-	let { et, st, small = false, preview = false, isCancelled } = $props();
+	let { et, st, small = false, preview = false, isCancelled, saved = false } = $props();
 
 	dayjs.extend(duration);
 
@@ -53,7 +53,7 @@
 		{/if}
 	{:else if diffDuration < 0.5}
 		<div class={['text-nowrap text-green-600', small ? 'text-md' : 'text-lg']}>
-			{#if fromNow < 40 && !small}
+			{#if fromNow < 40 && (!small || saved)}
 				{#if fromNow < -40}
 					<span class="text-black">
 						{displayET}
@@ -72,7 +72,7 @@
 				{displayET}
 			{/if}
 		</div>
-		{#if fromNow < 40 && !small}
+		{#if fromNow < 40 && (!small || saved)}
 			<div class="-mt-1 text-xs">
 				{displayET}
 			</div>
@@ -84,7 +84,7 @@
 		<div class="-mt-1 text-xs">{displayST}</div>
 	{:else}
 		<div class={['text-nowrap', small ? 'text-md' : 'text-lg', color(et, st)]}>
-			{#if fromNow < 40 && !small}
+			{#if fromNow < 40 && (!small || saved)}
 				{#if fromNow < -40}
 					<span class="text-black">
 						{displayET}
@@ -106,7 +106,7 @@
 		{#if !preview}
 			<div class="-mt-1 flex items-center justify-end gap-1 text-right">
 				<div class="text-xs font-light text-zinc-700 line-through">{displayST}</div>
-				{#if !small}
+				{#if !small || saved}
 					<div class="text-[13px]">{displayET}</div>
 				{/if}
 			</div>

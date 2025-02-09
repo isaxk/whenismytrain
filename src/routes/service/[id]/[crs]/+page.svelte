@@ -80,7 +80,7 @@
 						{/snippet}
 					</Header>
 				</div>
-				<div class="pt-ios-top md:hidden"><div class="h-3"></div></div>
+				<div class="pt-ios-top"><div class="h-8"></div></div>
 			{/if}
 			<div class="flex flex-col gap-2 px-4">
 				<TrainCard
