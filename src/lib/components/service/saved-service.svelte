@@ -56,7 +56,9 @@
 			<div class="overflow-hidden text-ellipsis text-nowrap font-semibold">
 				{data.destination.name}
 			</div>
-			<div class="-mt-1 flex-grow text-sm">from {data.focus.name}:</div>
+			<div class="-mt-1 flex-grow overflow-hidden text-ellipsis text-nowrap text-sm">
+				from {data.focus.name}:
+			</div>
 		</a>
 		<div class="font-mono"></div>
 		<div class="flex items-center pr-1">
