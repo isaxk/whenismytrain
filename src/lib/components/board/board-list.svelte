@@ -11,7 +11,7 @@
 
 <div
 	in:fade|global={{ duration: 300 }}
-	class="flex w-full flex-col md:mt-4 md:overflow-hidden md:rounded-lg md:border md:drop-shadow-sm"
+	class="flex w-full flex-col bg-red-500 md:mt-4 md:overflow-hidden md:rounded-lg md:border md:drop-shadow-sm"
 >
 	{#each list as [id, train], i (id)}
 		<div

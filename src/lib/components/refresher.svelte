@@ -69,9 +69,7 @@
 </script>
 
 {#if md.current}
-	<div class="">
-		{@render children()}
-	</div>
+	{@render children()}
 {:else}
 	<div ontouchstart={touchStart} ontouchmove={touchMove} ontouchend={touchEnd} class="refresher">
 		{#if pulling || refreshing}

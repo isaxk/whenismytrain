@@ -206,11 +206,17 @@
 				class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
 				><ArrowLeft size={20} /></button
 			>
+			{#if md.current}
+				<a href="/" class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
+					><Home /></a
+				>
+			{/if}
 			<button
 				onclick={() => operator(selectedOperator)}
 				class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
 				><RotateCw size={20} /></button
 			>
+
 			{#await data.board}
 				<Skeleton class="h-8 w-52" />
 			{:then { board }}
@@ -228,9 +234,6 @@
 					</div>
 				{:else}
 					<div class="flex w-full items-center">
-						<a href="/" class="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-300"
-							><Home /></a
-						>
 						<div class="flex-grow"></div>
 						<LastUpdated date={generatedAt} />
 					</div>

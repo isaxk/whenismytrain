@@ -92,7 +92,7 @@
 
 	<div
 		class="flex flex-col overflow-hidden pt-2"
-		style:height={card ? '100%' : `{${heightTween.current}px`}
+		style:height={card ? `${heightTween.current}px` : '100%'}
 	>
 		<div bind:this={elm} class="pb-4">
 			{#if value === 'board'}
