@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { receive, send } from '$lib/utils/transitions';
 	import { ArrowLeft } from 'lucide-svelte';
 
 	let { children } = $props();

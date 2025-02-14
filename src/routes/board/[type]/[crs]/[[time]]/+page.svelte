@@ -393,7 +393,11 @@
 </div>
 
 {#snippet serviceContent()}
-	<div class="flex h-full flex-col pt-3">
+	<div
+		class="flex h-full flex-col pt-3"
+		in:receive={{ key: 'service-details' }}
+		out:send={{ key: 'service-details' }}
+	>
 		{#if page.state.selected}
 			<ServiceDetails data={page.state.selected} drawer>
 				{#snippet header()}
