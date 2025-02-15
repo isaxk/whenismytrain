@@ -6,7 +6,16 @@
 	import Search from '$lib/components/home/search.svelte';
 	import PinnedStation from '$lib/components/pinned-station.svelte';
 	import { distance } from '$lib/utils';
-	import { ArrowUpRight, Locate } from 'lucide-svelte';
+	import {
+		ArrowUpRight,
+		Bug,
+		Code,
+		Code2,
+		Github,
+		HeartHandshake,
+		Locate,
+		User
+	} from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import StationsListJSON from 'uk-railway-stations';
@@ -52,10 +61,30 @@
 </script>
 
 <div class="full mx-auto min-h-screen max-w-screen-sm justify-center px-4 pt-ios-top">
-	<div class="py-8">
+	<div class="flex flex-col justify-center py-4">
 		<div class="text-3xl font-bold">When is my train?</div>
-		<div class="text-xl">The convinient UK Train times app</div>
+		<div class="text-sm font-medium">The simple train times app powered by National Rail</div>
 	</div>
+
+	<div class="flex items-center gap-3 border-b border-zinc-200 pb-3 text-zinc-700">
+		<a
+			href="https://github.com/isaxk/whenismytrain/issues"
+			class="flex items-center gap-1 transition-all hover:text-black"
+		>
+			<Bug size={18} /> Report Issues
+		</a>
+		<a
+			href="https://github.com/isaxk/whenismytrain"
+			class="flex items-center gap-1 transition-all hover:text-black"
+		>
+			<HeartHandshake size={18} /> Contribute
+		</a>
+		<a href="https://www.isaxk.com" class="flex items-center gap-1 transition-all hover:text-black">
+			<User size={18} /> by isaxk
+		</a>
+	</div>
+
+	<div class="h-5"></div>
 
 	<Switcher drawer={false}>
 		{#snippet suggestions()}
