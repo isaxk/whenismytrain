@@ -44,6 +44,7 @@
 	import { savedBoards } from '$lib/data/saved.svelte';
 	import ServiceSaveToggle from '$lib/components/service/service-save-toggle.svelte';
 	import type { Board, TrainService } from '$lib/types';
+	import Contact from '$lib/components/home/contact.svelte';
 
 	const [send, receive] = crossfade({ duration: 250, easing: quadInOut });
 
@@ -369,7 +370,7 @@
 						</div>
 					{/if}
 					<BoardList list={sorted} {handleServiceDetails} type={data.type} />
-					<div class="flex h-32 items-center justify-center px-4">
+					<div class="flex h-20 items-center justify-center px-4">
 						{#if maxTrainsReached}
 							<div
 								in:fade={{ duration: 200 }}
@@ -387,14 +388,17 @@
 								class="flex h-11 w-full items-center justify-center rounded-lg bg-blue-500 text-center text-white placeholder-gray-300 drop-shadow-xl transition-all duration-300 hover:brightness-105"
 								onclick={later}>Later trains</button
 							>
-							<div class="h-10"></div>
 						{/if}
 					</div>
 				{:else if sorted.size === 0}
 					<div class="p-4">No services found</div>
 				{/if}
-				<div class="h-20 md:h-0"></div>
 			{/await}
+			<div class="flex justify-center">
+				<Contact />
+			</div>
+			<div class="h-20 md:h-0"></div>
+			<div class="h-ios-bottom"></div>
 		</div>
 	</Refresher>
 </div>
