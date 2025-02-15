@@ -1,22 +1,21 @@
 <script lang="ts">
+	import dayjs from 'dayjs';
+	import { onDestroy, onMount, type Snippet } from 'svelte';
+	import { scrollY } from 'svelte/reactivity/window';
+	import { fade } from 'svelte/transition';
+	import { Accordion } from 'bits-ui';
+
 	import CallingPoint from '$lib/components/calling-point.svelte';
 	import Disruption from '$lib/components/service/disruption.svelte';
 	import TrainCard from '$lib/components/train-card.svelte';
 	import Header from '$lib/components/ui/header.svelte';
-	import { operatorList } from '$lib/data/operators';
-	import type { ServiceDetailsLocation } from '$lib/types/extentions';
-	import { strToMins } from '$lib/utils';
-	import { Accordion } from 'bits-ui';
-	import dayjs from 'dayjs';
-	import { Train } from 'lucide-svelte';
-	import { onDestroy, onMount, type Snippet } from 'svelte';
-	import { scrollY } from 'svelte/reactivity/window';
-	import { fade } from 'svelte/transition';
-	import type { PageData } from './$types';
 	import PositionIndicator from '$lib/components/service/position-indicator.svelte';
-	import { invalidateAll, preloadData } from '$app/navigation';
 	import LastUpdated from '$lib/components/last-updated.svelte';
 	import ServiceSaveToggle from '$lib/components/service/service-save-toggle.svelte';
+
+	import { operatorList } from '$lib/data/operators';
+	import type { PageData } from './$types';
+	import { navigating, page } from '$app/state';
 
 	let {
 		data,
@@ -24,13 +23,9 @@
 		header
 	}: { data: PageData; drawer?: boolean; header?: Snippet } = $props();
 
-	$inspect('data', data);
-
-	const destination: string = data.locations![data.locations!.length - 1].locationName!;
-
 	let currentAccordion = $state('');
 	let now: dayjs.Dayjs | null = $state(null);
-	let interval;
+	let interval: ReturnType<typeof setInterval>;
 
 	async function refresh() {
 		const response = await fetch(`/api/service/${data.id}/${data.crs}`);
@@ -80,9 +75,9 @@
 						{/snippet}
 					</Header>
 				</div>
-				<div class="pt-ios-top"><div class="h-8"></div></div>
+				<div class="h-14 pt-ios-top md:pt-0"></div>
 			{/if}
-			<div class="flex flex-col gap-2 px-4">
+			<div class={['flex flex-col gap-2 px-4']}>
 				<TrainCard
 					state="far"
 					disruptionCode={null}

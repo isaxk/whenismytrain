@@ -10,10 +10,11 @@
 	import { goto } from '$app/navigation';
 	import { operatorList } from '$lib/data/operators';
 	import Skeleton from '../skeleton.svelte';
+	import type { TrainService } from '$lib/types';
 
 	let { crs, date, destCrs } = $props();
 
-	let data: SvelteMap<string, definitions['ServiceItem']> | null = $state(null);
+	let data: SvelteMap<string, TrainService> | null = $state(null);
 
 	let elm: HTMLAnchorElement;
 
@@ -21,7 +22,9 @@
 		const newDate = dayjs(date).add(2, 'minutes');
 		const response = await getTrainServices(crs, null, newDate.toISOString(), 10);
 		data = new SvelteMap(
-			response.filter(([, t]) => t.destination![0].crs !== destCrs && (t.etd ?? t.std ?? '') > date)
+			response.filter(
+				([, t]) => t.destination.crs !== destCrs && (t.estimated ?? t.scheduled ?? '') > date
+			)
 		);
 	});
 </script>
@@ -29,7 +32,7 @@
 <a
 	bind:this={elm}
 	href="/board/dept/{crs}/{dayjs(date).format('HH:mm')}"
-	class="flex h-40 flex-col border-zinc-300 border-b pb-2"
+	class="flex h-40 flex-col border-b border-zinc-300 pb-2"
 >
 	<div class="flex items-center px-1 pb-2">
 		<div class="flex-grow text-sm font-medium">
@@ -39,7 +42,7 @@
 		<div class="rounded bg-blue-500 p-1 text-white"><ArrowUpRight size={14} /></div>
 	</div>
 
-	<div class={["grid flex-grow grid-rows-5 text-sm", !data && 'gap-0.5']}>
+	<div class={['grid flex-grow grid-rows-5 text-sm', !data && 'gap-0.5']}>
 		{#if data}
 			{#each Array.from(data).slice(0, 5) as [, train], i}
 				<div
@@ -48,24 +51,24 @@
 				>
 					<div
 						class="h-full w-1 rounded-sm"
-						style:background={operatorList[train.operatorCode].bg}
+						style:background={operatorList[train.operator].bg}
 					></div>
 					<div class="w-2"></div>
 					<div class="flex-grow">
-						{train.destination![0].locationName ?? ''}
+						{train.destination.name ?? ''}
 					</div>
 					<TimeDisplay
 						small
 						preview
-						et={train.atd ?? train.etd ?? train.std!}
-						st={train.std}
+						et={train.actual ?? train.estimated ?? 'Delayed'}
+						st={train.scheduled}
 						isCancelled={train.isCancelled}
 					/>
 				</div>
 			{/each}
 		{:else}
 			{#each Array(5)}
-				<Skeleton class="w-full h-full bg-zinc-200" />
+				<Skeleton class="h-full w-full bg-zinc-200" />
 			{/each}
 		{/if}
 	</div>

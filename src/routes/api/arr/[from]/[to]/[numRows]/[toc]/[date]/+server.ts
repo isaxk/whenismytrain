@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import dayjs from 'dayjs';
 import type { definitions } from '$lib/types/api';
 import { PUBLIC_ARRIVALS_KEY } from '$env/static/public';
+import { parseBoard } from '$lib/data/parse-board';
 
 export const GET: RequestHandler = async ({ params }) => {
 	const { from, to, toc, date, numRows } = params;
@@ -17,7 +18,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		}
 	});
 
-	const data: definitions['StationBoard'] = await response.json();
+	const data = parseBoard(await response.json(), 'arr');
 
 	return json(data);
 };

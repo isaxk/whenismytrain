@@ -1,10 +1,7 @@
 <script lang="ts">
-	import { operatorList } from '$lib/data/operators';
 	import { receive, send } from '$lib/utils/transitions';
 	import dayjs from 'dayjs';
 	import { Train } from 'lucide-svelte';
-	import { inview } from 'svelte-inview';
-	import { fly } from 'svelte/transition';
 
 	let {
 		a,
@@ -29,16 +26,10 @@
 
 		return (diffNowA / diffAB) * 100;
 	});
-
-	let inView = $state(false);
-	currentState;
-
-	$inspect(now, a, b, progress);
 </script>
 
 {#snippet indicator()}
 	<div
-		oninview_change={(e) => (inView = e.detail.inView)}
 		in:receive|global={{ key: 'indicator' }}
 		out:send|global={{ key: 'indicator' }}
 		style:border-color={color}

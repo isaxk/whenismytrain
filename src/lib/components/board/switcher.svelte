@@ -22,15 +22,25 @@
 		suggestions = null
 	} = $props();
 
+	let closeDrawer: HTMLButtonElement | null = $state(null);
+
 	function go() {
 		const list = from + (to ? `-${to}` : '');
-		requestAnimationFrame(() => {
-			if (value !== dayjs().format('HH:mm')) {
-				goto(`/board/${type}/${list}/${value}`);
-			} else {
-				goto(`/board/${type}/${list}`);
-			}
-		});
+		if (drawer) {
+			closeDrawer?.click();
+		}
+		window.setTimeout(
+			() => {
+				requestAnimationFrame(() => {
+					if (value !== dayjs().format('HH:mm')) {
+						goto(`/board/${type}/${list}/${value}`);
+					} else {
+						goto(`/board/${type}/${list}`);
+					}
+				});
+			},
+			drawer ? 450 : 0
+		);
 	}
 </script>
 
@@ -79,13 +89,16 @@
 		<Search {drawer} bind:crs={to} clearable={true}></Search>
 	</div>
 
+	{#if drawer}
+		<Drawer.Close bind:ref={closeDrawer} class="hidden"></Drawer.Close>
+	{/if}
 	{#if from && to !== from}
 		<div class="flex-grow"></div>
 		{#if drawer}
-			<Drawer.Close
+			<button
 				onclick={go}
 				class="z-0 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 text-white drop-shadow-lg"
-				><ArrowUpRight /> Go</Drawer.Close
+				><ArrowUpRight /> Go</button
 			>
 		{:else}
 			<button

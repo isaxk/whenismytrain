@@ -12,7 +12,7 @@
 	import { distance } from '$lib/utils';
 	import ClosestSuggestion from '../closest-suggestion.svelte';
 	import { crossfade, fade, fly, scale } from 'svelte/transition';
-	import { quadInOut, quintInOut } from 'svelte/easing';
+	import { quadInOut, quadOut, quintInOut } from 'svelte/easing';
 
 	let { drawer = false, crs = $bindable(null), clearable = false } = $props();
 
@@ -22,7 +22,7 @@
 	let input: HTMLInputElement;
 	let submitBtn: HTMLButtonElement | null = $state(null);
 
-	const [send, recieve] = crossfade({ duration: 200 });
+	const [send, recieve] = crossfade({ duration: 200, easing: quadOut });
 
 	const fuzzySearch = new Fuse(AllStationsJSON, {
 		keys: ['stationName', 'crsCode'],
@@ -102,7 +102,12 @@
 </script>
 
 {#snippet main()}
-	<form onsubmit={() => select(results[0].item)}>
+	<form
+		onsubmit={(e) => {
+			e.preventDefault();
+			select(results[0].item);
+		}}
+	>
 		<div
 			class="z-50 flex overflow-hidden rounded-t-lg border-b bg-white drop-shadow"
 			in:recieve|global={{ key: 'input' }}
@@ -142,8 +147,8 @@
 							onmousedown={() => select(results[i].item)}
 							class="flex w-full items-center gap-2 border-b px-4 py-2 text-left text-zinc-800 last:border-none"
 						>
-							<div class="flex-grow min-w-0">
-								<div class="text-xl font-medium text-nowrap text-ellipsis overflow-hidden">
+							<div class="min-w-0 flex-grow">
+								<div class="overflow-hidden text-ellipsis text-nowrap text-xl font-medium">
 									<Highlighter value={result.stationName} />
 								</div>
 								<div class="text-xs">
@@ -203,12 +208,12 @@
 		<button
 			in:recieve|global={{ key: 'input' }}
 			out:send|global={{ key: 'input' }}
-			class="absolute left-0 right-0 top-0 bottom-0 flex w-full items-center gap-2 rounded-lg border bg-white px-4 py-2 text-left drop-shadow"
-			onclick={() => (clearable && crs!==null ? (crs = null) : (focused = true))}
+			class="absolute bottom-0 left-0 right-0 top-0 flex w-full items-center gap-2 rounded-lg border bg-white px-4 py-2 text-left drop-shadow"
+			onclick={() => (clearable && crs !== null ? (crs = null) : (focused = true))}
 		>
 			{#if crs && selected}
-				<div class="flex-grow min-w-0">
-					<div class="text-xl font-semibold overflow-hidden text-ellipsis text-nowrap">
+				<div class="min-w-0 flex-grow">
+					<div class="overflow-hidden text-ellipsis text-nowrap text-xl font-semibold">
 						{selected.stationName}
 					</div>
 					<div class="text-sm">{selected.crsCode}</div>

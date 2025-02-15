@@ -15,7 +15,7 @@
 {#if compact}
 	<div class="w-full min-w-0 flex-col px-1">
 		<div
-			class="w-max text-base font-semibold"
+			class="h-max w-max text-base font-bold"
 			in:receive|global={{ key: 'title' }}
 			out:send|global={{ key: 'title' }}
 		>
@@ -58,7 +58,7 @@
 				in:receive|global={{ key: 'title' }}
 				out:send|global={{ key: 'title' }}
 				class={[
-					'z-20 w-max min-w-0 text-ellipsis text-nowrap text-left text-3xl font-bold duration-200 md:hidden md:pr-10 md:text-left md:text-4xl'
+					'z-20 h-max w-max min-w-0 text-ellipsis text-nowrap text-left text-3xl font-bold duration-200 md:hidden md:pr-10 md:text-left md:text-4xl'
 				]}
 			>
 				{locationName}

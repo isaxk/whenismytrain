@@ -23,19 +23,15 @@
 			transition:fade={{ duration: 200, easing: quartInOut }}
 		>
 			<TrainCard
-				state={train.ataSpecified ? (train.atdSpecified ? 'gone' : 'here') : 'far'}
+				state={train.status}
 				{id}
 				disruptionCode={train.cancelReason?.Value ?? null}
 				isCancelled={train.isCancelled ?? false}
-				destination={type === 'dept'
-					? train.destination![0].locationName!
-					: train.origin![0].locationName!}
-				operator={train.operatorCode!}
+				destination={type === 'dept' ? train.destination.name! : train.origin.name!}
+				operator={train.operator}
 				platform={train.platform!}
-				etd={type === 'dept'
-					? (train.etd ?? train.atd ?? 'Delayed')
-					: (train.eta ?? train.ata ?? train.sta)}
-				std={(type === 'dept' ? train.std : train.sta) ?? ''}
+				etd={train.estimated ?? train.actual ?? 'Delayed'}
+				std={train.scheduled}
 				onservicedetails={handleServiceDetails}
 			/>
 		</div>

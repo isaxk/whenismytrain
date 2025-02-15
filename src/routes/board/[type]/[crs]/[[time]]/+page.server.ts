@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import type { PageServerLoad } from './$types';
 import AllStationsJSON from 'uk-railway-stations';
 import { error } from '@sveltejs/kit';
+import type { Board, TrainService } from '$lib/types';
 
 export const load: PageServerLoad = async ({ params, fetch }) => {
 	const list = params.crs;
@@ -21,12 +22,10 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 				? `/api/dept/${from}/${to}/15/null/${date}`
 				: `/api/arr/${from}/${to}/15/null/${date}`
 		);
-		const board: definitions['StationBoard'] = await response.json();
+		const board: Board = await response.json();
 
-		const trainServices = new Map(
-			board.trainServices?.map((t: definitions['ServiceItem']) => [t.rid, t]) ?? []
-		);
-		return { board, trainServices };
+		const trains = new Map<string, TrainService>(board.trains.map((t) => [t.id, t]) ?? []);
+		return { board, trains };
 	}
 	if (['dept', 'arr'].includes(type)) {
 		if (

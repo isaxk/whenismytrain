@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { onNavigate } from '$app/navigation';
 	import '../app.css';
 	import { fade } from 'svelte/transition';
 	import { ArrowUpRight, Bookmark, Drama, LocateIcon, MapPin, Star, X } from 'lucide-svelte';
@@ -9,12 +10,23 @@
 	import { page } from '$app/state';
 	import dayjs from 'dayjs';
 	let { children, data } = $props();
+
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 </script>
 
 <div class="min-h-screen bg-zinc-50" data-vaul-drawer-wrapper>
 	{@render children()}
 	<div
-		class="fixed bottom-0 left-0 right-0 z-40 flex min-h-20 items-center justify-evenly border-t bg-white pb-ios-bottom pt-4 drop-shadow md:hidden"
+		class="vt-name-[mobile-bar] fixed bottom-0 left-0 right-0 z-40 flex min-h-20 items-center justify-evenly border-t bg-white pb-ios-bottom pt-4 drop-shadow md:hidden"
 	>
 		<a href="/nearme"><MapPin /></a>
 		{#if data.url.includes('board')}

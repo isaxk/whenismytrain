@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto, onNavigate, preloadData, pushState, replaceState } from '$app/navigation';
-	import { page } from '$app/state';
+	import { navigating, page } from '$app/state';
 	import BoardList from '$lib/components/board/board-list.svelte';
 	import Switcher from '$lib/components/board/switcher.svelte';
 	import OperatorsList from '$lib/components/operators-list.svelte';
@@ -43,17 +43,18 @@
 	import Title from '$lib/components/board/title.svelte';
 	import { savedBoards } from '$lib/data/saved.svelte';
 	import ServiceSaveToggle from '$lib/components/service/service-save-toggle.svelte';
+	import type { Board, TrainService } from '$lib/types';
 
 	const [send, receive] = crossfade({ duration: 250, easing: quadInOut });
 
 	let { data }: { data: PageData } = $props();
 
 	// data
-	let trains: SvelteMap<string, definitions['ServiceItem']> = $state(new SvelteMap([]));
-	let board: definitions['StationBoard'] | null = $state(null);
+	let trains: SvelteMap<string, TrainService> = $state(new SvelteMap([]));
+	let board: Board | null = $state(null);
 	let operators: SvelteSet<string> = $state(new SvelteSet([]));
 	let operatorStartTimes: SvelteMap<string, string | null> = $state(new SvelteMap([]));
-	let sorted: SvelteMap<string, definitions['ServiceItem']> = $derived(
+	let sorted: SvelteMap<string, TrainService> = $derived(
 		trains.size > 0 ? new SvelteMap([...trains].sort(sortByLiveDepart)) : new SvelteMap([])
 	);
 
@@ -78,7 +79,7 @@
 		data.board.then((d) => {
 			console.log(d);
 			operators = new SvelteSet([]);
-			trains = new SvelteMap([...d.trainServices]);
+			trains = new SvelteMap<string, TrainService>([...d.trains]);
 			board = d.board;
 		});
 	});
@@ -86,10 +87,10 @@
 	// Update operators
 	$effect(() => {
 		Array.from(trains.values()).forEach((t) => {
-			if (!operators.has(t.operatorCode!)) {
-				operators.add(t.operatorCode!);
-				if (!operatorStartTimes.has(t.operatorCode!)) {
-					operatorStartTimes.set(t.operatorCode!, t.atd ?? t.etd ?? t.std ?? null);
+			if (!operators.has(t.operator!)) {
+				operators.add(t.operator!);
+				if (!operatorStartTimes.has(t.operator!)) {
+					operatorStartTimes.set(t.operator!, t.actual ?? t.estimated ?? t.scheduled ?? null);
 				}
 			}
 		});
@@ -122,7 +123,7 @@
 		const response = await getTrainServices(
 			data.from,
 			data.to,
-			lastTrain?.etd ?? lastTrain?.std ?? null,
+			lastTrain?.actual ?? lastTrain?.estimated ?? lastTrain?.scheduled ?? null,
 			15,
 			selectedOperator,
 			data.type
@@ -130,7 +131,7 @@
 
 		let newTrain = false;
 		response.forEach(([rid, t]) => {
-			if (!trains.has(t.rid)) {
+			if (!trains.has(t.id)) {
 				newTrain = true;
 				trains.set(rid, t);
 			}
@@ -144,9 +145,9 @@
 	async function handleServiceDetails(id: string) {
 		if (!board) return;
 		drawerOpen = true;
-		const response = await preloadData(`/service/${id}/${board.crs}`);
+		const response = await preloadData(`/service/${id}/${board.locationCrs}`);
 		if (response.type === 'loaded' && response.status === 200) {
-			pushState(`/service/${id}/${board.crs}`, { selected: response.data });
+			pushState(`/service/${id}/${board.locationCrs}`, { selected: response.data });
 		}
 	}
 
@@ -165,8 +166,8 @@
 
 		if (o && arr.length > 0) {
 			arr.forEach((t) => {
-				if ((t.operatorCode ?? '' === o) && startTime === null) {
-					startTime = t.atd ?? t.etd ?? t.std ?? 'null';
+				if ((t.operator ?? '' === o) && startTime === null) {
+					startTime = t.actual ?? t.estimated ?? t.scheduled ?? 'null';
 				}
 			});
 		}
@@ -200,7 +201,12 @@
 
 <div class="mx-auto min-h-screen md:flex md:max-w-screen-lg md:gap-10">
 	<ComboSidetopbar>
-		<div class="flex gap-2 px-4 pb-2">
+		<div
+			class={[
+				'flex gap-2 px-4 pb-2 pt-1',
+				navigating.to?.url.pathname.includes('board') && 'vt-name-[board-header]'
+			]}
+		>
 			<button
 				onclick={() => history.back()}
 				class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
@@ -217,11 +223,9 @@
 				><RotateCw size={20} /></button
 			>
 
-			{#await data.board}
-				<Skeleton class="h-8 w-52" />
-			{:then { board }}
-				{#if !md.current}
-					<div class="min-w-0 flex-grow">
+			<div class="min-w-0 flex-grow">
+				{#await data.board then { board }}
+					{#if !md.current}
 						{#if (scrollY.current ?? 0) > 50}
 							<Title
 								locationName={board.locationName}
@@ -231,14 +235,14 @@
 								compact
 							/>
 						{/if}
-					</div>
-				{:else}
-					<div class="flex w-full items-center">
-						<div class="flex-grow"></div>
-						<LastUpdated date={generatedAt} />
-					</div>
-				{/if}
-			{/await}
+					{:else}
+						<div class="flex w-full items-center">
+							<div class="flex-grow"></div>
+							<LastUpdated date={generatedAt} />
+						</div>
+					{/if}
+				{/await}
+			</div>
 
 			{#if saveIndex !== -1}
 				<button
@@ -269,19 +273,19 @@
 			{/if}
 		</div>
 
-		{#await data.board then { board }}
-			<div
-				class={[
-					'transition-all',
-					md.current
-						? 'h-full flex-grow overflow-y-scroll'
-						: (scrollY.current ?? 0) > 50
-							? 'h-2 duration-200'
-							: data.to
-								? 'h-[100px] pt-2 duration-300'
-								: 'h-20 pt-2 duration-300'
-				]}
-			>
+		<div
+			class={[
+				'transition-all',
+				md.current
+					? 'h-full flex-grow overflow-y-scroll'
+					: (scrollY.current ?? 0) > 50
+						? 'h-2 duration-200'
+						: data.to
+							? 'h-[100px] pt-2 duration-300'
+							: 'h-20 pt-2 duration-300'
+			]}
+		>
+			{#await data.board then { board }}
 				{#if !md.current && (scrollY.current ?? 0) <= 50}
 					<Title
 						compact={false}
@@ -291,26 +295,29 @@
 						filter={board.filterLocationName ?? null}
 					/>
 				{/if}
-				{#if md.current}
-					<div class="h-3 md:h-0"></div>
+			{/await}
 
-					<div class="overflow-y-scroll px-1 md:pb-4 md:pt-4" in:fade={{ duration: 200 }}>
-						<div class="h-[350px] rounded-lg border-zinc-100 bg-white/95 p-4 drop-shadow">
-							<Switcher
-								drawer={false}
-								from={data.from}
-								to={data.to}
-								type={data.type}
-								value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
-							/>
-						</div>
-						<div class="mt-4 rounded-lg border bg-white p-2 drop-shadow-sm">
-							<Saved card />
-						</div>
+			{#if md.current}
+				<div class="h-3 md:h-0"></div>
+
+				<div class="overflow-y-scroll px-1 md:pb-4 md:pt-4" in:fade={{ duration: 200 }}>
+					<div class="h-[350px] w-full rounded-lg border-zinc-100 bg-white/95 p-4 drop-shadow">
+						<Switcher
+							drawer={false}
+							from={data.from}
+							to={data.to}
+							type={data.type}
+							value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
+						/>
 					</div>
-				{/if}
-			</div>
+					<div class="mt-4 rounded-lg border bg-white p-2 drop-shadow-sm">
+						<Saved card />
+					</div>
+				</div>
+			{/if}
+		</div>
 
+		{#await data.board then}
 			{#if !md.current}
 				<OperatorsList operators={Array.from(operators)} {selectedOperator} onselect={operator} />
 			{/if}
@@ -346,7 +353,7 @@
 						{/if}
 					</div>
 				{/if}
-				<DisruptionList messages={board.nrccMessages ?? []} />
+				<DisruptionList messages={board.alerts ?? []} />
 			{/await}
 			{#await data.board}
 				<div class="flex flex-col gap-2 pl-4 pr-4 md:pl-0 md:pt-4">
@@ -410,9 +417,12 @@
 						}}
 						ActionIcon={ArrowUpRight}
 						onActionClick={() => {
-							let id = page.state.selected?.serviceID;
-							replaceState('', { selected: null });
-							goto(`/service/${id}/${board?.crs}`);
+							drawerOpen = false;
+							setTimeout(() => {
+								let id = page.state.selected?.serviceID;
+								replaceState('', { selected: null });
+								goto(`/service/${id}/${board?.locationCrs}`);
+							}, 200);
 						}}
 					>
 						<div class="w-10"></div>
@@ -463,7 +473,7 @@
 			/>
 			<Dialog.Content
 				transition={flyAndScale}
-				class="fixed left-1/2 top-1/2 z-40 h-[90%] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-zinc-50"
+				class="fixed left-1/2 top-1/2 z-50 h-[90%] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-zinc-50"
 			>
 				{@render serviceContent()}
 			</Dialog.Content>

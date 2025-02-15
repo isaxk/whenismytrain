@@ -1,4 +1,5 @@
 import typography from '@tailwindcss/typography';
+import viewTransition from 'tailwindcss-view-transitions';
 import type { Config } from 'tailwindcss';
 import defaultTheme from 'tailwindcss/defaultTheme';
 
@@ -21,5 +22,5 @@ export default {
 		}
 	},
 
-	plugins: [typography]
+	plugins: [typography, viewTransition]
 } satisfies Config;
