@@ -81,6 +81,7 @@
 			console.log(d);
 			operators = new SvelteSet([]);
 			trains = new SvelteMap<string, TrainService>([...d.trains]);
+			generatedAt = dayjs();
 			board = d.board;
 		});
 	});
