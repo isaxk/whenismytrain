@@ -20,7 +20,7 @@ export function parseBoard(board: definitions['StationBoard'], type): Board {
 				estimated: t.etd ?? t.eta ?? null,
 				scheduled: t.std ?? t.sta ?? null,
 				operator: t.operatorCode ?? 'XX',
-				status: t.atdSpecified ? Status.DEPARTED : t.etaSpecified ? Status.ARRIVED : Status.AWAY
+				status: t.atdSpecified ? Status.DEPARTED : t.ataSpecified ? Status.ARRIVED : Status.AWAY
 			};
 		}) ?? [];
 	return {

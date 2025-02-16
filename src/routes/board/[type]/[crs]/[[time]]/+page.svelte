@@ -239,7 +239,6 @@
 					{:else}
 						<div class="flex w-full items-center">
 							<div class="flex-grow"></div>
-							<LastUpdated date={generatedAt} />
 						</div>
 					{/if}
 				{/await}
@@ -364,11 +363,10 @@
 				</div>
 			{:then}
 				{#if sorted && sorted.size > 0}
-					{#if !md.current}
-						<div class="flex items-center justify-end pb-1 pr-5">
-							<LastUpdated date={generatedAt} />
-						</div>
-					{/if}
+					<div class="flex items-center justify-end pb-1 pr-5">
+						<LastUpdated date={generatedAt} />
+					</div>
+
 					<BoardList list={sorted} {handleServiceDetails} type={data.type} />
 					<div class="flex h-20 items-center justify-center px-4">
 						{#if maxTrainsReached}

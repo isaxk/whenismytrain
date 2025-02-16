@@ -9,6 +9,7 @@
 	import { fade } from 'svelte/transition';
 	import TimeDisplay from './time-display.svelte';
 	import Disruption from './service/disruption.svelte';
+	import { Status } from '$lib/types';
 
 	let {
 		id,
@@ -27,7 +28,7 @@
 		destination: string;
 		operator: string;
 		platform: string | null;
-		state: 'far' | 'here' | 'gone';
+		state: Status;
 		etd: string;
 		std: string;
 		isCancelled: boolean;
@@ -79,9 +80,9 @@
 				{destination}
 			</div>
 			<div class="-mb-1 text-xs text-zinc-800">
-				{#if state === 'here'}
+				{#if state === Status.ARRIVED}
 					Arrived
-				{:else if state === 'gone'}
+				{:else if state === Status.DEPARTED}
 					Departed
 				{/if}
 			</div>

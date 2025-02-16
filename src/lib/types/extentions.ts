@@ -1,8 +1,9 @@
+import type { Status } from '.';
 import type { definitions } from './api';
 
 export type ServiceDetailsLocation = {
 	order: 'previous' | 'focus' | 'subsequent';
-	state: 'far' | 'here' | 'gone';
+	state: Status;
 	platform: string | null;
 	crs: string;
 	name: string;

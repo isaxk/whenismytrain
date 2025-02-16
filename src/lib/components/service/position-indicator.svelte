@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Status } from '$lib/types';
 	import { receive, send } from '$lib/utils/transitions';
 	import dayjs from 'dayjs';
 	import { Train } from 'lucide-svelte';
@@ -12,7 +13,7 @@
 	}: {
 		a: string;
 		b: string;
-		state: 'far' | 'gone' | 'here';
+		state: Status;
 		now: dayjs.Dayjs | null;
 		color: string;
 	} = $props();

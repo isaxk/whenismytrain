@@ -3,6 +3,7 @@ import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { definitions } from '$lib/types/api';
 import type { ServiceDetailsLocation } from '$lib/types/extentions';
+import { Status } from '$lib/types';
 
 export const GET: RequestHandler = async ({ params }) => {
 	const { id, crs } = params;
@@ -54,7 +55,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			ata: l.ata,
 			etd: l.etd,
 			eta: l.eta,
-			state: l.ataSpecified ? (l.atdSpecified ? 'gone' : 'here') : 'far',
+			state: l.ataSpecified ? (l.atdSpecified ? Status.DEPARTED : Status.ARRIVED) : Status.AWAY,
 			isCancelled: l.isCancelled ?? false
 		};
 	});
