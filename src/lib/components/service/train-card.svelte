@@ -8,7 +8,7 @@
 	import { inview } from 'svelte-inview';
 	import { fade } from 'svelte/transition';
 	import TimeDisplay from './time-display.svelte';
-	import Disruption from './service/disruption.svelte';
+	import Disruption from '../service/disruption.svelte';
 	import { Status } from '$lib/types';
 
 	let {
@@ -16,7 +16,7 @@
 		destination,
 		operator,
 		platform,
-		state = 'far',
+		state,
 		etd,
 		std,
 		isCancelled,
@@ -79,8 +79,10 @@
 			>
 				{destination}
 			</div>
-			<div class="-mb-1 text-xs text-zinc-800">
-				{#if state === Status.ARRIVED}
+			<div class="-mb-1 text-xs font-medium italic text-zinc-800">
+				{#if state === Status.STARTS_HERE}
+					<span class="font-light italic text-zinc-500">Starts Here</span>
+				{:else if state === Status.ARRIVED}
 					Arrived
 				{:else if state === Status.DEPARTED}
 					Departed

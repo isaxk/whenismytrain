@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import TimeDisplay from './time-display.svelte';
+	import TimeDisplay from '../service/time-display.svelte';
 	import { Accordion } from 'bits-ui';
-	import Header from './ui/header.svelte';
-	import Preview from './board/preview.svelte';
+	import Header from '../ui/header.svelte';
+	import Preview from '../board/preview.svelte';
 	import { slide } from 'svelte/transition';
 	import { foreign } from '$lib/data/foreign';
 	import dayjs from 'dayjs';
-	import Scrollintoview from './scrollintoview.svelte';
+	import Scrollintoview from '../scrollintoview.svelte';
 
 	let {
 		i,
@@ -30,7 +30,6 @@
 	function format(d: string) {
 		return dayjs(d).format('HH:mm:ss');
 	}
-
 </script>
 
 <Accordion.Item
@@ -42,9 +41,7 @@
 	]}
 >
 	<Accordion.Header class="contents h-full">
-		<Accordion.Trigger
-			class="flex h-16 w-full items-center gap-3 text-left"
-		>
+		<Accordion.Trigger class="flex h-16 w-full items-center gap-3 text-left">
 			<div
 				bind:this={elm}
 				class="flex flex-col items-center px-3 text-[10px] font-light text-zinc-600"
@@ -73,7 +70,12 @@
 				</div>
 			</div>
 			<div class="flex flex-col items-end">
-				<TimeDisplay et={etd ?? eta} st={std ?? sta} small {isCancelled} />
+				<TimeDisplay
+					et={atd ?? ata ?? etd ?? eta ?? 'Delayed'}
+					st={std ?? sta}
+					small
+					{isCancelled}
+				/>
 			</div>
 		</Accordion.Trigger>
 	</Accordion.Header>

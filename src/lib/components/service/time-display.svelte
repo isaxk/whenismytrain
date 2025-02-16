@@ -58,7 +58,7 @@
 					<span class="text-black">
 						{displayET}
 					</span>
-				{:else if fromNow < -2}
+				{:else if fromNow < (small ? 0 : -2)}
 					<span class="text-black">
 						{Math.abs(Math.round(fromNow))}
 						<span class="-ml-1.5 font-sans text-base font-light"> mins ago</span>
@@ -79,9 +79,9 @@
 		{/if}
 	{:else if et === 'Delayed'}
 		{#if !preview}
-			<div class={['text-red-600', small ? 'text-md' : 'text-lg']}>?</div>
+			<div class={['text-red-600', small ? 'text-sm' : 'text-base']}>Delayed</div>
 		{/if}
-		<div class="-mt-1 text-xs">{displayST}</div>
+		<div class="-mt-1 text-sm">{displayST}</div>
 	{:else}
 		<div class={['text-nowrap', small ? 'text-md' : 'text-lg', color(et, st)]}>
 			{#if fromNow < 40 && (!small || saved)}

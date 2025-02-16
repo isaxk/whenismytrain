@@ -8,7 +8,8 @@ type OriginDestination = {
 export enum Status {
 	ARRIVED,
 	DEPARTED,
-	AWAY
+	AWAY,
+	STARTS_HERE
 }
 
 export type Board = {
@@ -32,4 +33,5 @@ export type TrainService = {
 	platform: string;
 	isCancelled: boolean;
 	status: Status;
+	cancelReason: definitions['ReasonCodeWithLocation'] | null;
 };

@@ -2,15 +2,14 @@
 	import Fuse from 'fuse.js';
 	import format from 'format-fuse.js';
 	import AllStationsJSON, { type StationData } from 'uk-railway-stations';
-	import ExtraSuggestion from '../extra-suggestion.svelte';
-	import { goto } from '$app/navigation';
+	import ExtraSuggestion from './extra-suggestion.svelte';
 	import { ArrowUpRight, Check, Locate, Pencil, X } from 'lucide-svelte';
 	import { browser } from '$app/environment';
 	import Highlighter from './highlighter.svelte';
 	import { onDestroy, onMount, tick } from 'svelte';
 	import StationsListJSON from 'uk-railway-stations';
 	import { distance } from '$lib/utils';
-	import ClosestSuggestion from '../closest-suggestion.svelte';
+	import ClosestSuggestion from './closest-suggestion.svelte';
 	import { crossfade, fade, fly, scale } from 'svelte/transition';
 	import { quadInOut, quadOut, quintInOut } from 'svelte/easing';
 
@@ -66,7 +65,7 @@
 		});
 	}
 
-	let interval: number;
+	let interval: ReturnType<typeof setInterval>;
 
 	onMount(() => {
 		if (localStorage.coords) {

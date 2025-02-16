@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 	import { fade } from 'svelte/transition';
-	import TimeDisplay from '../time-display.svelte';
+	import TimeDisplay from '../service/time-display.svelte';
 	import { ArrowRight, ArrowUpRight } from 'lucide-svelte';
 	import dayjs from 'dayjs';
 	import { goto } from '$app/navigation';

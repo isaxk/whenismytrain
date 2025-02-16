@@ -5,9 +5,9 @@
 	import { fade } from 'svelte/transition';
 	import { Accordion } from 'bits-ui';
 
-	import CallingPoint from '$lib/components/calling-point.svelte';
+	import CallingPoint from '$lib/components/service/calling-point.svelte';
 	import Disruption from '$lib/components/service/disruption.svelte';
-	import TrainCard from '$lib/components/train-card.svelte';
+	import TrainCard from '$lib/components/service/train-card.svelte';
 	import Header from '$lib/components/ui/header.svelte';
 	import PositionIndicator from '$lib/components/service/position-indicator.svelte';
 	import LastUpdated from '$lib/components/last-updated.svelte';
@@ -15,7 +15,6 @@
 
 	import { operatorList } from '$lib/data/operators';
 	import type { PageData } from './$types';
-	import { navigating, page } from '$app/state';
 
 	let {
 		data,
@@ -23,7 +22,7 @@
 		header
 	}: { data: PageData; drawer?: boolean; header?: Snippet } = $props();
 
-	let currentAccordion = $state('');
+	let currentAccordion = $state(data.focus.crs);
 	let now: dayjs.Dayjs | null = $state(null);
 	let interval: ReturnType<typeof setInterval>;
 
@@ -75,11 +74,11 @@
 						{/snippet}
 					</Header>
 				</div>
-				<div class="h-14 pt-ios-top md:pt-0"></div>
+				<div class="h-14 pt-ios-top md:h-0 md:pt-0"></div>
 			{/if}
 			<div class={['flex flex-col gap-2 px-4']}>
 				<TrainCard
-					state="far"
+					state={data.focus.state}
 					disruptionCode={null}
 					id={data.serviceID}
 					isCancelled={data.destination.isCancelled ?? false}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { circInOut, quartInOut } from 'ssgoi';
 	import { fade } from 'svelte/transition';
-	import TrainCard from '../train-card.svelte';
+	import TrainCard from '../service/train-card.svelte';
 	import { flip } from 'svelte/animate';
 
 	let { list, handleServiceDetails, type } = $props();

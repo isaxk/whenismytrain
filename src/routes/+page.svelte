@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import Switcher from '$lib/components/board/switcher.svelte';
-	import ClosestSuggestion from '$lib/components/closest-suggestion.svelte';
-	import ExtraSuggestion from '$lib/components/extra-suggestion.svelte';
 	import Contact from '$lib/components/home/contact.svelte';
 	import Search from '$lib/components/home/search.svelte';
 	import PinnedStation from '$lib/components/pinned-station.svelte';

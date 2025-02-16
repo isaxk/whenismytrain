@@ -4,9 +4,9 @@
 	import { onMount } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
 	import Skeleton from '../skeleton.svelte';
-	import TrainCard from '../train-card.svelte';
+
 	import { operatorList } from '$lib/data/operators';
-	import TimeDisplay from '../time-display.svelte';
+	import TimeDisplay from '../service/time-display.svelte';
 	import dayjs from 'dayjs';
 	import { type ServiceDetailsWithID } from '$lib/types/extentions';
 

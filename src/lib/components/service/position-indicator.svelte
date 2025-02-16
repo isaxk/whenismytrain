@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Status } from '$lib/types';
+	import { Status } from '$lib/types';
 	import { receive, send } from '$lib/utils/transitions';
 	import dayjs from 'dayjs';
 	import { Train } from 'lucide-svelte';
@@ -43,13 +43,13 @@
 	</div>
 {/snippet}
 
-{#if currentState === 'far'}
+{#if currentState === Status.AWAY}
 	<div class="h-17 absolute -bottom-5 left-[62px] top-10 z-40 w-6 pt-5 duration-75">
 		<div class="flex w-full items-end transition-all" style:height="{progress}%">
 			{@render indicator()}
 		</div>
 	</div>
-{:else if currentState === 'here'}
+{:else if currentState === Status.ARRIVED}
 	<div class="h-17 absolute -bottom-11 left-[62px] top-10 z-40 flex w-6 items-end pt-3 duration-75">
 		{@render indicator()}
 	</div>{/if}
