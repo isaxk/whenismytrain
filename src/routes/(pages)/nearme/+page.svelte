@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import ExtraSuggestion from '$lib/components/extra-suggestion.svelte';
 	import Spinner from '$lib/components/spinner.svelte';
 	import { localStore } from '$lib/data/saved.svelte';
 	import { distance } from '$lib/utils';
