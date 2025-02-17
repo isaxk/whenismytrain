@@ -12,6 +12,7 @@
 	import ClosestSuggestion from './closest-suggestion.svelte';
 	import { crossfade, fade, fly, scale } from 'svelte/transition';
 	import { quadInOut, quadOut, quintInOut } from 'svelte/easing';
+	import { MediaQuery } from 'svelte/reactivity';
 
 	let { drawer = false, crs = $bindable(null), clearable = false } = $props();
 
@@ -27,6 +28,8 @@
 		keys: ['stationName', 'crsCode'],
 		includeMatches: true
 	});
+
+	const md = new MediaQuery('min-width: 768px');
 
 	let value = $state('');
 	const results = $derived(fuzzySearch.search(value).slice(0, 5));
@@ -90,11 +93,17 @@
 		}
 	});
 
-	function select(station: StationData) {
-		crs = station.crsCode;
-		focused = false;
-
-		value = '';
+	function select(station: StationData | null) {
+		console.log(station);
+		if (station) {
+			crs = station.crsCode;
+		} else {
+			crs = selected?.crsCode ?? null;
+		}
+		setTimeout(() => {
+			focused = false;
+			value = '';
+		}, 10);
 	}
 
 	let focused = $state(false);
@@ -104,11 +113,12 @@
 	<form
 		onsubmit={(e) => {
 			e.preventDefault();
+			console.log(formatted, select);
 			select(results[0].item);
 		}}
 	>
 		<div
-			class="bg-card z-50 flex transform-gpu overflow-hidden rounded-t-lg border-b drop-shadow"
+			class="z-50 flex transform-gpu overflow-hidden rounded-t-lg border-b bg-card drop-shadow"
 			in:recieve|global={{ key: 'input' }}
 			out:send|global={{ key: 'input' }}
 		>
@@ -120,30 +130,29 @@
 					focused = true;
 				}}
 				onblur={() => {
-					setTimeout(() => {
+					if (md.current) {
 						focused = false;
-					}, 100);
+						value = '';
+					}
 				}}
 				bind:this={input}
 				type="text"
 				placeholder="Find a station..."
 				bind:value
-				class="bg-card z-30 w-full rounded-t-lg p-4 -outline-offset-1 outline-blue-100/80"
+				class="z-30 w-full rounded-t-lg bg-card p-4 -outline-offset-1 outline-blue-100/80"
 			/>
-			<button class="px-2 pr-4 text-zinc-400" onclick={() => (focused = false)}>Cancel</button>
+			<button class="px-2 pr-4 text-zinc-400" type="button" onclick={() => select(null)}
+				>Cancel</button
+			>
 		</div>
 
-		<div class="md:bg-card h-[350px] md:rounded-b-lg md:border">
+		<div class="h-[350px] md:rounded-b-lg md:border md:bg-card">
+			<pre></pre>
 			{#if formatted.length > 0}
 				<div class="flex flex-col">
 					{#each formatted as result, i}
-						{#if i === 0}
-							<button bind:this={submitBtn} onclick={() => select(results[0].item)} class="hidden"
-								>Go</button
-							>
-						{/if}
 						<button
-							onmousedown={() => select(results[i].item)}
+							onmousedown={() => () => select(results[i].item)}
 							class="flex w-full items-center gap-2 border-b px-4 py-2 text-left text-zinc-800 last:border-none"
 						>
 							<div class="min-w-0 flex-grow">
@@ -182,6 +191,7 @@
 				</div>
 				<div class="-mt-1 flex h-24 items-center px-4 pb-4">
 					<button
+						type="button"
 						class="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-zinc-200 px-4 drop-shadow"
 						onclick={updateLocation}><Locate size={20} /> Update location</button
 					>
@@ -195,7 +205,7 @@
 	{#if focused}
 		<div
 			class={[
-				'bg-card fixed inset-0 z-40 rounded-t-lg md:absolute md:rounded-lg md:border',
+				'fixed inset-0 z-40 rounded-t-lg bg-card md:absolute md:rounded-lg md:border',
 				!drawer && 'pt-ios-top md:pt-0'
 			]}
 			in:fly={{ duration: 200, y: 20, opacity: 0 }}
@@ -207,7 +217,7 @@
 		<button
 			in:recieve|global={{ key: 'input' }}
 			out:send|global={{ key: 'input' }}
-			class="bg-card absolute bottom-0 left-0 right-0 top-0 flex w-full items-center gap-2 rounded-lg border px-4 py-2 text-left drop-shadow"
+			class="absolute bottom-0 left-0 right-0 top-0 flex w-full items-center gap-2 rounded-lg border bg-card px-4 py-2 text-left drop-shadow"
 			onclick={() => (clearable && crs !== null ? (crs = null) : (focused = true))}
 		>
 			{#if crs && selected}
