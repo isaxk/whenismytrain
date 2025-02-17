@@ -5,8 +5,8 @@
 </script>
 
 <button
-	onclick={()=>onSelect(crsCode)}
-	class="flex items-center text-left w-full gap-2 border-b last:border-none bg-white px-4 py-2 text-zinc-600 drop-shadow-sm"
+	onclick={() => onSelect(crsCode)}
+	class="bg-card flex w-full items-center gap-2 border-b px-4 py-2 text-left text-zinc-600 drop-shadow-sm last:border-none"
 >
 	<div class="flex-grow">
 		<div class="text-xl font-medium">{stationName}</div>
@@ -17,6 +17,7 @@
 	</div>
 	<div
 		class="h-max rounded-lg bg-blue-500 px-4 py-2 text-center text-white drop-shadow-xl transition-all duration-300 hover:brightness-105"
-		><ArrowUpRight size={22} /></div
 	>
+		<ArrowUpRight size={22} />
+	</div>
 </button>

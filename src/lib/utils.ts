@@ -1,4 +1,6 @@
 import type { TrainService } from '$lib/types';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 import type { definitions } from '$lib/types/api';
 
 export function strToMins(t: string) {
@@ -33,4 +35,8 @@ export function distance(lat1: number, lon1: number, lat2: number, lon2: number,
 		dist = dist * 0.8684;
 	}
 	return dist;
+}
+
+export function cn(...inputs: ClassValue[]) {
+	return twMerge(clsx(inputs));
 }

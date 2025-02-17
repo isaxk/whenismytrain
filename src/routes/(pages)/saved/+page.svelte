@@ -67,7 +67,7 @@
 <div
 	class={[
 		'sticky top-0 z-40 flex items-center font-semibold',
-		card ? 'bg-transparent px-4 text-xl' : 'bg-zinc-50 p-4 text-3xl'
+		card ? 'bg-transparent px-4 text-xl' : 'bg-card p-4 text-3xl'
 	]}
 >
 	<div class="pt-ios-top">Saved</div>

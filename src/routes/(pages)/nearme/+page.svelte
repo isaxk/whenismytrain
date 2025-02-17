@@ -42,7 +42,7 @@
 	onMount(updateLocation);
 </script>
 
-<div class="sticky top-0 z-40 flex items-center bg-zinc-50 p-4 text-3xl font-semibold">
+<div class="bg-background sticky top-0 z-40 flex items-center p-4 text-3xl font-semibold">
 	<div class="pt-ios-top">Near me</div>
 </div>
 <div>

@@ -75,7 +75,7 @@
 		{#snippet suggestions()}
 			<div class="mt-2 border-t pt-4">
 				{#if closestStation}
-					<div class="flex items-center rounded-lg border bg-white p-4 drop-shadow-sm">
+					<div class="bg-card flex items-center rounded-lg border p-4 drop-shadow-sm">
 						<div class="flex-grow">
 							<div class="text-sm font-bold">Closest Station</div>
 							<div class="text-3xl font-semibold">

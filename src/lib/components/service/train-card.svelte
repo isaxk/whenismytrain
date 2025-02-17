@@ -62,7 +62,7 @@
 			<div
 				class={[
 					'flex h-8 w-8 items-center justify-center rounded-full border drop-shadow-sm',
-					platform ? 'bg-zinc-100' : 'bg-zinc-50 text-zinc-400'
+					platform ? 'bg-zinc-100' : 'bg-background text-zinc-400'
 				]}
 			>
 				<div class={['font-bold', (platform ?? '?').length > 2 ? 'text-md' : 'max-w-lg']}>

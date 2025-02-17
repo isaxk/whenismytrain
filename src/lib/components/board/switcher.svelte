@@ -12,6 +12,8 @@
 	import dayjs from 'dayjs';
 	import { goto } from '$app/navigation';
 	import { Drawer } from 'vaul-svelte';
+	import Switch from '../ui/switch.svelte';
+	import { Label } from 'bits-ui';
 
 	let {
 		drawer = false,
@@ -23,6 +25,7 @@
 	} = $props();
 
 	let closeDrawer: HTMLButtonElement | null = $state(null);
+	let now = $state(value === dayjs().format('HH:mm'));
 
 	function go() {
 		const list = from + (to ? `-${to}` : '');
@@ -32,10 +35,10 @@
 		window.setTimeout(
 			() => {
 				requestAnimationFrame(() => {
-					if (value !== dayjs().format('HH:mm')) {
-						goto(`/board/${type}/${list}/${value}`);
-					} else {
+					if (now) {
 						goto(`/board/${type}/${list}`);
+					} else {
+						goto(`/board/${type}/${list}/${value}`);
 					}
 				});
 			},
@@ -56,14 +59,19 @@
 		]}
 		bind:value={type}
 	></Switchbar>
-	<div class="flex w-full gap-1">
-		<div class="h-11 flex-grow rounded-lg border border-zinc-100 bg-white drop-shadow">
-			<input type="time" bind:value class="h-full w-full bg-transparent px-2" />
+	<div class="flex w-full items-center gap-4">
+		<div class="flex items-center gap-2">
+			<Switch bind:checked={now} name="now" />
+			<Label.Root for="now" class="font-medium">Now</Label.Root>
 		</div>
-		<button
-			class="flex h-11 items-center justify-center gap-1 rounded-lg bg-blue-500 px-4 text-white"
-			onclick={() => (value = dayjs().format('HH:mm'))}><CalendarSync size={20} /> now</button
+		<div
+			class={[
+				'bg-card h-11 flex-grow transform-gpu rounded-lg border border-zinc-100 drop-shadow transition-all',
+				now && 'opacity-50'
+			]}
 		>
+			<input type="time" disabled={now} bind:value class="h-full w-full bg-transparent px-2" />
+		</div>
 	</div>
 	<div class="relative flex w-full items-center gap-2 text-right">
 		<button

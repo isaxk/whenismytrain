@@ -36,7 +36,7 @@
 		style:border-color={color}
 		style:color
 		class={[
-			'flex h-6 w-6 items-center justify-center rounded-full border-2 border-zinc-600 bg-white text-zinc-600 drop-shadow-2xl transition-all delay-75 duration-200'
+			'bg-card flex h-6 w-6 items-center justify-center rounded-full border-2 border-zinc-600 text-zinc-600 drop-shadow-2xl transition-all delay-75 duration-200'
 		]}
 	>
 		<Train size={16} strokeWidth={2.5} />

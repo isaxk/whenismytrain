@@ -23,10 +23,10 @@
 	});
 </script>
 
-<div class="min-h-screen bg-zinc-50" data-vaul-drawer-wrapper>
+<div class="bg-background min-h-screen" data-vaul-drawer-wrapper>
 	{@render children()}
 	<div
-		class="vt-name-[mobile-bar] fixed bottom-0 left-0 right-0 z-40 flex min-h-20 items-center justify-evenly border-t bg-white pb-ios-bottom pt-4 drop-shadow md:hidden"
+		class="bg-card fixed bottom-0 left-0 right-0 z-40 flex min-h-20 items-center justify-evenly border-t pb-ios-bottom pt-4 drop-shadow vt-name-[mobile-bar] md:hidden"
 	>
 		<a href="/nearme"><MapPin /></a>
 		{#if data.url.includes('board')}
@@ -37,7 +37,7 @@
 				<Drawer.Portal>
 					<Drawer.Overlay class="fixed inset-0 z-40 bg-black/80" />
 					<Drawer.Content
-						class="fixed bottom-0 left-0 right-0 z-50 flex h-drawer flex-col rounded-t-lg bg-zinc-50 pt-3"
+						class="bg-background fixed bottom-0 left-0 right-0 z-50 flex h-drawer flex-col rounded-t-lg pt-3"
 					>
 						<Header BackIcon={X} type="drawer" title="Board Options"></Header>
 						<div class="h-full min-h-0 flex-grow px-4 pb-ios-bottom">
@@ -61,6 +61,6 @@
 
 <style lang="postcss">
 	:global(body) {
-		@apply overflow-y-scroll bg-zinc-50;
+		@apply bg-background overflow-y-scroll;
 	}
 </style>

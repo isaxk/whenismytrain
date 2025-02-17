@@ -203,12 +203,7 @@
 
 <div class="mx-auto min-h-screen md:flex md:max-w-screen-lg md:gap-10">
 	<ComboSidetopbar>
-		<div
-			class={[
-				'flex gap-2 px-4 pb-2 pt-1',
-				navigating.to?.url.pathname.includes('board') && 'vt-name-[board-header]'
-			]}
-		>
+		<div class={['flex gap-2 px-4 pb-2 pt-1']}>
 			<button
 				onclick={() => history.back()}
 				class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
@@ -302,7 +297,7 @@
 				<div class="h-3 md:h-0"></div>
 
 				<div class="overflow-y-scroll px-1 md:pb-4 md:pt-4" in:fade={{ duration: 200 }}>
-					<div class="h-[350px] w-full rounded-lg border-zinc-100 bg-white/95 p-4 drop-shadow">
+					<div class="bg-card/95 h-[350px] w-full rounded-lg border-zinc-100 p-4 drop-shadow">
 						<Switcher
 							drawer={false}
 							from={data.from}
@@ -311,7 +306,7 @@
 							value={data.date ? dayjs(data.date).format('HH:mm') : dayjs().format('HH:mm')}
 						/>
 					</div>
-					<div class="mt-4 rounded-lg border bg-white p-2 drop-shadow-sm">
+					<div class="bg-card mt-4 rounded-lg border p-2 drop-shadow-sm">
 						<Saved card />
 					</div>
 				</div>
@@ -334,7 +329,7 @@
 		<div class="md:flex-grow">
 			{#await data.board then { board }}
 				{#if md.current}
-					<div class="sticky top-0 z-20 flex w-full bg-zinc-50 pt-4">
+					<div class="bg-background sticky top-0 z-20 flex w-full pt-4">
 						<div class="min-w-0 flex-grow">
 							<OperatorsList
 								operators={Array.from(operators)}
@@ -476,7 +471,7 @@
 			/>
 			<Dialog.Content
 				transition={flyAndScale}
-				class="fixed left-1/2 top-1/2 z-50 h-[90%] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-zinc-50"
+				class="bg-background fixed left-1/2 top-1/2 z-50 h-[90%] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-lg"
 			>
 				{@render serviceContent()}
 			</Dialog.Content>
@@ -495,7 +490,7 @@
 		<Drawer.Portal>
 			<Drawer.Overlay class="pointer-events-auto fixed inset-0 z-20 bg-black/80" />
 			<Drawer.Content
-				class="fixed bottom-0 left-0 right-0 z-40 mt-ios-top h-drawer rounded-t-lg bg-zinc-50 px-0 pb-5  outline-none"
+				class="bg-background fixed bottom-0 left-0 right-0 z-40 mt-ios-top h-drawer rounded-t-lg px-0 pb-5  outline-none"
 			>
 				{@render serviceContent()}
 			</Drawer.Content>

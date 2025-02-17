@@ -108,7 +108,7 @@
 		}}
 	>
 		<div
-			class="z-50 flex overflow-hidden rounded-t-lg border-b bg-white drop-shadow"
+			class="bg-card z-50 flex transform-gpu overflow-hidden rounded-t-lg border-b drop-shadow"
 			in:recieve|global={{ key: 'input' }}
 			out:send|global={{ key: 'input' }}
 		>
@@ -128,12 +128,12 @@
 				type="text"
 				placeholder="Find a station..."
 				bind:value
-				class="z-30 w-full rounded-t-lg bg-white p-4 -outline-offset-1 outline-blue-100/80"
+				class="bg-card z-30 w-full rounded-t-lg p-4 -outline-offset-1 outline-blue-100/80"
 			/>
 			<button class="px-2 pr-4 text-zinc-400" onclick={() => (focused = false)}>Cancel</button>
 		</div>
 
-		<div class="h-[350px] md:rounded-b-lg md:border md:bg-white">
+		<div class="md:bg-card h-[350px] md:rounded-b-lg md:border">
 			{#if formatted.length > 0}
 				<div class="flex flex-col">
 					{#each formatted as result, i}
@@ -195,7 +195,7 @@
 	{#if focused}
 		<div
 			class={[
-				'fixed inset-0 z-40 rounded-t-lg bg-white md:absolute md:rounded-lg md:border',
+				'bg-card fixed inset-0 z-40 rounded-t-lg md:absolute md:rounded-lg md:border',
 				!drawer && 'pt-ios-top md:pt-0'
 			]}
 			in:fly={{ duration: 200, y: 20, opacity: 0 }}
@@ -207,7 +207,7 @@
 		<button
 			in:recieve|global={{ key: 'input' }}
 			out:send|global={{ key: 'input' }}
-			class="absolute bottom-0 left-0 right-0 top-0 flex w-full items-center gap-2 rounded-lg border bg-white px-4 py-2 text-left drop-shadow"
+			class="bg-card absolute bottom-0 left-0 right-0 top-0 flex w-full items-center gap-2 rounded-lg border px-4 py-2 text-left drop-shadow"
 			onclick={() => (clearable && crs !== null ? (crs = null) : (focused = true))}
 		>
 			{#if crs && selected}

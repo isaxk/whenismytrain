@@ -17,7 +17,7 @@
 		<div
 			class={[
 				'flex items-center border-t first:border-t-0',
-				i % 2 === 0 ? 'bg-white' : 'bg-zinc-50'
+				i % 2 === 0 ? 'bg-card' : 'bg-background'
 			]}
 			animate:flip={{ duration: 200, easing: circInOut }}
 			transition:fade={{ duration: 200, easing: quartInOut }}

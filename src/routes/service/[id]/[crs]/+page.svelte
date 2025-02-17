@@ -22,6 +22,8 @@
 		header
 	}: { data: PageData; drawer?: boolean; header?: Snippet } = $props();
 
+	console.log(data);
+
 	let currentAccordion = $state(data.focus.crs);
 	let now: dayjs.Dayjs | null = $state(null);
 	let interval: ReturnType<typeof setInterval>;
@@ -59,7 +61,7 @@
 			{:else}
 				<div
 					class={[
-						'fixed left-0 right-0 top-0 z-40 bg-zinc-50 pb-1 pt-ios-top md:static md:pt-0',
+						'bg-background fixed left-0 right-0 top-0 z-40 pb-1 pt-ios-top md:static md:pt-0',
 						(scrollY.current ?? 0) > 5 && 'border-b drop-shadow md:border-none md:drop-shadow-none'
 					]}
 				>

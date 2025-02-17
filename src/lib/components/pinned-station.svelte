@@ -14,7 +14,7 @@
 </script>
 
 <div
-	class="flex items-center gap-2 rounded-lg border bg-white px-4 py-2 text-zinc-600 drop-shadow-sm"
+	class="bg-card flex items-center gap-2 rounded-lg border px-4 py-2 text-zinc-600 drop-shadow-sm"
 >
 	{#await stationData then data}
 		<div class="flex-grow">
