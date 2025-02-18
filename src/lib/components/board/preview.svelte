@@ -54,7 +54,7 @@
 						style:background={operatorList[train.operator].bg}
 					></div>
 					<div class="w-2"></div>
-					<div class="flex-grow">
+					<div class="flex-grow min-w-0 truncate">
 						{train.destination.name ?? ''}
 					</div>
 					<TimeDisplay
