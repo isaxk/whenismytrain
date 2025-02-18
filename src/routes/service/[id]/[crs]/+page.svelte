@@ -35,7 +35,7 @@
 	}
 
 	onMount(() => {
-		interval = setInterval(refresh, 15000);
+		interval = setInterval(refresh, 10000);
 		now = dayjs();
 
 		const genAt = dayjs(data.generatedAt);
