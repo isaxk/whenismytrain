@@ -34,13 +34,13 @@
 	}
 
 	onMount(() => {
-		interval = setInterval(refresh, 15000);
+		interval = setInterval(refresh, 10000);
 		now = dayjs();
 
 		const genAt = dayjs(data.generatedAt);
 		const diff = Math.abs(genAt.diff(now, 'seconds'));
 		console.log(diff);
-		if (diff > 14) {
+		if (diff > 10) {
 			refresh();
 		}
 	});
@@ -186,4 +186,5 @@
 			{/if}
 		</Accordion.Root>
 	</div>
+	<div class="h-20 md:h-0"></div>
 {/if}
