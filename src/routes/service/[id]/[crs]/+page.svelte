@@ -162,4 +162,5 @@
 			{/each}
 		{/if}
 	</Accordion.Root>
+	<div class="h-20 md:h-0"></div>
 {/if}
