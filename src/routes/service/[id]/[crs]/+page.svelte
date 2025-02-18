@@ -53,7 +53,6 @@
 		coords = JSON.parse(
 			JSON.stringify(
 				data.all.map((l, i) => {
-					console.log(i, l);
 					const found = tiplocs.find((tiploc) => tiploc.Tiploc === l.tiploc);
 					return found
 						? { l, coords: [found.Latitude, found.Longitude] }
@@ -185,26 +184,6 @@
 				{/each}
 			{/if}
 		</Accordion.Root>
+		<div class="h-20 md:h-0"></div>
 	</div>
-=======
-					<CallingPoint
-						{i}
-						platform={location.platform}
-						crs={location.crs}
-						name={location.name}
-						std={location.std}
-						sta={location.sta}
-						etd={location.etd}
-						atd={location.atd}
-						ata={location.ata}
-						eta={location.eta}
-						type={location.order}
-						isCancelled={location.isCancelled ?? false}
-						destCrs={data.destination.crs}
-					/>
-				</div>
-			{/each}
-		{/if}
-	</Accordion.Root>
-	<div class="h-20 md:h-0"></div>
 {/if}

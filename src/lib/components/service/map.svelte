@@ -43,20 +43,23 @@
 				shadowSize: [41, 41]
 			});
 
-			locations.forEach((location, i) => {
-				if (i === current) {
-					console.log('iiii', i);
-					if (posIndicator) {
-						posIndicator.setLatLng(location.coords);
-					} else {
-						posIndicator = leaflet
-							.marker(location.coords, { icon: greenIcon })
-							.addTo(map)
-							.bindPopup(location.l.name);
-						map.setView(location.coords, 13);
-					}
-				}
-			});
+			let coords = locations[current].coords;
+			if (locations[current].l.state === Status.DEPARTED) {
+				let next = locations[current + 1].coords;
+				console.log(coords, next);
+				coords = [(coords[0] + next[0]) / 2, (coords[1] + next[1]) / 2];
+			}
+
+			if (posIndicator) {
+				posIndicator.setLatLng(coords);
+			} else {
+				posIndicator = leaflet
+					.marker(coords, { icon: greenIcon })
+					.addTo(map)
+					.bindPopup(locations[current].l.name);
+				map.setView(coords, 13);
+			}
+
 			leaflet.polygon(connectTheDots(locations)).addTo(map);
 		}
 	});

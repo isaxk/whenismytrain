@@ -63,7 +63,17 @@ export const GET: RequestHandler = async ({ params }) => {
 					etd: l.etd,
 					eta: l.eta,
 					isPass: l.isPass ?? false,
-					state: l.ataSpecified ? (l.atdSpecified ? Status.DEPARTED : Status.ARRIVED) : Status.AWAY,
+					state: all
+						? l.atdSpecified
+							? Status.DEPARTED
+							: l.ataSpecified
+								? Status.ARRIVED
+								: Status.AWAY
+						: l.ataSpecified
+							? l.atdSpecified
+								? Status.DEPARTED
+								: Status.ARRIVED
+							: Status.AWAY,
 					isCancelled: l.isCancelled ?? false
 				};
 			}) ?? [];
