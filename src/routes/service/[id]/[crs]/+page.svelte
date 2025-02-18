@@ -186,5 +186,25 @@
 			{/if}
 		</Accordion.Root>
 	</div>
+=======
+					<CallingPoint
+						{i}
+						platform={location.platform}
+						crs={location.crs}
+						name={location.name}
+						std={location.std}
+						sta={location.sta}
+						etd={location.etd}
+						atd={location.atd}
+						ata={location.ata}
+						eta={location.eta}
+						type={location.order}
+						isCancelled={location.isCancelled ?? false}
+						destCrs={data.destination.crs}
+					/>
+				</div>
+			{/each}
+		{/if}
+	</Accordion.Root>
 	<div class="h-20 md:h-0"></div>
 {/if}
