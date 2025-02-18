@@ -15,14 +15,13 @@
 
 	import { operatorList } from '$lib/data/operators';
 	import type { PageData } from './$types';
+	import Map from '$lib/components/service/map.svelte';
 
 	let {
 		data,
 		drawer = false,
 		header
 	}: { data: PageData; drawer?: boolean; header?: Snippet } = $props();
-
-	console.log(data);
 
 	let currentAccordion = $state(data.focus.crs);
 	let now: dayjs.Dayjs | null = $state(null);
@@ -45,6 +44,24 @@
 			refresh();
 		}
 	});
+
+	let coords = $state([]);
+
+	onMount(async () => {
+		const response = await fetch(`https://json-993.pages.dev/tiploc.json`);
+		const tiplocs = (await response.json()).Tiplocs;
+		coords = JSON.parse(
+			JSON.stringify(
+				data.all.map((l, i) => {
+					console.log(i, l);
+					const found = tiplocs.find((tiploc) => tiploc.Tiploc === l.tiploc);
+					return found
+						? { l, coords: [found.Latitude, found.Longitude] }
+						: { l, coords: [null, null] };
+				})
+			)
+		);
+	});
 	onDestroy(() => {
 		clearInterval(interval);
 	});
@@ -61,7 +78,7 @@
 			{:else}
 				<div
 					class={[
-						'bg-background fixed left-0 right-0 top-0 z-40 pb-1 pt-ios-top md:static md:pt-0',
+						'fixed left-0 right-0 top-0 z-40 bg-background pb-1 pt-ios-top md:static md:pt-0',
 						(scrollY.current ?? 0) > 5 && 'border-b drop-shadow md:border-none md:drop-shadow-none'
 					]}
 				>
@@ -111,55 +128,62 @@
 			</div>
 		</div>
 	</div>
-	<Accordion.Root
-		bind:value={currentAccordion}
-		class="flex flex-grow flex-col overflow-y-scroll pl-4 pr-4 pt-2 [scrollbar-gutter:stable] [scrollbar-width:thin]"
-	>
-		{#if data.locations}
-			{#each data.locations ?? [] as location, i}
-				<div class="group relative">
-					<div
-						style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-						class={[
-							'absolute -bottom-3 left-[70px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
-						]}
-					></div>
-					{#if data.currentLocation === i + 1}
-						{@const b = data !== undefined ? (data.locations[i + 1] ?? null) : null}
-						{#if b}
-							<PositionIndicator
-								a={location.atd ?? location.etd ?? location.std}
-								b={b ? (b.ata ?? b.eta ?? b.sta) : null}
-								{now}
-								state={b.state}
-								color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-							/>
-						{/if}
-					{/if}
-					<div class="absolute left-[70px] top-0 z-30 flex h-16 w-2 items-center">
+
+	<div class="min-h-0 flex-grow overflow-y-scroll [scrollbar-gutter:stable] [scrollbar-width:thin]">
+		{#if coords.length > 0}
+			<Map locations={coords} current={data.currentAll} />
+		{/if}
+
+		<Accordion.Root
+			bind:value={currentAccordion}
+			class="pointer-events-none z-40 flex flex-grow flex-col bg-background pl-4 pr-4 pt-2"
+		>
+			{#if data.locations}
+				{#each data.locations ?? [] as location, i}
+					<div class="group pointer-events-auto relative">
 						<div
 							style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-							class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
+							class={[
+								'absolute -bottom-3 left-[70px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+							]}
 						></div>
-					</div>
+						{#if data.currentLocation === i + 1}
+							{@const b = data !== undefined ? (data.locations[i + 1] ?? null) : null}
+							{#if b}
+								<PositionIndicator
+									a={location.atd ?? location.etd ?? location.std}
+									b={b ? (b.ata ?? b.eta ?? b.sta) : null}
+									{now}
+									state={b.state}
+									color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+								/>
+							{/if}
+						{/if}
+						<div class="absolute left-[70px] top-0 z-30 flex h-16 w-2 items-center">
+							<div
+								style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+								class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
+							></div>
+						</div>
 
-					<CallingPoint
-						{i}
-						platform={location.platform}
-						crs={location.crs}
-						name={location.name}
-						std={location.std}
-						sta={location.sta}
-						etd={location.etd}
-						atd={location.atd}
-						ata={location.ata}
-						eta={location.eta}
-						type={location.order}
-						isCancelled={location.isCancelled ?? false}
-						destCrs={data.destination.crs}
-					/>
-				</div>
-			{/each}
-		{/if}
-	</Accordion.Root>
+						<CallingPoint
+							{i}
+							platform={location.platform}
+							crs={location.crs}
+							name={location.name}
+							std={location.std}
+							sta={location.sta}
+							etd={location.etd}
+							atd={location.atd}
+							ata={location.ata}
+							eta={location.eta}
+							type={location.order}
+							isCancelled={location.isCancelled ?? false}
+							destCrs={data.destination.crs}
+						/>
+					</div>
+				{/each}
+			{/if}
+		</Accordion.Root>
+	</div>
 {/if}

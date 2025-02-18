@@ -22,47 +22,72 @@ export const GET: RequestHandler = async ({ params }) => {
 	if (data === null) {
 		error(400, 'Could not fetch service');
 	}
-	data.locations?.filter((l) => !l.isPass);
 
 	let passedFocus = false;
-	let currentLocation: number | null = null;
 
-	data.locations = data.locations?.filter((l) => !l.isPass && l.crs) ?? [];
-	const locations: ServiceDetailsLocation[] = data.locations.map((l, i): ServiceDetailsLocation => {
-		let order: 'previous' | 'focus' | 'subsequent' = 'previous';
-		if (l.crs && l.crs === crs) {
-			passedFocus = true;
-			order = 'focus';
-		} else if (passedFocus) {
-			order = 'subsequent';
-		}
+	function parse(locations: definitions['ServiceLocation'][], all: boolean) {
+		let currentLocation: number | null = null;
+		const parsedLocations =
+			locations?.map((l, i): ServiceDetailsLocation => {
+				let order: 'previous' | 'focus' | 'subsequent' = 'previous';
+				if (l.crs && l.crs === crs) {
+					passedFocus = true;
+					order = 'focus';
+				} else if (passedFocus) {
+					order = 'subsequent';
+				}
 
-		if (
-			l.arrivalType === 'Actual' ||
-			data.locations![i === 0 ? 0 : i - 1].departureType === 'Actual'
-		) {
-			currentLocation = i;
-		}
+				if (all) {
+					if (l.arrivalType === 'Actual' || l.departureType === 'Actual') {
+						currentLocation = i;
+					}
+				} else {
+					if (
+						l.arrivalType === 'Actual' ||
+						locations![i === 0 ? 0 : i - 1].departureType === 'Actual'
+					) {
+						currentLocation = i;
+					}
+				}
 
-		return {
-			order,
-			crs: l.crs ?? '',
-			name: l.locationName ?? '',
-			platform: l.platform ?? null,
-			std: l.std,
-			sta: l.sta,
-			atd: l.atd,
-			ata: l.ata,
-			etd: l.etd,
-			eta: l.eta,
-			state: l.ataSpecified ? (l.atdSpecified ? Status.DEPARTED : Status.ARRIVED) : Status.AWAY,
-			isCancelled: l.isCancelled ?? false
-		};
-	});
+				return {
+					order,
+					crs: l.crs ?? '',
+					tiploc: l.tiploc ?? '',
+					name: l.locationName ?? '',
+					platform: l.platform ?? null,
+					std: l.std,
+					sta: l.sta,
+					atd: l.atd,
+					ata: l.ata,
+					etd: l.etd,
+					eta: l.eta,
+					isPass: l.isPass ?? false,
+					state: l.ataSpecified ? (l.atdSpecified ? Status.DEPARTED : Status.ARRIVED) : Status.AWAY,
+					isCancelled: l.isCancelled ?? false
+				};
+			}) ?? [];
+		return { locations: parsedLocations, current: currentLocation };
+	}
+
+	const { locations: all, current: currentAll } = parse(data.locations!, true);
+	const { locations, current: currentLocation } = parse(
+		data.locations!.filter((l) => !l.isPass),
+		false
+	);
 
 	const notCancelled = locations.filter((l) => !l.isCancelled);
 	const destination = notCancelled[notCancelled.length - 1] ?? locations[locations.length - 1];
 	const focus = locations.find((l) => l.crs === crs);
 
-	return json({ ...data, serviceID: id, locations, currentLocation, destination, focus });
+	return json({
+		...data,
+		serviceID: id,
+		locations,
+		all,
+		currentLocation,
+		currentAll,
+		destination,
+		focus
+	});
 };

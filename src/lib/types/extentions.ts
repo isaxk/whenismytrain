@@ -6,6 +6,7 @@ export type ServiceDetailsLocation = {
 	state: Status;
 	platform: string | null;
 	crs: string;
+	tiploc: string;
 	name: string;
 	std?: string;
 	sta?: string;
@@ -13,6 +14,7 @@ export type ServiceDetailsLocation = {
 	ata?: string;
 	etd?: string;
 	eta?: string;
+	isPass: boolean;
 	isCancelled: boolean;
 };
 
