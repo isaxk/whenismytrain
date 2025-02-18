@@ -41,7 +41,7 @@
 		const genAt = dayjs(data.generatedAt);
 		const diff = Math.abs(genAt.diff(now, 'seconds'));
 		console.log(diff);
-		if (diff > 14) {
+		if (diff > 10) {
 			refresh();
 		}
 	});
