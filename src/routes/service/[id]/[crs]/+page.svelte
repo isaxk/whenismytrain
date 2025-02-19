@@ -17,6 +17,7 @@
 	import type { PageData } from './$types';
 	import Map from '$lib/components/service/map.svelte';
 	import { Drawer } from 'vaul-svelte';
+	import { browser } from '$app/environment';
 
 	let {
 		data,
@@ -33,8 +34,15 @@
 	async function refresh() {
 		const response = await fetch(`/api/service/${data.id}/${data.crs}`);
 		now = dayjs();
-		data = { ...(await response.json()), crs: data.crs, id: data.id };
+		data = { ...(await response.json()), crs: data.crs, id: data.id, tiplocs: data.tiplocs };
 	}
+
+	const coords = $derived(
+		data.all.map((l, i) => {
+			const found = data.tiplocs.find((tiploc) => tiploc.Tiploc === l.tiploc);
+			return found ? { l, coords: [found.Latitude, found.Longitude] } : { l, coords: [null, null] };
+		})
+	);
 
 	onMount(() => {
 		interval = setInterval(refresh, 10000);
@@ -48,22 +56,6 @@
 		}
 	});
 
-	let coords = $state([]);
-
-	onMount(async () => {
-		const response = await fetch(`https://json-993.pages.dev/tiploc.json`);
-		const tiplocs = (await response.json()).Tiplocs;
-		coords = JSON.parse(
-			JSON.stringify(
-				data.all.map((l, i) => {
-					const found = tiplocs.find((tiploc) => tiploc.Tiploc === l.tiploc);
-					return found
-						? { l, coords: [found.Latitude, found.Longitude] }
-						: { l, coords: [null, null] };
-				})
-			)
-		);
-	});
 	onDestroy(() => {
 		clearInterval(interval);
 	});
@@ -134,7 +126,7 @@
 	</div>
 
 	<div class="flex-grow overflow-y-scroll">
-		{#if coords.length > 0}
+		{#if coords.length > 0 && browser}
 			<div class={['h-[200px] transition-all']}>
 				<Map
 					color={operatorList[data.operatorCode!].bg}

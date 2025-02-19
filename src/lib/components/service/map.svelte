@@ -1,119 +1,98 @@
-<script>
-	//@ts-nocheck
-
+<script lang="ts">
+	import { browser } from '$app/environment';
+	import type { ServiceDetailsLocation } from '$lib/types/extentions';
+	import { Map, TileLayer, Marker, Polyline, Popup } from 'sveaflet';
+	import { icon } from 'leaflet';
 	import { Status } from '$lib/types';
-	import { smoothLine } from '$lib/utils/bezier';
+	import { Tween } from 'svelte/motion';
+	import { MaptilerLayer } from '@maptiler/leaflet-maptilersdk';
 
-	import { onMount, onDestroy } from 'svelte';
+	let {
+		color,
+		locations,
+		current
+	}: {
+		color: string;
+		locations: { l: ServiceDetailsLocation; coords: [number, number] }[];
+		current: number;
+	} = $props();
 
-	let { locations, current, color } = $props();
-
-	$inspect(locations);
-
-	let mapElement;
 	let map = $state();
-	let leaflet = $state();
-	let posIndicator = null;
 
-	function connectTheDots(data) {
-		console.log(
-			smoothLine(
-				data.map((l) => {
-					return { x: l.coords[0], y: l.coords[1] };
-				})
-			)
-		);
-		return data.map((l) => l.coords);
-	}
-
-	onMount(async () => {
-		leaflet = await import('leaflet');
-
-		map = leaflet.map(mapElement).setView([51.505, -0.09], 13);
-		leaflet
-			.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				attribution:
-					'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-			})
-			.addTo(map);
-		var mapPin = new leaflet.Icon({
-			iconUrl: `/api/icons/${color.replace('#', '')}/pin`,
-			iconSize: [25, 25],
-			iconAnchor: [12, 12],
-			popupAnchor: [1, -25],
-			shadowSize: [41, 41]
-		});
-		var donePin = new leaflet.Icon({
-			iconUrl: `/api/icons/${color.replace('#', '')}/done`,
-			iconSize: [25, 25],
-			iconAnchor: [12, 12],
-			popupAnchor: [1, -25],
-			shadowSize: [41, 41]
-		});
-		locations
-			.filter((l) => !l.l.isPass)
-			.forEach((location) => {
-				leaflet
-					.marker(location.coords, {
-						icon: location.l.state === Status.DEPARTED ? donePin : mapPin
-					})
-					.addTo(map)
-					.bindPopup(location.l.name);
-			});
-		leaflet.polyline(connectTheDots(locations), { color: color, weight: 5 }).addTo(map);
+	const currentPosCoords: [number, number] = $derived.by(() => {
+		if (current) {
+			const a = locations[current];
+			console.log(a);
+			console.log(a.l.state, Status.DEPARTED);
+			if (a.l.state !== Status.DEPARTED) {
+				return a.coords;
+			} else {
+				const next = locations[current + 1];
+				return [(a.coords[0] + next.coords[0]) / 2, (a.coords[1] + next.coords[1]) / 2];
+			}
+		} else {
+			return locations[0].coords;
+		}
 	});
+
+	const tweenedX = new Tween(0);
+	const tweenedY = new Tween(0);
 
 	$effect(() => {
-		if (leaflet && map) {
-			var trainIcon = new leaflet.Icon({
-				iconUrl: `/api/icons/${color.replace('#', '')}/train`,
-				iconSize: [25, 25],
-				iconAnchor: [12, 12],
-				popupAnchor: [1, -25],
-				shadowSize: [41, 41]
-			});
-
-			if (current) {
-				let coords = locations[current].coords;
-				if (locations[current].l.state === Status.DEPARTED) {
-					let next = locations[current + 1].coords;
-					console.log(coords, next);
-					coords = [(coords[0] + next[0]) / 2, (coords[1] + next[1]) / 2];
-				}
-
-				if (posIndicator) {
-					posIndicator.setLatLng(coords);
-				} else {
-					posIndicator = leaflet
-						.marker(coords, { icon: trainIcon })
-						.addTo(map)
-						.bindPopup(locations[current].l.name);
-					map.setView(coords, 13);
-				}
-			} else {
-				map.setView(locations[0].coords, 13);
-			}
-		}
+		tweenedX.set(currentPosCoords[0]);
+		tweenedY.set(currentPosCoords[1]);
 	});
 
-	onDestroy(async () => {
-		if (map) {
-			console.log('Unloading Leaflet map.');
-			map.remove();
-		}
+	const pointIcon = icon({
+		iconUrl: `/api/icons/${color.replace('#', '')}/pin`,
+		iconSize: [25, 25],
+		iconAnchor: [12, 12]
+	});
+
+	const passedIcon = icon({
+		iconUrl: `/api/icons/${color.replace('#', '')}/done`,
+		iconSize: [25, 25],
+		iconAnchor: [12, 12]
+	});
+
+	const trainIcon = icon({
+		iconUrl: `/api/icons/${color.replace('#', '')}/train`,
+		iconSize: [25, 25],
+		iconAnchor: [12, 12]
 	});
 </script>
 
-<main class="z-0 h-full w-full overflow-y-hidden object-cover">
-	<div bind:this={mapElement}></div>
-</main>
-
-<style>
-	main div {
-		height: 200px;
-		z-index: 0 !important;
-	}
-	:global(.leaflet-control-attribution) {
-		bottom: 8px;
-	}
-</style>
+{#if browser}
+	<div style="width:100%;height:150px;">
+		<Map
+			options={{
+				center: currentPosCoords,
+				zoom: 13
+			}}
+		>
+			<TileLayer url={`https://tile.openstreetmap.org/{z}/{x}/{y}.png`} />
+			{#each locations.filter((l) => !l.l.isPass && l.l.crs) as location, i (location.coords)}
+				<Marker
+					latLng={location.coords}
+					options={{ icon: location.l.state === Status.DEPARTED ? passedIcon : pointIcon }}
+				>
+					<Popup options={{ content: location.l.name }} />
+				</Marker>
+			{/each}
+			{#if current}
+				<Marker
+					latLng={[tweenedX.current, tweenedY.current]}
+					options={{ icon: trainIcon, zIndexOffset: 1000 }}
+				></Marker>
+			{/if}
+			<Polyline
+				latLngs={locations.map((l) => l.coords)}
+				options={{
+					smoothFactor: 1,
+					weight: 5,
+					color
+				}}
+			/>
+		</Map>
+	</div>
+{/if}

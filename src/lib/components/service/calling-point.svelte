@@ -71,7 +71,7 @@
 			</div>
 			<div class="flex flex-col items-end">
 				<TimeDisplay
-					et={atd ?? ata ?? etd ?? eta ?? 'Delayed'}
+					et={atd ?? etd ?? eta ?? ata ?? 'Delayed'}
 					st={std ?? sta}
 					small
 					{isCancelled}
