@@ -7,9 +7,9 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 	const { id, crs } = params;
 
 	const response = await fetch(`/api/service/${id}/${crs}`);
-	const tiplocRes = await fetch(`https://json-993.pages.dev/tiploc.json`);
-	const tiplocs = (await tiplocRes.json()).Tiplocs;
 	const service = await response.json();
+	const tiplocRes = await fetch(`/api/latlong/${service.all.map((s) => s.tiploc).join(',')}`);
+	const tiplocs = await tiplocRes.json();
 
 	return { ...service, crs, id, tiplocs };
 };

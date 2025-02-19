@@ -39,6 +39,7 @@
 
 	const coords = $derived(
 		data.all.map((l, i) => {
+			console.log(l.tiploc);
 			const found = data.tiplocs.find((tiploc) => tiploc.Tiploc === l.tiploc);
 			return found ? { l, coords: [found.Latitude, found.Longitude] } : { l, coords: [null, null] };
 		})
