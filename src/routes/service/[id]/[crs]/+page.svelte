@@ -2,7 +2,7 @@
 	import dayjs from 'dayjs';
 	import { onDestroy, onMount, type Snippet } from 'svelte';
 	import { scrollY } from 'svelte/reactivity/window';
-	import { fade } from 'svelte/transition';
+	import { draw, fade } from 'svelte/transition';
 	import { Accordion } from 'bits-ui';
 
 	import CallingPoint from '$lib/components/service/calling-point.svelte';
@@ -16,12 +16,15 @@
 	import { operatorList } from '$lib/data/operators';
 	import type { PageData } from './$types';
 	import Map from '$lib/components/service/map.svelte';
+	import { Drawer } from 'vaul-svelte';
 
 	let {
 		data,
 		drawer = false,
 		header
 	}: { data: PageData; drawer?: boolean; header?: Snippet } = $props();
+
+	let open = $state(true);
 
 	let currentAccordion = $state(data.focus.crs);
 	let now: dayjs.Dayjs | null = $state(null);
@@ -64,6 +67,8 @@
 	onDestroy(() => {
 		clearInterval(interval);
 	});
+
+	let expandedMap = $state(false);
 </script>
 
 {#if data && data !== undefined && data.focus}
@@ -128,62 +133,74 @@
 		</div>
 	</div>
 
-	<div class="min-h-0 flex-grow overflow-y-scroll [scrollbar-gutter:stable] [scrollbar-width:thin]">
+	<div class="flex-grow overflow-y-scroll">
 		{#if coords.length > 0}
-			<Map locations={coords} current={data.currentAll} />
+			<div class={['h-[200px] transition-all']}>
+				<Map
+					color={operatorList[data.operatorCode!].bg}
+					locations={coords}
+					current={data.currentAll}
+				/>
+			</div>
 		{/if}
 
-		<Accordion.Root
-			bind:value={currentAccordion}
-			class="pointer-events-none z-40 flex flex-grow flex-col bg-background pl-4 pr-4 pt-2"
-		>
-			{#if data.locations}
-				{#each data.locations ?? [] as location, i}
-					<div class="group pointer-events-auto relative">
-						<div
-							style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-							class={[
-								'absolute -bottom-3 left-[70px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
-							]}
-						></div>
-						{#if data.currentLocation === i + 1}
-							{@const b = data !== undefined ? (data.locations[i + 1] ?? null) : null}
-							{#if b}
-								<PositionIndicator
-									a={location.atd ?? location.etd ?? location.std}
-									b={b ? (b.ata ?? b.eta ?? b.sta) : null}
-									{now}
-									state={b.state}
-									color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-								/>
-							{/if}
-						{/if}
-						<div class="absolute left-[70px] top-0 z-30 flex h-16 w-2 items-center">
-							<div
-								style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-								class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
-							></div>
-						</div>
-
-						<CallingPoint
-							{i}
-							platform={location.platform}
-							crs={location.crs}
-							name={location.name}
-							std={location.std}
-							sta={location.sta}
-							etd={location.etd}
-							atd={location.atd}
-							ata={location.ata}
-							eta={location.eta}
-							type={location.order}
-							isCancelled={location.isCancelled ?? false}
-							destCrs={data.destination.crs}
-						/>
-					</div>
-				{/each}
-			{/if}
-		</Accordion.Root>
-		<div class="h-20 md:h-0"></div>
+		{#if !expandedMap}
+			{@render stopList()}
+		{/if}
 	</div>
 {/if}
+
+{#snippet stopList()}
+	<Accordion.Root
+		bind:value={currentAccordion}
+		class="z-40 flex -translate-y-4 flex-col rounded-t-xl border-t border-zinc-300 bg-background pt-2 md:rounded-t-none md:drop-shadow-none"
+	>
+		{#if data.locations}
+			{#each data.locations ?? [] as location, i}
+				<div class="group relative">
+					<div
+						style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+						class={[
+							'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+						]}
+					></div>
+					{#if data.currentLocation === i + 1}
+						{@const b = data !== undefined ? (data.locations[i + 1] ?? null) : null}
+						{#if b}
+							<PositionIndicator
+								a={location.atd ?? location.etd ?? location.std}
+								b={b ? (b.ata ?? b.eta ?? b.sta) : null}
+								{now}
+								state={b.state}
+								color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+							/>
+						{/if}
+					{/if}
+					<div class="absolute left-[78px] top-0 z-30 flex h-16 w-2 items-center">
+						<div
+							style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+							class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
+						></div>
+					</div>
+
+					<CallingPoint
+						{i}
+						platform={location.platform}
+						crs={location.crs}
+						name={location.name}
+						std={location.std}
+						sta={location.sta}
+						etd={location.etd}
+						atd={location.atd}
+						ata={location.ata}
+						eta={location.eta}
+						type={location.order}
+						isCancelled={location.isCancelled ?? false}
+						destCrs={data.destination.crs}
+					/>
+				</div>
+			{/each}
+		{/if}
+	</Accordion.Root>
+	<div class="z-40 h-20 bg-background md:h-0"></div>
+{/snippet}

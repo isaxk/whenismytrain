@@ -36,7 +36,7 @@
 		style:border-color={color}
 		style:color
 		class={[
-			'bg-card flex h-6 w-6 items-center justify-center rounded-full border-2 border-zinc-600 text-zinc-600 drop-shadow-2xl transition-all delay-75 duration-200'
+			'flex h-6 w-6 items-center justify-center rounded-full border-2 border-zinc-600 bg-card text-zinc-600 drop-shadow-2xl transition-all delay-75 duration-200'
 		]}
 	>
 		<Train size={16} strokeWidth={2.5} />
@@ -44,12 +44,12 @@
 {/snippet}
 
 {#if currentState === Status.AWAY}
-	<div class="h-17 absolute -bottom-5 left-[62px] top-10 z-40 w-6 pt-5 duration-75">
+	<div class="h-17 absolute -bottom-5 left-[70px] top-10 z-40 w-6 pt-5 duration-75">
 		<div class="flex w-full items-end transition-all" style:height="{progress}%">
 			{@render indicator()}
 		</div>
 	</div>
 {:else if currentState === Status.ARRIVED}
-	<div class="h-17 absolute -bottom-11 left-[62px] top-10 z-40 flex w-6 items-end pt-3 duration-75">
+	<div class="h-17 absolute -bottom-11 left-[70px] top-10 z-40 flex w-6 items-end pt-3 duration-75">
 		{@render indicator()}
 	</div>{/if}

@@ -327,10 +327,10 @@
 	{/if}
 
 	<Refresher {onRefresh} {refreshing}>
-		<div class="md:flex-grow">
+		<div class="min-w-0 md:flex-grow">
 			{#await data.board then { board }}
 				{#if md.current}
-					<div class="sticky top-0 z-20 flex w-full bg-background pt-4">
+					<div class="sticky top-0 z-20 flex bg-background pt-4">
 						<div class="min-w-0 flex-grow">
 							<OperatorsList
 								operators={Array.from(operators)}

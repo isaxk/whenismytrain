@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="256mm"
+   height="256mm"
+   viewBox="0 0 256 256"
+   version="1.1"
+   id="svg1"
+   xml:space="preserve"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   sodipodi:docname="mappin.svg"
+   inkscape:export-filename="mappinplain.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.31240568"
+     inkscape:cx="283.2855"
+     inkscape:cy="323.29758"
+     inkscape:window-width="1440"
+     inkscape:window-height="765"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" /><defs
+     id="defs1" /><g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"><circle
+       style="fill:#0a59db;stroke:none;stroke-width:5.47955"
+       id="path2"
+       cx="129.25"
+       cy="129.25"
+       r="126.51022" /><g
+       style="fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       id="g2"
+       transform="matrix(7.2769896,0,0,7.2133004,40.676125,41.448576)"><path
+         d="m 20,10 c 0,4.993 -5.539,10.193 -7.399,11.799 a 1,1 0 0 1 -1.202,0 C 9.539,20.193 4,14.993 4,10 a 8,8 0 0 1 16,0"
+         id="path1-7"
+         style="stroke:#ffffff;stroke-opacity:1" /><circle
+         cx="12"
+         cy="10"
+         r="3"
+         id="circle1"
+         style="stroke:#ffffff;stroke-opacity:1" /></g></g></svg>
