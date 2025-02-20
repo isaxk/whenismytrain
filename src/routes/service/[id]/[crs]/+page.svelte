@@ -55,7 +55,6 @@
 
 	const coords = $derived(
 		data.all.map((l, i) => {
-			console.log(l.tiploc);
 			const found = data.tiplocs.find((tiploc) => tiploc.Tiploc === l.tiploc);
 			return found ? { l, coords: [found.Latitude, found.Longitude] } : { l, coords: [null, null] };
 		})
@@ -67,7 +66,6 @@
 
 		const genAt = dayjs(data.generatedAt);
 		const diff = Math.abs(genAt.diff(now, 'seconds'));
-		console.log(diff);
 		if (diff > REFRESH_INTERVAL) {
 			refresh();
 		}
@@ -81,7 +79,8 @@
 	let pointsScrollY = $state(0);
 	let pointsScrollX = $state(0);
 
-	let expandedMap = $state(false);
+	let expandedMap = $state(true);
+	let expandLock = $state(false);
 </script>
 
 {#if data && data !== undefined && data.focus}
@@ -151,17 +150,29 @@
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div
 				onmousedown={() => {
-					pointsScrollY = 0;
+					expandLock = true;
+					expandedMap = true;
+					setTimeout(() => {
+						expandLock = false;
+					}, 500);
+				}}
+				ontouchstart={() => {
+					expandLock = true;
+					expandedMap = true;
+					setTimeout(() => {
+						expandLock = false;
+					}, 500);
 				}}
 				class={[
-					'z-0 overflow-hidden transition-all duration-200',
-					pointsScrollY > 50 ? 'min-h-[90px] opacity-90 blur-[2px] brightness-75' : 'min-h-[150px]'
+					'z-0 overflow-hidden transition-all duration-300 ease-in-out',
+					expandedMap ? 'min-h-[200px]' : 'min-h-[90px] opacity-90 blur-[2px] brightness-75'
 				]}
 			>
 				<Map
 					color={operatorList[data.operatorCode!].bg}
 					locations={coords}
 					current={data.currentAll}
+					expanded={expandedMap}
 				/>
 			</div>
 		{/if}
@@ -189,15 +200,19 @@
 
 			<div
 				onscroll={(e) => {
-					pointsScrollY = e.target?.scrollTop;
+					if (e.target?.scrollTop > 50 && !expandLock) {
+						expandedMap = false;
+					} else {
+						expandedMap = true;
+					}
 				}}
-				class="min-h-0 flex-grow overflow-scroll"
+				class="min-h-0 flex-grow overflow-scroll overscroll-x-none"
 			>
 				{#if showPasses}
 					<div
 						class={[
 							[
-								'sticky top-0 z-10 flex w-max items-end gap-2 bg-background px-4 py-1 font-semibold',
+								'sticky -top-1 z-10 -mt-1 flex w-max items-end gap-2 bg-background px-4 py-1 font-semibold',
 								pointsScrollY > 5 ? 'drop-shadow' : ''
 							]
 						]}
@@ -289,7 +304,7 @@
 						{/each}
 					</div>
 					<div class="h-20"></div>
-				{:else if !expandedMap}
+				{:else}
 					{@render stopList()}
 				{/if}
 			</div>

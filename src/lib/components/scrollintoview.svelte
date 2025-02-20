@@ -5,7 +5,7 @@
 
 	onMount(() => {
 		setTimeout(() => {
-			elm.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'center' });
+			elm?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'center' });
 		}, 180);
 	});
 </script>

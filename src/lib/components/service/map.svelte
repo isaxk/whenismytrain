@@ -10,9 +10,11 @@
 	let {
 		color,
 		locations,
-		current
+		current,
+		expanded = true
 	}: {
 		color: string;
+		expanded: boolean;
 		locations: { l: ServiceDetailsLocation; coords: [number, number] }[];
 		current: number;
 	} = $props();
@@ -63,7 +65,7 @@
 </script>
 
 {#if browser}
-	<div style="width:100%;height:150px;">
+	<div class={['h-[200px] w-full']}>
 		<Map
 			options={{
 				center: currentPosCoords,
