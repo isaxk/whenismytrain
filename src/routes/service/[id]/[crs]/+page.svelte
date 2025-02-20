@@ -164,9 +164,9 @@
 					}, 500);
 				}}
 				class={[
-					'z-0 overflow-hidden transition-all duration-300 ease-in-out',
+					'z-0 overflow-hidden transition-all duration-300',
 					expandedMap
-						? 'min-h-[200px]'
+						? 'h-[200px] max-h-[200px] min-h-[200px]'
 						: 'h-[90px] max-h-[90px] min-h-[90px] opacity-90 blur-[2px] brightness-75'
 				]}
 			>
