@@ -18,6 +18,11 @@
 	import Map from '$lib/components/service/map.svelte';
 	import { Drawer } from 'vaul-svelte';
 	import { browser } from '$app/environment';
+	import Switch from '$lib/components/ui/switch.svelte';
+	import Switchbar from '$lib/components/ui/switchbar.svelte';
+	import { List, Table } from 'lucide-svelte';
+	import Refresher from '$lib/components/refresher.svelte';
+	import Refreshbar from '$lib/components/ui/refreshbar/refreshbar.svelte';
 
 	let {
 		data,
@@ -30,11 +35,22 @@
 	let currentAccordion = $state(data.focus.crs);
 	let now: dayjs.Dayjs | null = $state(null);
 	let interval: ReturnType<typeof setInterval>;
+	let showPasses = $state(true);
+	let refreshing = $state(false);
+
+	const REFRESH_INTERVAL = 10;
 
 	async function refresh() {
+		refreshing = true;
 		const response = await fetch(`/api/service/${data.id}/${data.crs}`);
 		now = dayjs();
 		data = { ...(await response.json()), crs: data.crs, id: data.id, tiplocs: data.tiplocs };
+		data.generatedAt = dayjs().toISOString();
+		interval = setTimeout(refresh, REFRESH_INTERVAL * 1000);
+
+		setTimeout(() => {
+			refreshing = false;
+		}, 750);
 	}
 
 	const coords = $derived(
@@ -46,20 +62,24 @@
 	);
 
 	onMount(() => {
-		interval = setInterval(refresh, 10000);
+		interval = setTimeout(refresh, REFRESH_INTERVAL * 1000);
 		now = dayjs();
 
 		const genAt = dayjs(data.generatedAt);
 		const diff = Math.abs(genAt.diff(now, 'seconds'));
 		console.log(diff);
-		if (diff > 10) {
+		if (diff > REFRESH_INTERVAL) {
 			refresh();
 		}
+		data.generatedAt = dayjs().toISOString();
 	});
 
 	onDestroy(() => {
-		clearInterval(interval);
+		clearTimeout(interval);
 	});
+
+	let pointsScrollY = $state(0);
+	let pointsScrollX = $state(0);
 
 	let expandedMap = $state(false);
 </script>
@@ -115,7 +135,6 @@
 						{operatorList[data.operatorCode!].name}
 					</div>
 					<div class="flex-grow"></div>
-					<LastUpdated date={data.generatedAt} />
 				</div>
 
 				<Disruption
@@ -126,9 +145,19 @@
 		</div>
 	</div>
 
-	<div class="flex-grow overflow-y-scroll">
+	<Refreshbar {refreshing} interval={REFRESH_INTERVAL} genAt={data.generatedAt} />
+	<div class="flex flex-grow flex-col overflow-auto">
 		{#if coords.length > 0 && browser}
-			<div class={['h-[200px] transition-all']}>
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div
+				onmousedown={() => {
+					pointsScrollY = 0;
+				}}
+				class={[
+					'z-0 overflow-hidden transition-all duration-200',
+					pointsScrollY > 50 ? 'min-h-[90px] opacity-90 blur-[2px] brightness-75' : 'min-h-[150px]'
+				]}
+			>
 				<Map
 					color={operatorList[data.operatorCode!].bg}
 					locations={coords}
@@ -137,19 +166,144 @@
 			</div>
 		{/if}
 
-		{#if !expandedMap}
-			{@render stopList()}
-		{/if}
+		<div
+			class="z-20 flex min-h-0 flex-grow -translate-y-2 flex-col rounded-t-lg border-t bg-background"
+		>
+			<div class="p-1">
+				<Switchbar
+					bind:value={showPasses}
+					items={[
+						{
+							Icon: List,
+							key: false,
+							label: 'Simple'
+						},
+						{
+							Icon: Table,
+							key: true,
+							label: 'Detailed'
+						}
+					]}
+				/>
+			</div>
+
+			<div
+				onscroll={(e) => {
+					pointsScrollY = e.target?.scrollTop;
+				}}
+				class="min-h-0 flex-grow overflow-scroll"
+			>
+				{#if showPasses}
+					<div
+						class={[
+							[
+								'sticky top-0 z-10 flex w-max items-end gap-2 bg-background px-4 py-1 font-semibold',
+								pointsScrollY > 5 ? 'drop-shadow' : ''
+							]
+						]}
+					>
+						<div class="min-w-10">Plat.</div>
+						<div class="min-w-64">Name</div>
+						<div class="flex">
+							<div class="w-full flex-col pr-1">
+								<div class="w-full text-left">Arrival</div>
+								<div class="flex gap-1 text-left text-sm font-medium">
+									<div class="min-w-12 max-w-12">Plan</div>
+									<div class="min-w-12 max-w-12">Est</div>
+									<div class="min-w-12 max-w-12">Act</div>
+								</div>
+							</div>
+							<div class="w-full flex-col">
+								<div class="w-full text-left">Departure</div>
+								<div class="flex gap-1 text-left text-sm font-medium">
+									<div class="min-w-12 max-w-12">Plan</div>
+									<div class="min-w-12 max-w-12">Est</div>
+									<div class="min-w-12 max-w-12">Act.</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="flex w-max flex-col border-b font-bold">
+						{#each data.all as location, i (location.tiploc + location.std)}
+							<div
+								class={[
+									'flex items-center gap-2 px-4 text-base',
+									location.isPass
+										? 'py-0.5 text-xs font-normal text-zinc-500'
+										: 'py-1 font-semibold',
+									i % 2 === 0 && 'border-y bg-card'
+								]}
+							>
+								<div class="min-w-10">
+									{#if location.isPass}
+										<span class="text-xs italic">PASS</span>
+									{:else}
+										<div class="font-mono">
+											{location.platform ?? '?'}
+										</div>
+									{/if}
+								</div>
+								{#snippet date(d)}
+									{#if d}
+										{dayjs(d).format('HHmm')}
+										{#if dayjs(d).format('ss') !== '00'}
+											<div class="translate-y-[1px] text-[9px] font-light">
+												{dayjs(d).format('ss')}
+											</div>
+										{/if}
+									{:else}
+										-
+									{/if}
+								{/snippet}
+								<div
+									class={[
+										'w-full min-w-64 max-w-64 truncate',
+										location.crs && location.isPass && 'font-medium text-zinc-800'
+									]}
+								>
+									{location.name}
+									{#if location.crs}
+										<span class="text-xs font-light text-zinc-600"> ({location.crs})</span>{/if}
+								</div>
+								<div class="flex gap-1 text-left">
+									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+										{@render date(location.sta)}
+									</div>
+									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+										{@render date(location.eta)}
+									</div>
+									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+										{@render date(location.ata)}
+									</div>
+									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+										{@render date(location.std)}
+									</div>
+									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+										{@render date(location.etd)}
+									</div>
+									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+										{@render date(location.atd)}
+									</div>
+								</div>
+							</div>
+						{/each}
+					</div>
+					<div class="h-20"></div>
+				{:else if !expandedMap}
+					{@render stopList()}
+				{/if}
+			</div>
+		</div>
 	</div>
 {/if}
 
 {#snippet stopList()}
 	<Accordion.Root
 		bind:value={currentAccordion}
-		class="z-40 flex -translate-y-4 flex-col rounded-t-xl border-t border-zinc-300 bg-background pt-2 md:rounded-t-none md:drop-shadow-none"
+		class="z-40 flex flex-col bg-background pt-2 md:rounded-t-none md:drop-shadow-none"
 	>
 		{#if data.locations}
-			{#each data.locations ?? [] as location, i}
+			{#each data.locations as location, i}
 				<div class="group relative">
 					<div
 						style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
@@ -178,6 +332,7 @@
 
 					<CallingPoint
 						{i}
+						isPass={location.isPass}
 						platform={location.platform}
 						crs={location.crs}
 						name={location.name}

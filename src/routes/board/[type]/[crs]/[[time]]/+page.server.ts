@@ -5,6 +5,8 @@ import AllStationsJSON from 'uk-railway-stations';
 import { error } from '@sveltejs/kit';
 import type { Board, TrainService } from '$lib/types';
 
+export const ssr = false;
+
 export const load: PageServerLoad = async ({ params, fetch }) => {
 	const list = params.crs;
 	const time = params.time ?? null;

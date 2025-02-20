@@ -6,13 +6,16 @@
 	let {
 		items,
 		value = $bindable()
-	}: { value: string; items: { key: string; label: string; Icon: typeof IconType }[] } = $props();
+	}: {
+		value: string | boolean;
+		items: { key: string | boolean; label: string; Icon: typeof IconType }[];
+	} = $props();
 
 	const [send, receive] = crossfade({ duration: 200, easing: quartInOut });
 </script>
 
 <div
-	class="bg-card flex h-11 min-h-11 transform-gpu rounded-lg border border-zinc-100 p-1 drop-shadow"
+	class="flex h-11 min-h-11 transform-gpu rounded-lg border border-zinc-100 bg-card p-1 drop-shadow"
 >
 	{#each items as { key, label, Icon }}
 		<button

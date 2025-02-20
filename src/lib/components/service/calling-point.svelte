@@ -22,7 +22,8 @@
 		atd,
 		sta,
 		eta,
-		ata
+		ata,
+		isPass = false
 	} = $props();
 
 	let elm: HTMLDivElement;

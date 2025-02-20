@@ -67,7 +67,7 @@
 		<Map
 			options={{
 				center: currentPosCoords,
-				zoom: 13
+				zoom: 11
 			}}
 		>
 			<TileLayer url={`https://tile.openstreetmap.org/{z}/{x}/{y}.png`} />
