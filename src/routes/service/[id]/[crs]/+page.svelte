@@ -35,7 +35,7 @@
 	let currentAccordion = $state(data.focus.crs);
 	let now: dayjs.Dayjs | null = $state(null);
 	let interval: ReturnType<typeof setInterval>;
-	let showPasses = $state(true);
+	let showPasses = $state(false);
 	let refreshing = $state(false);
 
 	const REFRESH_INTERVAL = 10;

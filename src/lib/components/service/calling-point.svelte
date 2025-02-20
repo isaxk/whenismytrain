@@ -83,10 +83,11 @@
 
 	<Accordion.Content class="pb-5 pl-[90px]" transition={slide} transitionConfig={{ duration: 180 }}>
 		<div class="rounded-lg border bg-zinc-100 px-2 py-2.5 drop-shadow-sm">
+			<Scrollintoview />
 			{#if type === 'subsequent' && !foreign.includes(crs)}
 				<Preview {crs} date={std ?? etd ?? sta ?? eta} {destCrs} />
 			{/if}
-			<Scrollintoview />
+
 			<div class="grid grid-cols-3 px-2 pt-1 text-xs md:text-sm">
 				<div class="text-xs font-medium">
 					<div class="h-5"></div>

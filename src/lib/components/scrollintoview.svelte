@@ -4,9 +4,9 @@
 	let elm: HTMLDivElement;
 
 	onMount(() => {
-        setTimeout(()=>{
-            elm.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'center' });
-        }, 180)
+		setTimeout(() => {
+			elm.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'center' });
+		}, 180);
 	});
 </script>
 
