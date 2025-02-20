@@ -130,10 +130,12 @@
 					focused = true;
 				}}
 				onblur={() => {
-					if (md.current) {
-						focused = false;
-						value = '';
-					}
+					window.setTimeout(() => {
+						if (md.current) {
+							focused = false;
+							value = '';
+						}
+					}, 100);
 				}}
 				bind:this={input}
 				type="text"
@@ -152,7 +154,8 @@
 				<div class="flex flex-col">
 					{#each formatted as result, i}
 						<button
-							onmousedown={() => () => select(results[i].item)}
+							type="button"
+							onmousedown={() => select(results[i].item)}
 							class="flex w-full items-center gap-2 border-b px-4 py-2 text-left text-zinc-800 last:border-none"
 						>
 							<div class="min-w-0 flex-grow">
