@@ -165,7 +165,9 @@
 				}}
 				class={[
 					'z-0 overflow-hidden transition-all duration-300 ease-in-out',
-					expandedMap ? 'min-h-[200px]' : 'min-h-[90px] opacity-90 blur-[2px] brightness-75'
+					expandedMap
+						? 'min-h-[200px]'
+						: 'h-[90px] max-h-[90px] min-h-[90px] opacity-90 blur-[2px] brightness-75'
 				]}
 			>
 				<Map
