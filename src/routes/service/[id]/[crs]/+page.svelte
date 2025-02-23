@@ -96,7 +96,7 @@
 	{/if}
 </svelte:head>
 
-{#if data && data !== undefined && data.focus && data.currentAll}
+{#if data && data !== undefined && data.focus}
 	<div
 		class={['w-full', !drawer && 'md:min-w-[450px] md:max-w-[450px]']}
 		in:fade|global={{ duration: 250 }}
@@ -358,7 +358,7 @@
 			class="z-40 flex flex-col bg-background pt-2 md:rounded-t-none md:drop-shadow-none"
 		>
 			{#if data.locations}
-				{#if !showPrevious}
+				{#if !showPrevious && data.locations.filter((l) => l.order === 'previous').length > 0}
 					<button
 						out:slide={{ duration: 125 }}
 						class="relative flex items-center px-4 py-3 text-left odd:bg-background even:bg-card"
