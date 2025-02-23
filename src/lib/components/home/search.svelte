@@ -63,7 +63,7 @@
 		if (focused) {
 			input.focus();
 		}
-		if (!crs && !clearable) {
+		if (!crs && !clearable && geoStations.length > 0) {
 			select(geoStations[0]);
 		}
 	});

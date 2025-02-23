@@ -53,7 +53,8 @@ export const savedServices = localStore<{ crs: string; id: string; key: string }
 export const coordsStore = localStore<{ lat: number; lng: number } | null>('coords', null);
 
 export function getGeoStations() {
-	if (coordsStore.value !== null) {
+	console.log('coordsStore.value', coordsStore.value);
+	if (coordsStore.value) {
 		const withDistance = AllStationsJSON.map((s) => {
 			return {
 				...s,
@@ -68,6 +69,8 @@ export function getGeoStations() {
 
 export function updateLocation() {
 	navigator.geolocation.getCurrentPosition((t) => {
-		coordsStore.value = { lat: t.coords.latitude, lng: t.coords.longitude };
+		if (t.coords) {
+			coordsStore.value = { lat: t.coords.latitude, lng: t.coords.longitude };
+		}
 	});
 }
