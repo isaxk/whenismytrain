@@ -236,8 +236,6 @@
 				onscroll={(e) => {
 					if (e.target?.scrollTop > 50 && !expandLock) {
 						expandedMap = false;
-					} else {
-						expandedMap = true;
 					}
 				}}
 				class="min-h-0 flex-grow overflow-scroll overscroll-none"
@@ -361,37 +359,56 @@
 			class="z-40 flex flex-col bg-background pt-2 md:rounded-t-none md:drop-shadow-none"
 		>
 			{#if data.locations}
-				{#if !showPrevious && data.locations.filter((l) => l.order === 'previous').length > 0}
-					<button
-						out:slide={{ duration: 125 }}
-						class="relative flex items-center bg-card px-4 py-3 text-left"
-						onclick={() => (showPrevious = true)}
-					>
-						<div class="flex w-16 items-center justify-center text-center">
-							<Ellipsis size={18} />
-						</div>
-						<div class="w-[26px]">
-							<div
-								style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-								class={[
-									'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
-								]}
-							></div>
-
-							{#if data.locations[0].state === Status.DEPARTED && data.focus.state === Status.AWAY}
-								<PositionIndicator
-									progress={0}
-									collapsed
-									color={operatorList[data.operatorCode].bg}
-									{now}
-								/>
-							{/if}
-						</div>
-						Show {data.locations.filter((l) => l.order === 'previous').length} previous stops
-					</button>
-				{/if}
 				{#each data.locations as location, i}
 					{#if showPrevious || location.order !== 'previous'}
+						{#if !showPrevious && location.order === 'focus' && data.locations.filter((l) => l.order === 'previous').length > 0}
+							<button
+								out:slide={{ duration: 125 }}
+								class={[
+									'relative flex items-center px-4 py-3 text-left font-medium',
+									(i - 1) % 2 === 0 ? 'bg-background' : 'bg-card'
+								]}
+								onclick={() => (showPrevious = true)}
+							>
+								<div class="flex w-16 items-center justify-center text-center"></div>
+								<div class="w-[26px]">
+									<div
+										class={[
+											'absolute -bottom-0 left-[78px] top-3 z-30 grid w-2 grid-rows-6 rounded-sm group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+										]}
+									>
+										{#snippet empty()}
+											<div class="rounded"></div>
+										{/snippet}
+										{#snippet dot()}
+											<div
+												class="rounded"
+												style:background={data.operatorCode
+													? operatorList[data.operatorCode].bg
+													: ''}
+											></div>
+										{/snippet}
+
+										{@render dot()}
+										{@render empty()}
+										{@render dot()}
+										{@render empty()}
+										{@render dot()}
+										{@render empty()}
+									</div>
+
+									{#if data.locations[0].state === Status.DEPARTED && data.focus.state === Status.AWAY}
+										<PositionIndicator
+											progress={0}
+											collapsed
+											color={operatorList[data.operatorCode].bg}
+											{now}
+										/>
+									{/if}
+								</div>
+								Show {data.locations.filter((l) => l.order === 'previous').length} previous stops
+							</button>
+						{/if}
 						<div class="group relative" transition:slide={{ duration: 75 }}>
 							<div
 								style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
@@ -440,8 +457,8 @@
 							<button
 								transition:slide={{ duration: 125 }}
 								class={[
-									'relative pb-2 pl-[108px] text-left text-zinc-700 transition-all duration-200',
-									i === 0 ? 'bg-background' : 'bg-card'
+									'relative pb-2 pl-[108px] text-left font-medium text-zinc-700 transition-all duration-200',
+									i % 2 === 0 ? 'bg-background' : 'bg-card'
 								]}
 								onclick={() => (showPrevious = false)}
 							>
