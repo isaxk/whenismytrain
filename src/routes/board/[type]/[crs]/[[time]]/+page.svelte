@@ -332,7 +332,7 @@
 		in:receive={{ key: 'service-details' }}
 		out:send={{ key: 'service-details' }}
 	>
-		{#if page.state.selected}
+		{#if page.state.selected && page.state.selected !== null}
 			<ServiceDetails data={page.state.selected} drawer>
 				{#snippet header()}
 					<Header

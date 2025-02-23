@@ -41,29 +41,32 @@
 
 	async function refresh() {
 		refreshing = true;
+		if (!data) return;
 
 		const response = await fetch(`/api/service/${data.id}/${data.crs}`);
 		now = dayjs();
 		data = { ...(await response.json()), crs: data.crs, id: data.id, tiplocs: data.tiplocs };
 
 		interval = setTimeout(refresh, REFRESH_INTERVAL * 1000);
-		setTimeout(() => {
-			refreshing = false;
-		}, 750);
+		refreshing = false;
 	}
 
 	const coords = $derived(
-		data.all.map((l, i) => {
-			const found = data.tiplocs.find((tiploc) => tiploc.Tiploc === l.tiploc);
-			return found ? { l, coords: [found.Latitude, found.Longitude] } : { l, coords: [null, null] };
-		})
+		data
+			? data.all.map((l, i) => {
+					const found = data.tiplocs.find((tiploc) => tiploc.Tiploc === l.tiploc);
+					return found
+						? { l, coords: [found.Latitude, found.Longitude] }
+						: { l, coords: [null, null] };
+				})
+			: []
 	);
 
 	onMount(() => {
 		interval = setTimeout(refresh, REFRESH_INTERVAL * 1000);
 		now = dayjs();
 
-		const genAt = dayjs(data.generatedAt);
+		const genAt = data ? dayjs(data?.generatedAt) : dayjs();
 		const diff = Math.abs(genAt.diff(now, 'seconds'));
 		if (diff > REFRESH_INTERVAL) {
 			refresh();
@@ -83,15 +86,17 @@
 </script>
 
 <svelte:head>
-	<title
-		>{dayjs(
-			data.focus.atd ?? data.focus.etd ?? data.focus.std ?? data.focus.ata ?? data.focus.eta
-		).format('HH:mm')}
-		to {data.destination.name} - {operatorList[data.operatorCode].name}
-	</title>
+	{#if data}
+		<title
+			>{dayjs(
+				data.focus.atd ?? data.focus.etd ?? data.focus.std ?? data.focus.ata ?? data.focus.eta
+			).format('HH:mm')}
+			to {data.destination.name} - {operatorList[data.operatorCode].name}
+		</title>
+	{/if}
 </svelte:head>
 
-{#if data && data !== undefined && data.focus}
+{#if data && data !== undefined && data.focus && data.currentAll}
 	<div
 		class={['w-full', !drawer && 'md:min-w-[450px] md:max-w-[450px]']}
 		in:fade|global={{ duration: 250 }}
@@ -157,12 +162,12 @@
 		<div class="md:px-4">
 			<Refreshbar {refreshing} interval={REFRESH_INTERVAL} genAt={data.generatedAt} />
 		</div>
-		{#if md.current && !drawer}
+		{#if coords && coords.length > 0 && browser && md.current && !drawer}
 			<div class="px-4 pt-4">
 				<Map
 					color={operatorList[data.operatorCode!].bg}
 					locations={coords}
-					current={data.currentAll}
+					current={data?.currentAll}
 					expanded={expandedMap}
 				/>
 			</div>
@@ -170,7 +175,7 @@
 	</div>
 
 	<div class={['flex flex-grow flex-col overflow-auto', !drawer && 'md:pt-5']}>
-		{#if coords.length > 0 && browser && (!md.current || drawer)}
+		{#if coords && coords.length > 0 && browser && (!md.current || drawer)}
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div
 				onmousedown={() => {
@@ -197,7 +202,7 @@
 				<Map
 					color={operatorList[data.operatorCode!].bg}
 					locations={coords}
-					current={data.currentAll}
+					current={data?.currentAll}
 					expanded={expandedMap}
 				/>
 			</div>
@@ -347,103 +352,105 @@
 {/if}
 
 {#snippet stopList()}
-	<Accordion.Root
-		bind:value={currentAccordion}
-		class="z-40 flex flex-col bg-background pt-2 md:rounded-t-none md:drop-shadow-none"
-	>
-		{#if data.locations}
-			{#if !showPrevious}
-				<button
-					out:slide={{ duration: 125 }}
-					class="relative flex items-center px-4 py-3 text-left"
-					onclick={() => (showPrevious = true)}
-				>
-					<div class="flex w-16 items-center justify-center text-center">
-						<Ellipsis size={18} />
-					</div>
-					<div class="w-[26px]">
-						<div
-							style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-							class={[
-								'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
-							]}
-						></div>
-
-						{#if data.locations[0].state === Status.DEPARTED && data.focus.state === Status.AWAY}
-							<PositionIndicator
-								progress={0}
-								collapsed
-								color={operatorList[data.operatorCode].bg}
-								{now}
-							/>
-						{/if}
-					</div>
-					Show {data.locations.filter((l) => l.order === 'previous').length} previous stops
-				</button>
-			{/if}
-			{#each data.locations as location, i}
-				{#if location.order === 'focus' && showPrevious}
+	{#if data}
+		<Accordion.Root
+			bind:value={currentAccordion}
+			class="z-40 flex flex-col bg-background pt-2 md:rounded-t-none md:drop-shadow-none"
+		>
+			{#if data.locations}
+				{#if !showPrevious}
 					<button
-						transition:slide={{ duration: 125 }}
-						class="relative border-t py-2 pl-[105px] text-left text-zinc-700"
-						onclick={() => (showPrevious = false)}
+						out:slide={{ duration: 125 }}
+						class="relative flex items-center px-4 py-3 text-left odd:bg-background even:bg-card"
+						onclick={() => (showPrevious = true)}
 					>
-						<div
-							style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-							class={[
-								'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
-							]}
-						></div>
-						Hide previous stops
-					</button>{/if}
-				{#if showPrevious || location.order !== 'previous'}
-					<div class="group relative">
-						<div
-							style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-							class={[
-								'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
-							]}
-						></div>
-						{#if data.currentLocation === i}
-							{@const b = data !== undefined ? (data.locations[i + 1] ?? null) : null}
-							{#if b}
-								<PositionIndicator
-									progress={location.progress}
-									a={location.atd ?? location.etd ?? location.std}
-									b={b ? (b.ata ?? b.eta ?? b.sta) : null}
-									{now}
-									state={location.state}
-									color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-								/>
-							{/if}
-						{/if}
-						<div class="absolute left-[78px] top-0 z-30 flex h-16 w-2 items-center">
+						<div class="flex w-16 items-center justify-center text-center">
+							<Ellipsis size={18} />
+						</div>
+						<div class="w-[26px]">
 							<div
 								style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-								class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
+								class={[
+									'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+								]}
 							></div>
-						</div>
 
-						<CallingPoint
-							{i}
-							isPass={location.isPass}
-							platform={location.platform}
-							crs={location.crs}
-							name={location.name}
-							std={location.std}
-							sta={location.sta}
-							etd={location.etd}
-							atd={location.atd}
-							ata={location.ata}
-							eta={location.eta}
-							type={location.order}
-							isCancelled={location.isCancelled ?? false}
-							destCrs={data.destination.crs}
-						/>
-					</div>
+							{#if data.locations[0].state === Status.DEPARTED && data.focus.state === Status.AWAY}
+								<PositionIndicator
+									progress={0}
+									collapsed
+									color={operatorList[data.operatorCode].bg}
+									{now}
+								/>
+							{/if}
+						</div>
+						Show {data.locations.filter((l) => l.order === 'previous').length} previous stops
+					</button>
 				{/if}
-			{/each}
-		{/if}
-	</Accordion.Root>
-	<div class="z-40 h-20 bg-background md:h-0"></div>
+				{#each data.locations as location, i}
+					{#if location.order === 'focus' && showPrevious}
+						<button
+							transition:slide={{ duration: 125 }}
+							class="relative border-t py-2 pl-[105px] text-left text-zinc-700 transition-all duration-200 odd:bg-background even:bg-card"
+							onclick={() => (showPrevious = false)}
+						>
+							<div
+								style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+								class={[
+									'absolute  -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+								]}
+							></div>
+							Hide previous stops
+						</button>{/if}
+					{#if showPrevious || location.order !== 'previous'}
+						<div class="group relative" transition:slide={{ duration: 75 }}>
+							<div
+								style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+								class={[
+									'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 transition-all duration-75 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+								]}
+							></div>
+							{#if data.currentLocation === i}
+								{@const b = data !== undefined ? (data.locations[i + 1] ?? null) : null}
+								{#if b}
+									<PositionIndicator
+										progress={location.progress}
+										a={location.atd ?? location.etd ?? location.std}
+										b={b ? (b.ata ?? b.eta ?? b.sta) : null}
+										{now}
+										state={location.state}
+										color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+									/>
+								{/if}
+							{/if}
+							<div class="absolute left-[78px] top-0 z-30 flex h-16 w-2 items-center">
+								<div
+									style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+									class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
+								></div>
+							</div>
+
+							<CallingPoint
+								{i}
+								isPass={location.isPass}
+								platform={location.platform}
+								crs={location.crs}
+								name={location.name}
+								std={location.std}
+								sta={location.sta}
+								etd={location.etd}
+								atd={location.atd}
+								ata={location.ata}
+								eta={location.eta}
+								type={location.order}
+								isCancelled={location.isCancelled ?? false}
+								destCrs={data.destination.crs}
+							/>
+						</div>
+					{/if}
+				{/each}
+			{/if}
+		</Accordion.Root>
+		<div class="z-40 h-20 bg-background md:h-0"></div>
+	{/if}
 {/snippet}

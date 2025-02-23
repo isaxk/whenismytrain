@@ -36,9 +36,8 @@
 <Accordion.Item
 	value={crs}
 	class={[
-		'border-t px-4 group-first:border-t-0',
-		type === 'previous' ? 'min-h-14' : 'min-h-14',
-		i % 2 === 0 ? 'bg-background' : 'bg-card'
+		'border-t px-4 transition-all duration-200 group-first:border-t-0 group-odd:bg-background group-even:bg-card',
+		type === 'previous' ? 'min-h-14' : 'min-h-14'
 	]}
 >
 	<Accordion.Header class="contents h-full">

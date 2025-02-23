@@ -21,21 +21,30 @@
 
 	let map = $state();
 
+	function round(n: number) {
+		return parseFloat(n.toFixed(8));
+	}
+
 	const currentPosCoords: [number, number] = $derived.by(() => {
-		if (current) {
+		console.log('current', current);
+		if (current || current === 0) {
 			const a = locations[current];
-			console.log(a);
-			console.log(a.l.state, Status.DEPARTED);
 			if (a.l.state !== Status.DEPARTED) {
 				return a.coords;
 			} else {
 				const next = locations[current + 1];
-				return [(a.coords[0] + next.coords[0]) / 2, (a.coords[1] + next.coords[1]) / 2];
+				console.log(a, next);
+				return [
+					round((a.coords[0] + next.coords[0]) / 2),
+					round((a.coords[1] + next.coords[1]) / 2)
+				];
 			}
 		} else {
-			return locations[0].coords;
+			return locations && locations.length > 0 ? locations[0].coords : [0, 0];
 		}
 	});
+
+	$inspect(currentPosCoords);
 
 	const tweenedX = new Tween(0);
 	const tweenedY = new Tween(0);
@@ -81,7 +90,7 @@
 					<Popup options={{ content: location.l.name }} />
 				</Marker>
 			{/each}
-			{#if current}
+			{#if current && locations && locations.length > 0}
 				<Marker
 					latLng={[tweenedX.current, tweenedY.current]}
 					options={{ icon: trainIcon, zIndexOffset: 1000 }}
