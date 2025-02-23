@@ -21,7 +21,8 @@
 		std,
 		isCancelled,
 		disruptionCode = null,
-		details = null,
+		details = false,
+		focus = null,
 		onservicedetails
 	}: {
 		id: string;
@@ -33,11 +34,10 @@
 		std: string;
 		isCancelled: boolean;
 		disruptionCode: number | null;
-		details?: definitions['ServiceDetails'] | null;
+		details?: boolean;
+		focus?: string;
 		onservicedetails: (id: string) => void;
 	} = $props();
-
-	console.log(disruptionCode);
 </script>
 
 <button
@@ -83,9 +83,21 @@
 				{#if state === Status.STARTS_HERE}
 					<span class="font-light italic text-zinc-500">Starts Here</span>
 				{:else if state === Status.ARRIVED}
-					Arrived
+					Arrived {#if details}
+						<span class="font-light italic text-zinc-500">
+							at {focus}
+						</span>
+					{/if}
 				{:else if state === Status.DEPARTED}
-					Departed
+					Departed {#if details}
+						<span class="font-light italic text-zinc-500">
+							from {focus}
+						</span>
+					{/if}
+				{:else if details}
+					<span class="font-light italic text-zinc-500">
+						Departing {focus} at:
+					</span>
 				{/if}
 			</div>
 		</div>

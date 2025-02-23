@@ -1,48 +1,17 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import Spinner from '$lib/components/spinner.svelte';
-	import { localStore } from '$lib/data/saved.svelte';
+	import { coordsStore, getGeoStations, localStore } from '$lib/data/saved.svelte';
 	import { distance } from '$lib/utils';
 	import { ArrowUpRight } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import AllStationsJSON from 'uk-railway-stations';
 
-	let coords: GeolocationCoordinates | null = $state(null);
-	let geoStations = $derived.by(() => {
-		if (coords !== null) {
-			const withDistance = AllStationsJSON.map((s) => {
-				return {
-					...s,
-					distance: distance(coords!.latitude, coords!.longitude, s.lat, s.long, 'K')
-				};
-			});
-			return withDistance.toSorted((a, b) => a.distance - b.distance);
-		} else {
-			return [];
-		}
-	});
-	const closestStation = $derived(geoStations[0] ?? null);
-	let loading = $state(false);
-
-	$inspect(closestStation);
-
-	function updateLocation() {
-		loading = true;
-		if (localStorage.coords) {
-			coords = JSON.parse(localStorage.coords);
-		}
-		navigator.geolocation.getCurrentPosition((t) => {
-			loading = false;
-			coords = t.coords ?? null;
-			localStorage.coords = JSON.stringify(coords);
-		});
-	}
-
-	onMount(updateLocation);
+	const geoStations = $derived(getGeoStations());
 </script>
 
-<div class="bg-background sticky top-0 z-40 flex items-center p-4 text-3xl font-semibold">
+<div class="sticky top-0 z-40 flex items-center bg-background p-4 text-3xl font-semibold">
 	<div class="pt-ios-top">Near me</div>
 </div>
 <div>

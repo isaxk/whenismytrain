@@ -23,9 +23,8 @@ export const GET: RequestHandler = async ({ params }) => {
 		error(400, 'Could not fetch service');
 	}
 
-	let passedFocus = false;
-
 	function parse(locations: definitions['ServiceLocation'][], all: boolean) {
+		let passedFocus = false;
 		let currentLocation: number | null = null;
 		const parsedLocations =
 			locations?.map((l, i): ServiceDetailsLocation => {
@@ -62,7 +61,7 @@ export const GET: RequestHandler = async ({ params }) => {
 					ata: l.ata,
 					etd: l.etd,
 					eta: l.eta,
-					isPass: l.isPass ?? false,
+					isPass: (l.isPass ?? false) || !l.crs,
 					state: all
 						? l.atdSpecified
 							? Status.DEPARTED
@@ -82,7 +81,7 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	const { locations: all, current: currentAll } = parse(data.locations!, true);
 	const { locations, current: currentLocation } = parse(
-		data.locations!.filter((l) => !l.isPass),
+		data.locations!.filter((l) => !l.isPass && l.crs),
 		false
 	);
 

@@ -8,8 +8,25 @@
 	import type { definitions } from '$lib/types/api';
 	import { Drawer } from 'vaul-svelte';
 	import { MediaQuery } from 'svelte/reactivity';
+	import type { Board } from '$lib/types';
 
-	let { messages }: { messages: definitions['NRCCMessage'][] } = $props();
+	let {
+		board
+	}: {
+		board: Promise<{
+			board: Board;
+			trains: unknown;
+			operators: unknown;
+		}>;
+	} = $props();
+
+	let messages: definitions['NRCCMessage'][] = $state([]);
+
+	$effect(() => {
+		board.then((data) => {
+			messages = data.board.alerts;
+		});
+	});
 
 	const md = new MediaQuery('min-width: 768px');
 </script>

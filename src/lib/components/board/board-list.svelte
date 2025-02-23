@@ -5,13 +5,11 @@
 	import { flip } from 'svelte/animate';
 
 	let { list, handleServiceDetails, type } = $props();
-
-	console.log(list);
 </script>
 
 <div
 	in:fade|global={{ duration: 300 }}
-	class="flex flex-col md:mt-4 md:overflow-hidden md:rounded-lg md:border md:drop-shadow-sm"
+	class="flex flex-col md:overflow-hidden md:rounded-lg md:border md:drop-shadow-sm"
 >
 	{#each list as [id, train], i (id)}
 		<div

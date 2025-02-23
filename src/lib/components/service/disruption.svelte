@@ -9,13 +9,12 @@
 
 	let data: definitions['ReasonDescription'] | null = $state(null);
 
-	onMount(async () => {
+	$effect(() => {
 		if (code) {
-			const response = await fetch(`/api/disruption/${code}`);
-			data = await response.json();
+			fetch(`/api/disruption/${code}`).then(async (d) => {
+				data = await d.json();
+			});
 		}
-
-		console.log(data);
 	});
 </script>
 
@@ -28,7 +27,7 @@
 		</div>
 		{#if data}
 			<div
-				class="prose line-clamp-2 flex-grow text-xs text-zinc-700 prose-p:m-0"
+				class="prose prose-p:m-0 line-clamp-2 flex-grow text-xs text-zinc-700"
 				in:fade={{ duration: 200 }}
 			>
 				{isCancelled ? data.cancReason : data.lateReason}

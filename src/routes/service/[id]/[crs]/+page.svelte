@@ -2,7 +2,7 @@
 	import dayjs from 'dayjs';
 	import { onDestroy, onMount, type Snippet } from 'svelte';
 	import { scrollY } from 'svelte/reactivity/window';
-	import { draw, fade } from 'svelte/transition';
+	import { draw, fade, slide } from 'svelte/transition';
 	import { Accordion } from 'bits-ui';
 
 	import CallingPoint from '$lib/components/service/calling-point.svelte';
@@ -10,19 +10,17 @@
 	import TrainCard from '$lib/components/service/train-card.svelte';
 	import Header from '$lib/components/ui/header.svelte';
 	import PositionIndicator from '$lib/components/service/position-indicator.svelte';
-	import LastUpdated from '$lib/components/last-updated.svelte';
 	import ServiceSaveToggle from '$lib/components/service/service-save-toggle.svelte';
 
 	import { operatorList } from '$lib/data/operators';
 	import type { PageData } from './$types';
 	import Map from '$lib/components/service/map.svelte';
-	import { Drawer } from 'vaul-svelte';
 	import { browser } from '$app/environment';
-	import Switch from '$lib/components/ui/switch.svelte';
 	import Switchbar from '$lib/components/ui/switchbar.svelte';
-	import { List, Table } from 'lucide-svelte';
-	import Refresher from '$lib/components/refresher.svelte';
+	import { Ellipsis, List, Table } from 'lucide-svelte';
 	import Refreshbar from '$lib/components/ui/refreshbar/refreshbar.svelte';
+	import { MediaQuery } from 'svelte/reactivity';
+	import { receive, send } from '$lib/utils/transitions';
 
 	let {
 		data,
@@ -30,7 +28,9 @@
 		header
 	}: { data: PageData; drawer?: boolean; header?: Snippet } = $props();
 
-	let open = $state(true);
+	const REFRESH_INTERVAL = 10;
+
+	const md = new MediaQuery('min-width: 768px');
 
 	let currentAccordion = $state(data.focus.crs);
 	let now: dayjs.Dayjs | null = $state(null);
@@ -38,16 +38,15 @@
 	let showPasses = $state(false);
 	let refreshing = $state(false);
 
-	const REFRESH_INTERVAL = 10;
-
 	async function refresh() {
 		refreshing = true;
+
 		const response = await fetch(`/api/service/${data.id}/${data.crs}`);
 		now = dayjs();
 		data = { ...(await response.json()), crs: data.crs, id: data.id, tiplocs: data.tiplocs };
 		data.generatedAt = dayjs().toISOString();
-		interval = setTimeout(refresh, REFRESH_INTERVAL * 1000);
 
+		interval = setTimeout(refresh, REFRESH_INTERVAL * 1000);
 		setTimeout(() => {
 			refreshing = false;
 		}, 750);
@@ -81,10 +80,23 @@
 
 	let expandedMap = $state(true);
 	let expandLock = $state(false);
+	let showPrevious = $state(false);
 </script>
 
+<svelte:head>
+	<title
+		>{dayjs(
+			data.focus.atd ?? data.focus.etd ?? data.focus.std ?? data.focus.ata ?? data.focus.eta
+		).format('HH:mm')}
+		to {data.destination.name} - {operatorList[data.operatorCode].name}
+	</title>
+</svelte:head>
+
 {#if data && data !== undefined && data.focus}
-	<div class={['w-full', !drawer && 'md:max-w-96']} in:fade|global={{ duration: 250 }}>
+	<div
+		class={['w-full', !drawer && 'md:min-w-[450px] md:max-w-[450px]']}
+		in:fade|global={{ duration: 250 }}
+	>
 		<div class={['top-0 pb-2 md:sticky', !drawer && 'pt-ios-top']}>
 			{#if drawer}
 				{#if header}
@@ -122,7 +134,8 @@
 					operator={data.operatorCode!}
 					etd={data.focus?.atd ?? data.focus?.etd ?? 'Delayed'}
 					std={data.focus?.std ?? ''}
-					details={data}
+					focus={data.focus?.name}
+					details
 					onservicedetails={() => {}}
 				/>
 				<div class="flex items-center gap-2">
@@ -142,11 +155,23 @@
 				/>
 			</div>
 		</div>
+		<div class="md:px-4">
+			<Refreshbar {refreshing} interval={REFRESH_INTERVAL} genAt={data.generatedAt} />
+		</div>
+		{#if md.current && !drawer}
+			<div class="px-4 pt-4">
+				<Map
+					color={operatorList[data.operatorCode!].bg}
+					locations={coords}
+					current={data.currentAll}
+					expanded={expandedMap}
+				/>
+			</div>
+		{/if}
 	</div>
 
-	<Refreshbar {refreshing} interval={REFRESH_INTERVAL} genAt={data.generatedAt} />
-	<div class="flex flex-grow flex-col overflow-auto">
-		{#if coords.length > 0 && browser}
+	<div class={['flex flex-grow flex-col overflow-auto', !drawer && 'md:pt-5']}>
+		{#if coords.length > 0 && browser && (!md.current || drawer)}
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div
 				onmousedown={() => {
@@ -166,7 +191,7 @@
 				class={[
 					'z-0 overflow-hidden transition-all duration-300',
 					expandedMap
-						? 'h-[200px] max-h-[200px] min-h-[200px]'
+						? 'h-[150px] max-h-[150px] min-h-[150px]'
 						: 'h-[90px] max-h-[90px] min-h-[90px] opacity-90 blur-[2px] brightness-75'
 				]}
 			>
@@ -180,7 +205,7 @@
 		{/if}
 
 		<div
-			class="z-20 flex min-h-0 flex-grow -translate-y-2 flex-col rounded-t-lg border-t bg-background"
+			class="z-20 flex min-h-0 flex-grow -translate-y-2 flex-col rounded-t-lg border-t bg-background md:border-none"
 		>
 			<div class="p-1">
 				<Switchbar
@@ -290,7 +315,11 @@
 										{@render date(location.eta)}
 									</div>
 									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
-										{@render date(location.ata)}
+										{#if location.isCancelled}
+											<span class="text-red-500">Cancel</span>
+										{:else}
+											{@render date(location.ata)}
+										{/if}
 									</div>
 									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
 										{@render date(location.std)}
@@ -299,7 +328,11 @@
 										{@render date(location.etd)}
 									</div>
 									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
-										{@render date(location.atd)}
+										{#if location.isCancelled}
+											<span class="text-red-500">Cancel</span>
+										{:else}
+											{@render date(location.atd)}
+										{/if}
 									</div>
 								</div>
 							</div>
@@ -320,50 +353,87 @@
 		class="z-40 flex flex-col bg-background pt-2 md:rounded-t-none md:drop-shadow-none"
 	>
 		{#if data.locations}
-			{#each data.locations as location, i}
-				<div class="group relative">
-					<div
-						style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-						class={[
-							'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
-						]}
-					></div>
-					{#if data.currentLocation === i + 1}
-						{@const b = data !== undefined ? (data.locations[i + 1] ?? null) : null}
-						{#if b}
-							<PositionIndicator
-								a={location.atd ?? location.etd ?? location.std}
-								b={b ? (b.ata ?? b.eta ?? b.sta) : null}
-								{now}
-								state={b.state}
-								color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-							/>
-						{/if}
-					{/if}
-					<div class="absolute left-[78px] top-0 z-30 flex h-16 w-2 items-center">
+			{#if !showPrevious}
+				<button
+					out:slide={{ duration: 125 }}
+					class="relative flex items-center px-4 py-3 text-left"
+					onclick={() => (showPrevious = true)}
+				>
+					<div class="flex w-16 items-center justify-center text-center">
+						<Ellipsis size={18} />
+					</div>
+					<div class="w-[26px]">
 						<div
 							style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-							class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
+							class={[
+								'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+							]}
 						></div>
+						<PositionIndicator collapsed color={operatorList[data.operatorCode].bg} {now} />
 					</div>
+					Show {data.locations.filter((l) => l.order === 'previous').length} previous stops
+				</button>
+			{/if}
+			{#each data.locations as location, i}
+				{#if location.order === 'focus' && showPrevious}
+					<button
+						transition:slide={{ duration: 125 }}
+						class="relative border-t py-2 pl-[105px] text-left text-zinc-700"
+						onclick={() => (showPrevious = false)}
+					>
+						<div
+							style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+							class={[
+								'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+							]}
+						></div>
+						Hide previous stops
+					</button>{/if}
+				{#if showPrevious || location.order !== 'previous'}
+					<div class="group relative">
+						<div
+							style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+							class={[
+								'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+							]}
+						></div>
+						{#if data.currentLocation === i + 1}
+							{@const b = data !== undefined ? (data.locations[i + 1] ?? null) : null}
+							{#if b}
+								<PositionIndicator
+									a={location.atd ?? location.etd ?? location.std}
+									b={b ? (b.ata ?? b.eta ?? b.sta) : null}
+									{now}
+									state={b.state}
+									color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+								/>
+							{/if}
+						{/if}
+						<div class="absolute left-[78px] top-0 z-30 flex h-16 w-2 items-center">
+							<div
+								style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+								class="h-2 w-2 rounded-l-full rounded-r-full border-blue-500 pl-4"
+							></div>
+						</div>
 
-					<CallingPoint
-						{i}
-						isPass={location.isPass}
-						platform={location.platform}
-						crs={location.crs}
-						name={location.name}
-						std={location.std}
-						sta={location.sta}
-						etd={location.etd}
-						atd={location.atd}
-						ata={location.ata}
-						eta={location.eta}
-						type={location.order}
-						isCancelled={location.isCancelled ?? false}
-						destCrs={data.destination.crs}
-					/>
-				</div>
+						<CallingPoint
+							{i}
+							isPass={location.isPass}
+							platform={location.platform}
+							crs={location.crs}
+							name={location.name}
+							std={location.std}
+							sta={location.sta}
+							etd={location.etd}
+							atd={location.atd}
+							ata={location.ata}
+							eta={location.eta}
+							type={location.order}
+							isCancelled={location.isCancelled ?? false}
+							destCrs={data.destination.crs}
+						/>
+					</div>
+				{/if}
 			{/each}
 		{/if}
 	</Accordion.Root>

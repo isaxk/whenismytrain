@@ -1,6 +1,24 @@
 <script lang="ts">
+	import type { PageData } from './$types';
+	import type { Board, TrainService } from '$lib/types';
+
+	import dayjs from 'dayjs';
+	import { throttle } from 'throttle-typescript';
 	import { goto, onNavigate, preloadData, pushState, replaceState } from '$app/navigation';
-	import { navigating, page } from '$app/state';
+	import { page } from '$app/state';
+	import { scrollY } from 'svelte/reactivity/window';
+	import { quadInOut } from 'svelte/easing';
+	import { MediaQuery, SvelteMap, SvelteSet } from 'svelte/reactivity';
+
+	import { sortByLiveDepart, strToMins } from '$lib/utils';
+	import { getTrainServices } from '$lib/utils/api';
+	import { flyAndScale } from '$lib/utils/transitions';
+	import { crossfade, fade, scale } from 'svelte/transition';
+
+	import { ArrowDown, ArrowUp, ArrowUpRight, X } from 'lucide-svelte';
+	import { Dialog } from 'bits-ui';
+	import { Drawer } from 'vaul-svelte';
+
 	import BoardList from '$lib/components/board/board-list.svelte';
 	import Switcher from '$lib/components/board/switcher.svelte';
 	import OperatorsList from '$lib/components/operators-list.svelte';
@@ -10,45 +28,19 @@
 	import ComboSidetopbar from '$lib/components/ui/combo-sidetopbar.svelte';
 	import Header from '$lib/components/ui/header.svelte';
 	import Saved from '../../../../(pages)/saved/+page.svelte';
-	import type { definitions } from '$lib/types/api';
-	import { sortByLiveDepart } from '$lib/utils';
-	import { getTrainServices } from '$lib/utils/api';
-	import { flyAndScale } from '$lib/utils/transitions';
-	import { Dialog } from 'bits-ui';
-	import dayjs from 'dayjs';
-	import {
-		AlertCircle,
-		ArrowDownRight,
-		ArrowLeft,
-		ArrowUpRight,
-		Bookmark,
-		Check,
-		Clock,
-		Home,
-		RotateCw,
-		Save,
-		Settings,
-		X
-	} from 'lucide-svelte';
-	import { MediaQuery, SvelteMap, SvelteSet } from 'svelte/reactivity';
-	import { crossfade, fade, fly, scale } from 'svelte/transition';
-	import { throttle } from 'throttle-typescript';
-	import { Drawer } from 'vaul-svelte';
 	import ServiceDetails from '../../../../service/[id]/[crs]/+page.svelte';
-	import type { PageData } from './$types';
 	import DisruptionList from '$lib/components/board/disruption-list.svelte';
 	import LastUpdated from '$lib/components/last-updated.svelte';
-	import { scrollY } from 'svelte/reactivity/window';
-	import { quadInOut, quartInOut } from 'svelte/easing';
-	import Title from '$lib/components/board/title.svelte';
-	import { savedBoards } from '$lib/data/saved.svelte';
 	import ServiceSaveToggle from '$lib/components/service/service-save-toggle.svelte';
-	import type { Board, TrainService } from '$lib/types';
 	import Contact from '$lib/components/home/contact.svelte';
-
-	const [send, receive] = crossfade({ duration: 250, easing: quadInOut });
+	import Title from '$lib/components/board/title.svelte';
+	import BoardHeader from '$lib/components/board/board-header.svelte';
+	import Refreshbar from '$lib/components/ui/refreshbar/refreshbar.svelte';
+	import { onMount } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	const [send, receive] = crossfade({ duration: 250, easing: quadInOut });
 
 	// data
 	let trains: SvelteMap<string, TrainService> = $state(new SvelteMap([]));
@@ -68,12 +60,7 @@
 	let generatedAt = $state(dayjs());
 	const md = new MediaQuery('min-width: 768px');
 
-	const saveIndex = $derived(
-		savedBoards.value.findIndex(
-			(b) =>
-				b.from === data.from && b.time === data.time && b.to === data.to && b.type === data.type
-		)
-	);
+	let loading: 'earlier' | 'later' | 'refresh' | null = $state(null);
 
 	// update after data.board promise resolves
 	$effect(() => {
@@ -84,6 +71,8 @@
 			trains = new SvelteMap<string, TrainService>([...d.trains]);
 			generatedAt = dayjs();
 			board = d.board;
+			loading = null;
+			window.scrollTo({ top: 0, behavior: 'smooth' });
 		});
 	});
 
@@ -110,38 +99,41 @@
 
 	// load later trains
 	const later = throttle(async () => {
-		if (loadingLaterTrains) return;
-		if (maxTrainsReached) return;
-		if (!board) return;
-		if (trains.size > 200) {
-			maxTrainsReached = true;
-			return;
-		}
-
-		loadingLaterTrains = true;
-
+		loading = 'later';
 		const arr = Array.from(sorted);
 		const [, lastTrain] = arr.length > 0 ? arr[arr.length - 1] : [null, null];
 
-		const response = await getTrainServices(
-			data.from,
-			data.to,
-			lastTrain?.actual ?? lastTrain?.estimated ?? lastTrain?.scheduled ?? null,
-			15,
-			selectedOperator,
-			data.type
+		const time = dayjs(lastTrain?.actual ?? lastTrain?.estimated ?? lastTrain?.scheduled).format(
+			'HH:mm'
 		);
 
-		let newTrain = false;
-		response.forEach(([rid, t]) => {
-			if (!trains.has(t.id)) {
-				newTrain = true;
-				trains.set(rid, t);
-			}
-		});
+		if (strToMins(time) < 120) {
+			loading = null;
+			return;
+		}
 
-		if (!newTrain) maxTrainsReached = true;
-		loadingLaterTrains = false;
+		goto(
+			`/board/${data.type}/${data.from}${data.to ? '-' + data.to : ''}/${time}${data.toc ? '?toc=' + data.toc : ''}`
+		).then(() => window.scrollTo({ top: 10000 }));
+	}, 200);
+
+	const earlier = throttle(async () => {
+		loading = 'earlier';
+		const arr = Array.from(sorted);
+		const [, firstTrain] = arr.length > 0 ? arr[0] : [null, null];
+
+		let time = dayjs(firstTrain?.actual ?? firstTrain?.estimated ?? firstTrain?.scheduled).subtract(
+			30,
+			'minutes'
+		);
+
+		if (time.format('HH:mm') === data.time) {
+			time = time.subtract(30, 'minutes');
+		}
+
+		await goto(
+			`/board/${data.type}/${data.from}${data.to ? '-' + data.to : ''}/${time.format('HH:mm')}${data.toc ? '?toc=' + data.toc : ''}`
+		);
 	}, 200);
 
 	// open the service details drawer / modal
@@ -154,39 +146,34 @@
 		}
 	}
 
+	let refreshTimeout: ReturnType<typeof setTimeout>;
+
 	// refresh or filter by operator
-	async function operator(o: string | null) {
+	async function refresh() {
+		clearInterval(refreshTimeout);
 		if (!board) return;
-		refreshing = true;
-		selectedOperator = o;
-		maxTrainsReached = false;
+		loading = 'refresh';
 
-		window.scrollTo({ top: 0, behavior: 'smooth' });
-
-		const arr = Array.from(sorted.values());
-
-		let startTime: string | null = o ? (operatorStartTimes.get(o) ?? null) : null;
-
-		if (o && arr.length > 0) {
-			arr.forEach((t) => {
-				if ((t.operator ?? '' === o) && startTime === null) {
-					startTime = t.actual ?? t.estimated ?? t.scheduled ?? 'null';
-				}
-			});
-		}
-
-		trains = new SvelteMap(await getTrainServices(data.from, data.to, data.date, 15, o, data.type));
+		trains = new SvelteMap(
+			await getTrainServices(data.from, data.to, data.date, 15, data.toc, data.type)
+		);
 		generatedAt = dayjs();
 
-		refreshing = false;
+		loading = null;
 		if (trains.size < 2) {
 			later();
 		}
+		refreshTimeout = setTimeout(refresh, 15000);
 	}
+
+	onMount(() => {
+		refreshTimeout = setTimeout(refresh, 15000);
+		return () => clearInterval(refreshTimeout);
+	});
 
 	// handle pull to refresh
 	async function onRefresh() {
-		await operator(selectedOperator);
+		await refresh();
 	}
 
 	onNavigate(() => {
@@ -198,78 +185,20 @@
 	{#await data.board}
 		<title>Departures</title>
 	{:then { board }}
-		<title>{board.locationName} -Departures</title>
+		<title>{board.locationName} - Departures</title>
 	{/await}
 </svelte:head>
 
 <div class="mx-auto min-h-screen md:flex md:max-w-screen-lg md:gap-10">
 	<ComboSidetopbar>
-		<div class={['flex gap-2 px-4 pb-2 pt-1']}>
-			<button
-				onclick={() => history.back()}
-				class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
-				><ArrowLeft size={20} /></button
-			>
-			{#if md.current}
-				<a href="/" class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
-					><Home /></a
-				>
-			{/if}
-			<button
-				onclick={() => operator(selectedOperator)}
-				class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
-				><RotateCw size={20} /></button
-			>
-
-			<div class="min-w-0 flex-grow">
-				{#await data.board then { board }}
-					{#if !md.current}
-						{#if (scrollY.current ?? 0) > 50}
-							<Title
-								locationName={board.locationName}
-								type={data.type}
-								date={data.date}
-								filter={board.filterLocationName ?? null}
-								compact
-							/>
-						{/if}
-					{:else}
-						<div class="flex w-full items-center">
-							<div class="flex-grow"></div>
-						</div>
-					{/if}
-				{/await}
-			</div>
-
-			{#if saveIndex !== -1}
-				<button
-					in:scale={{ start: 0.5 }}
-					onclick={() => {
-						savedBoards.value.splice(saveIndex, 1);
-					}}
-					class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-blue-500 text-white"
-				>
-					<Check size={20} />
-				</button>
-			{:else}
-				<button
-					onclick={() =>
-						(savedBoards.value = [
-							...savedBoards.value,
-							{
-								from: data.from,
-								time: data.time,
-								to: data.to,
-								type: data.type,
-								key: Date.now() + data.from + data.time + data.to + data.type
-							}
-						])}
-					class="flex h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-300"
-					><Bookmark size={20} /></button
-				>
-			{/if}
-		</div>
-
+		<BoardHeader
+			{board}
+			from={data.from}
+			to={data.to}
+			date={data.date}
+			type={data.type}
+			onRefresh={refresh}
+		/>
 		<div
 			class={[
 				'transition-all',
@@ -282,17 +211,15 @@
 							: 'h-20 pt-2 duration-300'
 			]}
 		>
-			{#await data.board then { board }}
-				{#if !md.current && (scrollY.current ?? 0) <= 50}
-					<Title
-						compact={false}
-						locationName={board.locationName}
-						type={data.type}
-						date={data.date}
-						filter={board.filterLocationName ?? null}
-					/>
-				{/if}
-			{/await}
+			{#if board && !md.current && (scrollY.current ?? 0) <= 50}
+				<Title
+					compact={false}
+					locationName={board.locationName}
+					type={data.type}
+					date={data.date}
+					filter={board.filterLocationName ?? null}
+				/>
+			{/if}
 
 			{#if md.current}
 				<div class="h-3 md:h-0"></div>
@@ -314,11 +241,10 @@
 			{/if}
 		</div>
 
-		{#await data.board then}
-			{#if !md.current}
-				<OperatorsList operators={Array.from(operators)} {selectedOperator} onselect={operator} />
-			{/if}
-		{/await}
+		{#if !md.current}
+			<OperatorsList board={data.board} />
+			<Refreshbar interval={15} genAt={generatedAt} refreshing={loading === 'refresh'} />
+		{/if}
 	</ComboSidetopbar>
 
 	{#if !md.current}
@@ -326,69 +252,72 @@
 		<div class="h-[180px]"></div>
 	{/if}
 
-	<Refresher {onRefresh} {refreshing}>
+	<Refresher {onRefresh} refreshing={false}>
 		<div class="min-w-0 md:flex-grow">
-			{#await data.board then { board }}
-				{#if md.current}
-					<div class="sticky top-0 z-20 flex bg-background pt-4">
-						<div class="min-w-0 flex-grow">
-							<OperatorsList
-								operators={Array.from(operators)}
-								{selectedOperator}
-								onselect={operator}
-							/>
-						</div>
-						{#if refreshing}
-							<div
-								transition:fade={{ duration: 200 }}
-								class="flex h-10 items-center justify-end overflow-hidden"
-							>
-								<div class="-mr-4 scale-75">
+			{#if md.current}
+				<div class="sticky top-0 z-20 mb-2 bg-background pt-4">
+					<div class="min-w-0 flex-grow">
+						<OperatorsList board={data.board} />
+					</div>
+					<Refreshbar interval={15} genAt={generatedAt} refreshing={loading === 'refresh'} />
+				</div>
+			{/if}
+
+			<DisruptionList board={data.board} />
+
+			<div class="flex min-h-12 w-full items-center justify-start px-4">
+				{#if strToMins(data.time ?? dayjs().format('HH:mm')) > 30}
+					<button
+						in:fade={{ duration: 200 }}
+						class="flex h-9 w-full items-center gap-1 py-2"
+						onclick={earlier}
+					>
+						<div class="flex h-9 w-4 items-center justify-center overflow-hidden">
+							{#if loading === 'earlier'}
+								<div class="mr-1 mt-1 origin-center scale-[60%]">
 									<Spinner />
 								</div>
-							</div>
-						{/if}
-					</div>
+							{:else}
+								<ArrowUp size={18} />
+							{/if}
+						</div>
+						Earlier trains
+					</button>
 				{/if}
-				<DisruptionList messages={board.alerts ?? []} />
-			{/await}
+			</div>
+
 			{#await data.board}
 				<div class="flex flex-col gap-2 pl-4 pr-4 md:pl-0 md:pt-4">
-					{#each Array(10)}
+					{#each Array(15)}
 						<Skeleton class="h-[88px]" />
 					{/each}
 				</div>
-			{:then}
+			{:then { board }}
 				{#if sorted && sorted.size > 0}
-					<div class="flex items-center justify-end pb-1 pr-5">
-						<LastUpdated date={generatedAt} />
-					</div>
-
 					<BoardList list={sorted} {handleServiceDetails} type={data.type} />
-					<div class="flex h-20 items-center justify-center px-4">
-						{#if maxTrainsReached}
-							<div
-								in:fade={{ duration: 200 }}
-								class="flex h-20 items-center justify-center text-center"
-							>
-								Refer to a timetable or dedicated journey planner app to see further trains.
-							</div>
-						{:else if loadingLaterTrains}
-							<div in:fade={{ duration: 200 }} class="flex h-20 items-center justify-center">
+				{:else}
+					No services found
+				{/if}
+			{/await}
+
+			<div class="flex min-h-12 items-center justify-start px-4">
+				<button
+					in:fade={{ duration: 200 }}
+					class="flex w-full items-center gap-1 py-2"
+					onclick={later}
+				>
+					<div class="flex h-9 w-4 items-center justify-center overflow-hidden">
+						{#if loading === 'later'}
+							<div class="mr-1 mt-1 origin-center scale-[60%]">
 								<Spinner />
 							</div>
 						{:else}
-							<button
-								in:fade={{ duration: 200 }}
-								class="flex h-11 w-full items-center justify-center rounded-lg bg-blue-500 text-center text-white placeholder-gray-300 drop-shadow-xl transition-all duration-300 hover:brightness-105"
-								onclick={later}>Later trains</button
-							>
+							<ArrowDown size={18} />
 						{/if}
 					</div>
-				{:else if sorted.size === 0}
-					<div class="p-4">No services found</div>
-				{/if}
-			{/await}
+					Later trains
+				</button>
+			</div>
 			<div class="flex justify-center">
 				<Contact />
 			</div>

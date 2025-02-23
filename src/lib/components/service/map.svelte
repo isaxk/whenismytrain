@@ -65,7 +65,7 @@
 </script>
 
 {#if browser}
-	<div class={['h-[200px] w-full']}>
+	<div class={['h-[150px] w-full']}>
 		<Map
 			options={{
 				center: currentPosCoords,

@@ -27,6 +27,12 @@
 	let closeDrawer: HTMLButtonElement | null = $state(null);
 	let now = $state(value === dayjs().format('HH:mm'));
 
+	$effect(() => {
+		if (value !== dayjs().format('HH:mm')) {
+			now = false;
+		}
+	});
+
 	function go() {
 		const list = from + (to ? `-${to}` : '');
 		if (drawer) {
@@ -66,7 +72,7 @@
 		</div>
 		<div
 			class={[
-				'bg-card h-11 flex-grow transform-gpu rounded-lg border border-zinc-100 drop-shadow transition-all',
+				'h-11 flex-grow transform-gpu rounded-lg border border-zinc-100 bg-card drop-shadow transition-all',
 				now && 'opacity-50'
 			]}
 		>

@@ -9,11 +9,17 @@
 	import Switcher from '$lib/components/board/switcher.svelte';
 	import { page } from '$app/state';
 	import dayjs from 'dayjs';
+	import { coordsStore, updateLocation } from '$lib/data/saved.svelte';
 	let { children, data } = $props();
 
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) return;
 
+		if (
+			navigation.from?.url.pathname.includes('/board') &&
+			navigation.to?.url.pathname.includes('/board')
+		)
+			return;
 		return new Promise((resolve) => {
 			document.startViewTransition(async () => {
 				resolve();
@@ -21,12 +27,14 @@
 			});
 		});
 	});
+
+	onMount(updateLocation);
 </script>
 
-<div class="bg-background min-h-screen" data-vaul-drawer-wrapper>
+<div class="min-h-screen bg-background" data-vaul-drawer-wrapper>
 	{@render children()}
 	<div
-		class="bg-card fixed bottom-0 left-0 right-0 z-40 flex min-h-20 items-center justify-evenly border-t pb-ios-bottom pt-4 drop-shadow vt-name-[mobile-bar] md:hidden"
+		class="fixed bottom-0 left-0 right-0 z-40 flex min-h-20 items-center justify-evenly border-t bg-card pb-ios-bottom pt-4 drop-shadow vt-name-[mobile-bar] md:hidden"
 	>
 		<a href="/nearme"><MapPin /></a>
 		{#if data.url.includes('board')}
@@ -37,7 +45,7 @@
 				<Drawer.Portal>
 					<Drawer.Overlay class="fixed inset-0 z-40 bg-black/80" />
 					<Drawer.Content
-						class="bg-background fixed bottom-0 left-0 right-0 z-50 flex h-drawer flex-col rounded-t-lg pt-3"
+						class="fixed bottom-0 left-0 right-0 z-50 flex h-drawer flex-col rounded-t-lg bg-background pt-3"
 					>
 						<Header BackIcon={X} type="drawer" title="Board Options"></Header>
 						<div class="h-full min-h-0 flex-grow px-4 pb-ios-bottom">
@@ -61,6 +69,6 @@
 
 <style lang="postcss">
 	:global(body) {
-		@apply bg-background overflow-y-scroll;
+		@apply overflow-y-scroll bg-background;
 	}
 </style>

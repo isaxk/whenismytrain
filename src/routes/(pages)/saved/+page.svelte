@@ -67,7 +67,7 @@
 <div
 	class={[
 		'sticky top-0 z-40 flex items-center font-semibold',
-		card ? 'bg-transparent px-4 text-xl' : 'bg-card p-4 text-3xl'
+		card ? 'bg-card px-4 text-xl' : 'bg-zinc-50 p-4 text-3xl'
 	]}
 >
 	<div class="pt-ios-top">Saved</div>
@@ -102,8 +102,7 @@
 							'flex items-center gap-2 border-t first:border-t-0',
 							card ? 'py-1.5' : 'h-[70px]'
 						]}
-						in:slide={{ duration: 200 }}
-						animate:flip={{ duration: 200 }}
+						animate:flip={{ duration: 150 }}
 					>
 						<a
 							class="min-w-0 flex-grow pr-2"

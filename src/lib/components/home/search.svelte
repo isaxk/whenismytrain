@@ -13,14 +13,13 @@
 	import { crossfade, fade, fly, scale } from 'svelte/transition';
 	import { quadInOut, quadOut, quintInOut } from 'svelte/easing';
 	import { MediaQuery } from 'svelte/reactivity';
+	import { coordsStore, getGeoStations, updateLocation } from '$lib/data/saved.svelte';
 
 	let { drawer = false, crs = $bindable(null), clearable = false } = $props();
 
-	let isSelected = $state(false);
 	const selected = $derived(AllStationsJSON.find((s) => s.crsCode === crs) ?? null);
 
 	let input: HTMLInputElement;
-	let submitBtn: HTMLButtonElement | null = $state(null);
 
 	const [send, recieve] = crossfade({ duration: 200, easing: quadOut });
 
@@ -41,45 +40,18 @@
 				}>(results)
 			: []
 	);
-
-	let coords: GeolocationCoordinates | null = $state(null);
-	let geoStations = $derived.by(() => {
-		if (coords !== null) {
-			const withDistance = AllStationsJSON.map((s) => {
-				return {
-					...s,
-					distance: distance(coords!.latitude, coords!.longitude, s.lat, s.long, 'K')
-				};
-			});
-			return withDistance.toSorted((a, b) => a.distance - b.distance);
-		} else {
-			return [];
-		}
-	});
+	const geoStations = $derived(getGeoStations());
 
 	const closestStation = $derived(geoStations[0] ?? null);
-
-	$inspect(closestStation);
-
-	function updateLocation() {
-		navigator.geolocation.getCurrentPosition((t) => {
-			coords = t.coords ?? null;
-			localStorage.coords = JSON.stringify(coords);
-		});
-	}
 
 	let interval: ReturnType<typeof setInterval>;
 
 	onMount(() => {
-		if (localStorage.coords) {
-			coords = JSON.parse(localStorage.coords);
-		}
 		interval = setInterval(() => {
 			if (focused) {
 				window.scrollTo({ top: 0 });
 			}
 		});
-		updateLocation();
 	});
 
 	onDestroy(() => {
@@ -90,6 +62,9 @@
 		crs = selected?.crsCode ?? null;
 		if (focused) {
 			input.focus();
+		}
+		if (!crs && !clearable) {
+			select(geoStations[0]);
 		}
 	});
 

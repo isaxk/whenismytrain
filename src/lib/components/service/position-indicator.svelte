@@ -7,25 +7,31 @@
 	let {
 		a,
 		b,
-		state: currentState,
+		state: currentState = null,
 		now,
-		color
+		color,
+		collapsed = false
 	}: {
-		a: string;
-		b: string;
-		state: Status;
+		a?: string;
+		b?: string;
+		state?: Status | null;
 		now: dayjs.Dayjs | null;
 		color: string;
+		collapsed?: boolean;
 	} = $props();
 
 	const progress = $derived.by(() => {
-		const aTime = dayjs(a);
-		const bTime = dayjs(b);
+		if (a && b) {
+			const aTime = dayjs(a);
+			const bTime = dayjs(b);
 
-		const diffAB = aTime.diff(bTime, 'seconds');
-		const diffNowA = aTime.diff(now ?? dayjs(), 'seconds');
+			const diffAB = aTime.diff(bTime, 'seconds');
+			const diffNowA = aTime.diff(now ?? dayjs(), 'seconds');
 
-		return (diffNowA / diffAB) * 100;
+			return (diffNowA / diffAB) * 100;
+		} else {
+			return 50;
+		}
 	});
 </script>
 
@@ -43,7 +49,13 @@
 	</div>
 {/snippet}
 
-{#if currentState === Status.AWAY}
+{#if collapsed}
+	<div class="h-17 absolute -bottom-0 left-[70px] top-0 z-40 w-6 duration-75">
+		<div class="flex h-full w-full items-center transition-all">
+			{@render indicator()}
+		</div>
+	</div>
+{:else if currentState === Status.AWAY}
 	<div class="h-17 absolute -bottom-5 left-[70px] top-10 z-40 w-6 pt-5 duration-75">
 		<div class="flex w-full items-end transition-all" style:height="{progress}%">
 			{@render indicator()}

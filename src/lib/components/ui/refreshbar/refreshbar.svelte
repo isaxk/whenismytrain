@@ -24,10 +24,12 @@
 	});
 </script>
 
-<div class={['relative h-1.5 w-full transition-all duration-1000', refreshing && 'animate-pulse']}>
+<div
+	class={['relative min-h-0.5 w-full transition-all duration-1000', refreshing && 'animate-pulse']}
+>
 	<div
 		transition:fade={{ duration: 200 }}
-		class={['absolute bottom-0 left-0 top-0 h-full bg-blue-300']}
+		class={['absolute bottom-0 left-0 top-0 h-full rounded bg-blue-300']}
 		style:width="{(1 - progress.current) * 100}%"
 	></div>
 </div>
