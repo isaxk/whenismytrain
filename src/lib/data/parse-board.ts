@@ -4,7 +4,6 @@ import type { definitions } from '$lib/types/api';
 export function parseBoard(board: definitions['StationBoard'], type: 'dept' | 'arr'): Board {
 	const trains =
 		board.trainServices?.map((t): TrainService => {
-			console.log(t);
 			return {
 				id: t.rid,
 				destination: {

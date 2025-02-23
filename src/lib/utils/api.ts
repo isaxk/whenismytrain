@@ -15,7 +15,6 @@ export async function getTrainServices(
 			: `/api/arr/${from}/${to}/${numRows}/${filterToc}/${date}`;
 	const response = await fetch(url);
 	const data: Board = await response.json();
-	console.log(data);
 	const trainServices: [string, TrainService][] = data.trains!.map((t) => [t.id, t]);
 
 	return trainServices;

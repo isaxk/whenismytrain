@@ -16,6 +16,7 @@ export type ServiceDetailsLocation = {
 	eta?: string;
 	isPass: boolean;
 	isCancelled: boolean;
+	progress: number;
 };
 
 export type ServiceDetailsWithID = definitions['ServiceDetails'] & {

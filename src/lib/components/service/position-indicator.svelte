@@ -10,6 +10,7 @@
 		state: currentState = null,
 		now,
 		color,
+		progress = 0,
 		collapsed = false
 	}: {
 		a?: string;
@@ -17,22 +18,9 @@
 		state?: Status | null;
 		now: dayjs.Dayjs | null;
 		color: string;
+		progress: number;
 		collapsed?: boolean;
 	} = $props();
-
-	const progress = $derived.by(() => {
-		if (a && b) {
-			const aTime = dayjs(a);
-			const bTime = dayjs(b);
-
-			const diffAB = aTime.diff(bTime, 'seconds');
-			const diffNowA = aTime.diff(now ?? dayjs(), 'seconds');
-
-			return (diffNowA / diffAB) * 100;
-		} else {
-			return 50;
-		}
-	});
 </script>
 
 {#snippet indicator()}
@@ -55,13 +43,18 @@
 			{@render indicator()}
 		</div>
 	</div>
-{:else if currentState === Status.AWAY}
-	<div class="h-17 absolute -bottom-5 left-[70px] top-10 z-40 w-6 pt-5 duration-75">
-		<div class="flex w-full items-end transition-all" style:height="{progress}%">
-			{@render indicator()}
+{:else if currentState === Status.ARRIVED}
+	<div
+		class="h-17 absolute left-[70px] top-0 z-40 flex w-6 items-end justify-center pt-5 duration-75"
+	>
+		{@render indicator()}
+	</div>
+{:else if currentState === Status.DEPARTED}
+	<div class="absolute -bottom-6 left-[70px] top-10 z-40 w-6 duration-75">
+		<div class="absolute flex w-full items-end justify-center" style:height="{progress * 100}%">
+			<div class="flex h-1 items-center justify-center">
+				{@render indicator()}
+			</div>
 		</div>
 	</div>
-{:else if currentState === Status.ARRIVED}
-	<div class="h-17 absolute -bottom-11 left-[70px] top-10 z-40 flex w-6 items-end pt-3 duration-75">
-		{@render indicator()}
-	</div>{/if}
+{/if}

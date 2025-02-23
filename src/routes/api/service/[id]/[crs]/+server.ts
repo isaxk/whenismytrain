@@ -36,17 +36,30 @@ export const GET: RequestHandler = async ({ params }) => {
 					order = 'subsequent';
 				}
 
-				if (all) {
-					if (l.arrivalType === 'Actual' || l.departureType === 'Actual') {
-						currentLocation = i;
+				if (l.arrivalType === 'Actual' || l.departureType === 'Actual') {
+					currentLocation = i;
+				}
+
+				let progress = 0;
+
+				if (!all && l.departureType === 'Actual') {
+					let passed = 0;
+					let total = 0;
+					const start = data.locations!.findIndex((x) => x.crs === l.crs);
+					const end = data.locations!.findIndex((x) => x.crs === locations[i + 1].crs);
+					const arr = data.locations!.slice(start, end + 1);
+					if (arr.length === 2) {
+						total = 2;
+						passed = 1;
+					} else {
+						arr.forEach((i) => {
+							if (i.arrivalType === 'Actual' || i.departureType === 'Actual') {
+								passed++;
+							}
+							total++;
+						});
 					}
-				} else {
-					if (
-						l.arrivalType === 'Actual' ||
-						locations![i === 0 ? 0 : i - 1].departureType === 'Actual'
-					) {
-						currentLocation = i;
-					}
+					progress = passed / total;
 				}
 
 				return {
@@ -62,17 +75,8 @@ export const GET: RequestHandler = async ({ params }) => {
 					etd: l.etd,
 					eta: l.eta,
 					isPass: (l.isPass ?? false) || !l.crs,
-					state: all
-						? l.atdSpecified
-							? Status.DEPARTED
-							: l.ataSpecified
-								? Status.ARRIVED
-								: Status.AWAY
-						: l.ataSpecified
-							? l.atdSpecified
-								? Status.DEPARTED
-								: Status.ARRIVED
-							: Status.AWAY,
+					state: l.atdSpecified ? Status.DEPARTED : l.ataSpecified ? Status.ARRIVED : Status.AWAY,
+					progress,
 					isCancelled: l.isCancelled ?? false
 				};
 			}) ?? [];

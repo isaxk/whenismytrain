@@ -65,7 +65,6 @@
 	// update after data.board promise resolves
 	$effect(() => {
 		data.board.then((d) => {
-			console.log(d);
 			operators = new SvelteSet([]);
 			selectedOperator = null;
 			trains = new SvelteMap<string, TrainService>([...d.trains]);

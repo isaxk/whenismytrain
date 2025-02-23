@@ -21,6 +21,7 @@
 	import Refreshbar from '$lib/components/ui/refreshbar/refreshbar.svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { receive, send } from '$lib/utils/transitions';
+	import { Status } from '$lib/types';
 
 	let {
 		data,
@@ -44,7 +45,6 @@
 		const response = await fetch(`/api/service/${data.id}/${data.crs}`);
 		now = dayjs();
 		data = { ...(await response.json()), crs: data.crs, id: data.id, tiplocs: data.tiplocs };
-		data.generatedAt = dayjs().toISOString();
 
 		interval = setTimeout(refresh, REFRESH_INTERVAL * 1000);
 		setTimeout(() => {
@@ -68,7 +68,6 @@
 		if (diff > REFRESH_INTERVAL) {
 			refresh();
 		}
-		data.generatedAt = dayjs().toISOString();
 	});
 
 	onDestroy(() => {
@@ -369,7 +368,15 @@
 								'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
 							]}
 						></div>
-						<PositionIndicator collapsed color={operatorList[data.operatorCode].bg} {now} />
+
+						{#if data.locations[0].state === Status.DEPARTED && data.focus.state === Status.AWAY}
+							<PositionIndicator
+								progress={0}
+								collapsed
+								color={operatorList[data.operatorCode].bg}
+								{now}
+							/>
+						{/if}
 					</div>
 					Show {data.locations.filter((l) => l.order === 'previous').length} previous stops
 				</button>
@@ -397,14 +404,15 @@
 								'absolute -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
 							]}
 						></div>
-						{#if data.currentLocation === i + 1}
+						{#if data.currentLocation === i}
 							{@const b = data !== undefined ? (data.locations[i + 1] ?? null) : null}
 							{#if b}
 								<PositionIndicator
+									progress={location.progress}
 									a={location.atd ?? location.etd ?? location.std}
 									b={b ? (b.ata ?? b.eta ?? b.sta) : null}
 									{now}
-									state={b.state}
+									state={location.state}
 									color={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
 								/>
 							{/if}
