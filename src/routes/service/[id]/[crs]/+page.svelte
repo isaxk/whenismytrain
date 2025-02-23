@@ -38,6 +38,7 @@
 	let interval: ReturnType<typeof setInterval>;
 	let showPasses = $state(false);
 	let refreshing = $state(false);
+	let lastUpdated = $state(dayjs());
 
 	async function refresh() {
 		refreshing = true;
@@ -46,7 +47,8 @@
 		const response = await fetch(`/api/service/${data.id}/${data.crs}`);
 		now = dayjs();
 		data = { ...(await response.json()), crs: data.crs, id: data.id, tiplocs: data.tiplocs };
-
+		lastUpdated = dayjs();
+		clearTimeout(interval);
 		interval = setTimeout(refresh, REFRESH_INTERVAL * 1000);
 		refreshing = false;
 	}
@@ -65,6 +67,7 @@
 	onMount(() => {
 		interval = setTimeout(refresh, REFRESH_INTERVAL * 1000);
 		now = dayjs();
+		lastUpdated = now;
 
 		const genAt = data ? dayjs(data?.generatedAt) : dayjs();
 		const diff = Math.abs(genAt.diff(now, 'seconds'));
@@ -160,7 +163,7 @@
 			</div>
 		</div>
 		<div class="md:px-4">
-			<Refreshbar {refreshing} interval={REFRESH_INTERVAL} genAt={data.generatedAt} />
+			<Refreshbar {refreshing} interval={REFRESH_INTERVAL} genAt={lastUpdated.toISOString()} />
 		</div>
 		{#if coords && coords.length > 0 && browser && md.current && !drawer}
 			<div class="px-4 pt-4">
@@ -237,7 +240,7 @@
 						expandedMap = true;
 					}
 				}}
-				class="min-h-0 flex-grow overflow-scroll overscroll-x-none"
+				class="min-h-0 flex-grow overflow-scroll overscroll-none"
 			>
 				{#if showPasses}
 					<div
@@ -253,18 +256,18 @@
 						<div class="flex">
 							<div class="w-full flex-col pr-1">
 								<div class="w-full text-left">Arrival</div>
-								<div class="flex gap-1 text-left text-sm font-medium">
-									<div class="min-w-12 max-w-12">Plan</div>
-									<div class="min-w-12 max-w-12">Est</div>
-									<div class="min-w-12 max-w-12">Act</div>
+								<div class="flex gap-1 text-left text-xs font-medium">
+									<div class="min-w-[54px] max-w-[54px]">Planned</div>
+									<div class="min-w-[54px] max-w-[54px]">Expect.</div>
+									<div class="min-w-[54px] max-w-[54px]">Actual</div>
 								</div>
 							</div>
 							<div class="w-full flex-col">
 								<div class="w-full text-left">Departure</div>
-								<div class="flex gap-1 text-left text-sm font-medium">
-									<div class="min-w-12 max-w-12">Plan</div>
-									<div class="min-w-12 max-w-12">Est</div>
-									<div class="min-w-12 max-w-12">Act.</div>
+								<div class="flex gap-1 text-left text-xs font-medium">
+									<div class="min-w-[54px] max-w-[54px]">Planned</div>
+									<div class="min-w-[54px] max-w-[54px]">Expect.</div>
+									<div class="min-w-[54px] max-w-[54px]">Actual</div>
 								</div>
 							</div>
 						</div>
@@ -291,9 +294,9 @@
 								</div>
 								{#snippet date(d)}
 									{#if d}
-										{dayjs(d).format('HHmm')}
+										{dayjs(d).format('HH:mm')}
 										{#if dayjs(d).format('ss') !== '00'}
-											<div class="translate-y-[1px] text-[9px] font-light">
+											<div class="translate-y-[1px] pl-[0.5px] text-[9px] font-light">
 												{dayjs(d).format('ss')}
 											</div>
 										{/if}
@@ -312,26 +315,26 @@
 										<span class="text-xs font-light text-zinc-600"> ({location.crs})</span>{/if}
 								</div>
 								<div class="flex gap-1 text-left">
-									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+									<div class="flex min-w-[54px] max-w-[54px] items-end font-mono text-xs">
 										{@render date(location.sta)}
 									</div>
-									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+									<div class="flex min-w-[54px] max-w-[54px] items-end font-mono text-xs">
 										{@render date(location.eta)}
 									</div>
-									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+									<div class="flex min-w-[54px] max-w-[54px] items-end font-mono text-xs">
 										{#if location.isCancelled}
 											<span class="text-red-500">Cancel</span>
 										{:else}
 											{@render date(location.ata)}
 										{/if}
 									</div>
-									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+									<div class="flex min-w-[54px] max-w-[54px] items-end font-mono text-xs">
 										{@render date(location.std)}
 									</div>
-									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+									<div class="flex min-w-[54px] max-w-[54px] items-end font-mono text-xs">
 										{@render date(location.etd)}
 									</div>
-									<div class="flex min-w-12 max-w-12 items-end font-mono text-xs">
+									<div class="flex min-w-[54px] max-w-[54px] items-end font-mono text-xs">
 										{#if location.isCancelled}
 											<span class="text-red-500">Cancel</span>
 										{:else}
@@ -361,7 +364,7 @@
 				{#if !showPrevious && data.locations.filter((l) => l.order === 'previous').length > 0}
 					<button
 						out:slide={{ duration: 125 }}
-						class="relative flex items-center px-4 py-3 text-left odd:bg-background even:bg-card"
+						class="relative flex items-center bg-card px-4 py-3 text-left"
 						onclick={() => (showPrevious = true)}
 					>
 						<div class="flex w-16 items-center justify-center text-center">
@@ -388,20 +391,6 @@
 					</button>
 				{/if}
 				{#each data.locations as location, i}
-					{#if location.order === 'focus' && showPrevious}
-						<button
-							transition:slide={{ duration: 125 }}
-							class="relative border-t py-2 pl-[105px] text-left text-zinc-700 transition-all duration-200 odd:bg-background even:bg-card"
-							onclick={() => (showPrevious = false)}
-						>
-							<div
-								style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
-								class={[
-									'absolute  -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
-								]}
-							></div>
-							Hide previous stops
-						</button>{/if}
 					{#if showPrevious || location.order !== 'previous'}
 						<div class="group relative" transition:slide={{ duration: 75 }}>
 							<div
@@ -447,6 +436,24 @@
 								destCrs={data.destination.crs}
 							/>
 						</div>
+						{#if data.locations[i + 1]?.order === 'focus' && showPrevious}
+							<button
+								transition:slide={{ duration: 125 }}
+								class={[
+									'relative pb-2 pl-[108px] text-left text-zinc-700 transition-all duration-200',
+									i === 0 ? 'bg-background' : 'bg-card'
+								]}
+								onclick={() => (showPrevious = false)}
+							>
+								<div
+									style:background={data.operatorCode ? operatorList[data.operatorCode].bg : ''}
+									class={[
+										'absolute  -bottom-3 left-[78px] top-0 z-30 flex w-2 rounded-full bg-zinc-400 group-first:top-7 group-first:items-start group-last:bottom-7 group-last:h-9 group-last:items-end'
+									]}
+								></div>
+								Hide previous stops
+							</button>
+						{/if}
 					{/if}
 				{/each}
 			{/if}

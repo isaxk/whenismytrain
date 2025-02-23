@@ -400,7 +400,7 @@
 			/>
 			<Dialog.Content
 				transition={flyAndScale}
-				class="fixed left-1/2 top-1/2 z-50 h-[90%] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background"
+				class="fixed left-1/2 top-1/2 z-50 h-[96%] max-h-[700px] w-[650px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-background"
 			>
 				{@render serviceContent()}
 			</Dialog.Content>

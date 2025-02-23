@@ -10,6 +10,7 @@
 	import { page } from '$app/state';
 	import dayjs from 'dayjs';
 	import { coordsStore, updateLocation } from '$lib/data/saved.svelte';
+	import LoadingBar from '$lib/components/ui/loading-bar.svelte';
 	let { children, data } = $props();
 
 	onNavigate((navigation) => {
@@ -33,9 +34,15 @@
 
 <div class="min-h-screen bg-background" data-vaul-drawer-wrapper>
 	{@render children()}
+	<div class="fixed left-0 right-0 top-0 z-40 hidden md:block">
+		<LoadingBar />
+	</div>
 	<div
 		class="fixed bottom-0 left-0 right-0 z-40 flex min-h-20 items-center justify-evenly border-t bg-card pb-ios-bottom pt-4 drop-shadow vt-name-[mobile-bar] md:hidden"
 	>
+		<div class="absolute left-0 right-0 top-0">
+			<LoadingBar />
+		</div>
 		<a href="/nearme"><MapPin /></a>
 		{#if data.url.includes('board')}
 			<Drawer.Root>

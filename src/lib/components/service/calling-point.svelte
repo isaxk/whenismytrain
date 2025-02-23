@@ -36,8 +36,9 @@
 <Accordion.Item
 	value={crs}
 	class={[
-		'border-t px-4 transition-all duration-200 group-first:border-t-0 group-odd:bg-background group-even:bg-card',
-		type === 'previous' ? 'min-h-14' : 'min-h-14'
+		'border-t px-4 transition-all duration-200 group-first:border-t-0',
+		type === 'previous' ? 'min-h-14' : 'min-h-14',
+		i % 2 === 0 ? 'bg-background' : 'bg-card'
 	]}
 >
 	<Accordion.Header class="contents h-full">
@@ -90,22 +91,22 @@
 			<div class="grid grid-cols-3 px-2 pt-1 text-xs md:text-sm">
 				<div class="text-xs font-medium">
 					<div class="h-5"></div>
-					<div class="flex h-6 items-center">Scheduled</div>
-					<div class="flex h-6 items-center">Actual</div>
+					<div class="flex h-6 items-center">Planned</div>
 					<div class="flex h-6 items-center">Expected</div>
+					<div class="flex h-6 items-center">Actual</div>
 				</div>
 				<div>
 					<div class="h-5 text-xs font-medium">Arrival</div>
 					<div class="flex h-6 items-center font-mono">{sta ? format(sta) : '-'}</div>
-					<div class="flex h-6 items-center font-mono">{ata ? format(ata) : '-'}</div>
 					<div class="flex h-6 items-center font-mono">{eta ? format(eta) : '-'}</div>
+					<div class="flex h-6 items-center font-mono">{ata ? format(ata) : '-'}</div>
 				</div>
 				<!---->
 				<div class="">
 					<div class="h-5 text-xs font-medium">Departure</div>
 					<div class="flex h-6 items-center font-mono">{std ? format(std) : '-'}</div>
-					<div class="flex h-6 items-center font-mono">{atd ? format(atd) : '-'}</div>
 					<div class="flex h-6 items-center font-mono">{etd ? format(etd) : '-'}</div>
+					<div class="flex h-6 items-center font-mono">{atd ? format(atd) : '-'}</div>
 				</div>
 				<!---->
 			</div>

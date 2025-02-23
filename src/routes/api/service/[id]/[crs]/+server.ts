@@ -83,6 +83,10 @@ export const GET: RequestHandler = async ({ params }) => {
 		return { locations: parsedLocations, current: currentLocation };
 	}
 
+	if (!data.locations) {
+		error(400, 'Request failed');
+	}
+
 	const { locations: all, current: currentAll } = parse(data.locations!, true);
 	const { locations, current: currentLocation } = parse(
 		data.locations!.filter((l) => !l.isPass && l.crs),
