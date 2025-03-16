@@ -1,0 +1,132 @@
+<script lang="ts">
+	import { browser } from '$app/environment';
+	import { onNavigate } from '$app/navigation';
+	import CallingPoint from '$lib/components/train/calling-point.svelte';
+	import Map from '$lib/components/train/map.svelte';
+	import TrainCard from '$lib/components/train/train-card.svelte';
+	import TrainSaveToggle from '$lib/components/train/train-save-toggle.svelte';
+	import Disruption from '$lib/components/ui/disruption.svelte';
+	import Refreshbar from '$lib/components/ui/refreshbar.svelte';
+	import Skeleton from '$lib/components/ui/skeleton.svelte';
+	import TimeDisplay from '$lib/components/ui/time-display.svelte';
+	import { operatorList } from '$lib/data/operators.js';
+	import { dontMove } from '$lib/state/dont-move.svelte.js';
+	import { Order, Status } from '$lib/types/train.js';
+	import { receive, send } from '$lib/utils/transitions.js';
+	import { Accordion } from 'bits-ui';
+	import dayjs from 'dayjs';
+	import { Bookmark, ChevronLeft, Train, X } from 'lucide-svelte';
+	import { onDestroy, onMount } from 'svelte';
+	import { crossfade, fade } from 'svelte/transition';
+
+	let { data, drawer = false } = $props();
+
+	let service = $derived(data.service);
+
+	let topheight = $state(0);
+</script>
+
+<div class="border-border bg-background flex h-full flex-col overflow-hidden rounded-lg border">
+	{#await service}
+		<div class="pt-safe">
+			<div class="border-border flex h-[50px] items-center overflow-hidden pb-3">
+				<a href="../.." class="flex w-14 justify-center"><X /></a>
+				<div class="flex-grow text-center font-medium"></div>
+				<div class="flex w-14 justify-center"></div>
+			</div>
+		</div>
+		<div class="h-20">
+			<div class={['relative flex min-h-20 items-center gap-4 pr-4 pl-5']}>
+				<div class={['flex flex-col items-center']}>
+					<Skeleton class="mb-[2px] h-[10px] w-[40px] rounded-full" />
+					<div class="overflow-hidden rounded-full">
+						<Skeleton class="h-7 w-7 rounded-full" />
+					</div>
+				</div>
+				<div class="flex-grow">
+					<div class="flex-grow text-xl font-semibold select-text">
+						<Skeleton class="h-8 w-40" />
+					</div>
+				</div>
+				<div>
+					<Skeleton class="h-4 w-20" />
+				</div>
+			</div>
+		</div>
+		<div class="-mt-2 h-[36px] px-4 pb-4">
+			<Skeleton class="h-[28px] w-40" />
+		</div>
+		<Skeleton class="min-h-[150px] w-full rounded-[0px]" />
+		<div class="flex flex-col py-4">
+			{#each Array(10)}
+				<Skeleton class="even:bg-accent/20 h-16 w-full rounded-[0px] opacity-60" />
+			{/each}
+		</div>
+	{:then service}
+		<div
+			bind:clientHeight={topheight}
+			class={[!drawer && 'bg-background top-0 z-50 w-full md:flex md:flex-col']}
+		>
+			<div class="pt-safe">
+				<div class="border-border flex h-[50px] items-center overflow-hidden pb-3">
+					<a
+						data-sveltekit-noscroll
+						href="{data.url}?{data.searchParams}"
+						onclick={() => history.back()}
+						class="flex w-14 justify-center"><X /></a
+					>
+					<div class="flex-grow text-center font-medium"></div>
+					<div class="flex w-14 justify-center">
+						<TrainSaveToggle
+							id={data.id}
+							focus={data.crs}
+							destination={service.trainCard.destination.name}
+							date={service.trainCard.scheduled}
+						/>
+					</div>
+				</div>
+			</div>
+			<div style:view-transition-name={data.id} class="h-20" in:fade|global={{ duration: 200 }}>
+				<TrainCard train={service.trainCard} />
+			</div>
+
+			<div class="-mt-2 pb-2 pl-5" in:fade|global={{ duration: 200 }}>
+				<div
+					class="w-max rounded-lg px-2.5 py-1 text-sm"
+					style:color={operatorList[service.trainCard.operator].text}
+					style:background={operatorList[service.trainCard.operator].bg}
+				>
+					{operatorList[service.trainCard.operator].name}
+				</div>
+			</div>
+
+			{#if service.cancelReason || service.delayReason}
+				<div class="border-border border-t px-5 pt-2 pb-2">
+					<Disruption
+						isCancelled={service.focus.isCancelled}
+						code={service.cancelReason ?? service.delayReason ?? null}
+					/>
+				</div>
+			{/if}
+		</div>
+
+		<Map locations={service.locations} color={operatorList[service.trainCard.operator].bg} />
+
+		<Accordion.Root
+			class="border-border min-h-0 flex-grow overflow-y-scroll border-t py-4"
+			type="single"
+			value={undefined}
+		>
+			<div class="h-full" in:fade|global={{ duration: 200 }}>
+				{#each service.callingPoints as location, i (location.tiploc)}
+					<CallingPoint
+						{i}
+						{location}
+						length={service.callingPoints.length}
+						operator={service.trainCard.operator}
+					/>
+				{/each}
+			</div>
+		</Accordion.Root>
+	{/await}
+</div>

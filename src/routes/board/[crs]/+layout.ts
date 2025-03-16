@@ -1,0 +1,42 @@
+import type { LayoutLoad } from './$types';
+import type { Train } from '$lib/types/train';
+import type { BoardDetails } from '$lib/types';
+
+export const ssr = false;
+export const load: LayoutLoad<{
+	board: Promise<{
+		details: BoardDetails;
+
+		trains: Train[];
+	}>;
+}> = ({ params, url, fetch }) => {
+	const { crs } = params;
+	const time = url.searchParams.get('time') || null;
+	const to = url.searchParams.get('to') || null;
+	const toc = url.searchParams.get('toc') || null;
+
+	const qparams = new URLSearchParams();
+	if (to) {
+		qparams.set('to', to);
+	}
+	if (time) {
+		qparams.set('time', time.replace(':', ''));
+	}
+	if (toc) {
+		qparams.set('toc', toc);
+	}
+
+	const rootUrl = `/board/${crs}`;
+
+	return {
+		crs,
+		time,
+		to,
+		toc,
+		url: rootUrl,
+		searchParams: qparams.toString(),
+		board: fetch(`/api/board/${crs}/${to}/${time}/${toc}`).then(
+			async (response): Promise<{ details: BoardDetails; trains: Train[] }> => await response.json()
+		)
+	};
+};
