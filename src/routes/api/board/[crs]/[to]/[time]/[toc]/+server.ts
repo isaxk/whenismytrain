@@ -39,8 +39,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	const urlParams = new URLSearchParams(url.searchParams);
 
 	console.log(time);
- const hour = time.split()[0]+time.split()[1]
- const minute = time.split()[2]+time.split()[3]
+ const hour = parseInt(time.split('')[0]+time.split('')[1])
+ const minute = parseInt(time.split('')[2]+time.split('' )[3])
 	const date =
 		time !== 'null'
 			? dayjs().set('hour', hour).set('minute', minute).tz('Europe/London').format('YYYYMMDDTHHmmss')
