@@ -43,7 +43,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
  const minute = time.split()[2]+time.split()[3]
 	const date =
 		time !== 'null'
-			? dayjs().set('hour', hour).set('minute', minute).tz('Europe/London').format('YYYYMMDDTHHmmss');
+			? dayjs().set('hour', hour).set('minute', minute).tz('Europe/London').format('YYYYMMDDTHHmmss')
 			: dayjs().tz('Europe/London').format('YYYYMMDDTHHmmss');
 
 	const reqUrl = new URL(
