@@ -3,6 +3,11 @@ import type { RequestHandler } from './$types';
 import dayjs from 'dayjs';
 import { PUBLIC_DEPARTURES_KEY } from '$env/static/public';
 import { Status, type Train } from '$lib/types/train';
+import timezone from 'dayjs/plugin/timezone'
+import utc from 'dayjs/plugin/utc'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 function parseItem(item: any, crs: string): Train {
 	let status = Status.AWAY;
@@ -34,10 +39,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	const urlParams = new URLSearchParams(url.searchParams);
 
 	console.log(time);
+ const hour = time.split()[0]+time.split()[1]
+ const minute = time.split()[2]+time.split()[3]
 	const date =
 		time !== 'null'
-			? dayjs().format('YYYYMMDD') + 'T' + time.replace(':', '') + '00'
-			: dayjs().format('YYYYMMDDTHHmmss');
+			? dayjs().set('hour', hour).set('minute', minute).tz('Europe/London').format('YYYYMMDDTHHmmss');
+			: dayjs().tz('Europe/London').format('YYYYMMDDTHHmmss');
 
 	const reqUrl = new URL(
 		`https://api1.raildata.org.uk/1010-live-departure-board---staff-version1_0/LDBSVWS/api/20220120/GetDepartureBoardByCRS/${crs}/${date}?numRows=15${to !== 'null' ? `&filterCRS=${to}` : ''}${toc !== 'null' ? `&filterTOC=${toc}` : ''}`
