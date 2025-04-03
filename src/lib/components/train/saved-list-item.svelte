@@ -29,13 +29,7 @@
 	<div class="flex items-center">
 		<a href="/board/{focus}/train/{id}" class="flex h-14 min-w-0 flex-grow items-center gap-3 px-4">
 			{#await data}
-				<div class="flex-grow opacity-50">
-					<div class="text-lg font-medium">
-						{cache.destination.name}
-					</div>
-					<div class="-mt-1 text-xs">loading...</div>
-				</div>
-				<div class="saturate-0">
+				<div class="w-12 saturate-0">
 					<TimeDisplay
 						isCancelled={false}
 						size="sm"
@@ -43,27 +37,15 @@
 						scheduled={cache.date}
 					/>
 				</div>
+				<div class="flex-grow opacity-50">
+					<div class="text-lg font-medium">
+						{cache.destination.name}
+					</div>
+					<div class="-mt-1 text-xs">loading...</div>
+				</div>
 			{:then { trainCard, focus }}
 				{#if trainCard}
-					<div class="flex flex-col items-center">
-						<div class="text-[10px]">Platform</div>
-						<div class="bg-accent flex h-6 w-6 items-center justify-center rounded-full text-sm">
-							{focus.platform}
-						</div>
-					</div>
-					<div class="min-w-0 flex-grow overflow-hidden">
-						<div class="w-full min-w-0 truncate text-lg font-medium">
-							{trainCard.destination.name}
-						</div>
-						<div class="-mt-1 w-full truncate text-xs" in:fade|global={{ duration: 200 }}>
-							{#if trainCard.status === Status.DEPARTED}
-								Departed from {focus.name}
-							{:else}
-								Departing from {focus.name}
-							{/if}
-						</div>
-					</div>
-					<div in:fade|global={{ duration: 200 }}>
+					<div class="w-12" in:fade|global={{ duration: 200 }}>
 						<TimeDisplay
 							isCancelled={trainCard.isCancelled}
 							size="sm"
@@ -71,10 +53,29 @@
 							scheduled={trainCard.scheduled}
 						/>
 					</div>
+					<div class="min-w-0 flex-grow overflow-hidden">
+						<div class="w-full min-w-0 truncate text-lg font-medium">
+							{trainCard.destination.name}
+						</div>
+						<div class="-mt-1 w-full truncate text-xs" in:fade|global={{ duration: 200 }}>
+							{#if trainCard.status === Status.DEPARTED}
+								from {focus.name}
+							{:else}
+								from {focus.name}
+							{/if}
+						</div>
+					</div>
+
+					<div class="flex flex-col items-center">
+						<div class="text-[10px]">Platform</div>
+						<div class="bg-accent flex h-6 w-6 items-center justify-center rounded-full text-sm">
+							{focus.platform}
+						</div>
+					</div>
 				{/if}
 			{/await}
 		</a>
-		<button class="min-w-7 text-sm text-red-500" onclick={() => savedServices.value.splice(i, 1)}
+		<button class="min-w-8 text-sm text-red-500" onclick={() => savedServices.value.splice(i, 1)}
 			><Trash size={16} /></button
 		>
 	</div>

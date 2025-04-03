@@ -5,6 +5,7 @@ import {
 	Order,
 	Status,
 	type CallingPoint,
+	type ServiceDetails,
 	type ServiceLocation,
 	type Train
 } from '$lib/types/train';
@@ -64,6 +65,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
 					crs: ass.destCrs
 				};
 			}
+		}
+
+		if (location.crs === 'LFD') {
+			console.log(location);
 		}
 
 		return {
@@ -139,7 +144,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		}
 	}
 
-	const callingPoints: CallingPoint[] = locations
+	let callingPoints: CallingPoint[] = locations
 		.filter((l) => l.isCallingPoint)
 		.map(parseCallingPoint);
 	const notCancelled = locations.filter((l) => !l.isCancelled);
@@ -165,7 +170,24 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		isCancelled: focus.isCancelled
 	};
 
-	return json({
+	const active = callingPoints.findLastIndex(
+		(c) => c.status === Status.ARRIVED || c.status === Status.DEPARTED
+	);
+	console.log('active', active);
+	callingPoints = callingPoints.map((c, i) => {
+		if (c.status === Status.ARRIVED) {
+			console.log('c', i, c);
+			if (i === active) {
+				return c;
+			} else {
+				return { ...c, status: Status.DEPARTED, progress: 1 };
+			}
+		} else {
+			return c;
+		}
+	});
+
+	const returnData: ServiceDetails = {
 		destination,
 		generatedAt: data.generatedAt,
 		focus,
@@ -174,5 +196,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		callingPoints,
 		locations,
 		trainCard
-	});
+	};
+
+	return json(returnData);
 };

@@ -6,7 +6,7 @@
 	import { boardUrl } from '$lib/utils/fn';
 	import { Label, Switch, Tabs } from 'bits-ui';
 	import dayjs from 'dayjs';
-	import { Bookmark, Clock, Trash, X } from 'lucide-svelte';
+	import { Bookmark, Bug, Clock, Code, Trash, User, X } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import AllStationsJSON from 'uk-railway-stations';
@@ -20,11 +20,11 @@
 		if (to && now) {
 			return `/board/${from}?to=${to}`;
 		} else if (to && !now) {
-			return `/board/${from}?to=${to}&time=${time}`;
+			return `/board/${from}?to=${to}&time=${time.replace(':', '')}`;
 		} else if (now) {
 			return `/board/${from}`;
 		} else {
-			return `/board/${from}?time=${time}`;
+			return `/board/${from}?time=${time.replace(':', '')}`;
 		}
 	});
 
@@ -33,14 +33,33 @@
 	});
 </script>
 
+{#snippet infos()}
+	<div class="flex items-center gap-2">
+		<div class="w-6 max-w-6 min-w-6"><User size={20} /></div>
+		<a href="https://www.isaxk.com">
+			Created by
+			<span class="font-medium">Isaac (@isaxk)</span>
+		</a>
+	</div>
+	<div class="flex items-center gap-2">
+		<div class="w-6 max-w-6 min-w-6"><Code size={20} /></div>
+		<a href="https://github.com/isaxk/whenismytrain"> Open Source on GitHub </a>
+	</div>
+	<div class="flex items-center gap-2">
+		<div class="w-6 max-w-6 min-w-6"><Bug size={20} /></div>
+		<a href="https://github.com/isaxk/whenismytrain/issues"> Report Bugs & Issues </a>
+	</div>
+{/snippet}
+
 <div class="bg-muted h-full min-h-screen w-full md:h-screen">
-	<div class="pt-safe mx-auto flex h-full w-full max-w-screen-xl flex-col gap-4 p-4 md:flex-row">
+	<div class="pt-safe mx-auto flex h-full w-full max-w-screen-xl flex-col gap-4 p-4 lg:flex-row">
 		<div
-			class="border-border bg-background w-full rounded-lg border pt-2 md:h-full md:max-w-[500px]"
+			class="border-border bg-background flex w-full flex-col rounded-lg border pt-2 drop-shadow-xs lg:h-full lg:max-w-[500px]"
 		>
 			<div class="p-4 px-6">
 				<div class="pb-4">
 					<div class="text-3xl font-bold">When is my train?</div>
+					<div class="text-base">The easiest UK train tracker</div>
 				</div>
 				<div class="flex min-h-20 items-center">
 					<div class="box-content min-w-10 pr-3 text-right">from:</div>
@@ -120,8 +139,12 @@
 					>
 				{/if}
 			</div>
+			<div class="flex-grow"></div>
+			<div class="hidden flex-col gap-2 px-4 pb-5 lg:flex">
+				{@render infos()}
+			</div>
 		</div>
-		<div class="border-border bg-background flex-grow rounded-lg border pt-4">
+		<div class="border-border bg-background flex-grow rounded-lg border pt-4 drop-shadow-xs">
 			<Tabs.Root value="boards">
 				<div class="px-4 pt-1 pb-2 text-2xl font-semibold">Saved</div>
 
@@ -182,7 +205,7 @@
 				<Tabs.Content value="trains" class="flex flex-col">
 					{#if savedServices.value.length > 0}
 						{#each savedServices.value as service, i (`${service.id}${service.focus}`)}
-							<div class="odd:bg-muted even:bg-card border-border/60 border-t">
+							<div class="odd:bg-muted even:bg-card border-border/60 border-t first:border-t-0">
 								<svelte:boundary>
 									<SavedListItem {i} id={service.id} focus={service.focus} cache={service.cache} />
 									{#snippet failed(error)}
@@ -205,6 +228,11 @@
 					{/if}
 				</Tabs.Content>
 			</Tabs.Root>
+		</div>
+		<div
+			class="border-border bg-background flex flex-grow flex-col gap-2 rounded-lg border p-4 py-5 drop-shadow-xs lg:hidden"
+		>
+			{@render infos()}
 		</div>
 	</div>
 </div>

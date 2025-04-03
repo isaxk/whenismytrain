@@ -37,18 +37,18 @@
 </script>
 
 {#snippet formatTime(time: Dayjs)}
-	{#if fromNow < -10 && !point}
+	{#if fromNow < -1 && !point}
 		<span class={[!point && 'text-black']}>
 			{time.format('HH:mm')}
 		</span>
-	{:else if fromNow < -1 && !point}
-		<span class="text-black">
-			{-fromNow}<span class="pl-0.5 font-sans text-base font-light">mins ago</span>
-		</span>
 	{:else if fromNow < 1 && !point}
-		<div class="font-sans">now</div>
+		<span class="text-base font-medium">&lt;1</span><span
+			class="pl-0.5 font-sans text-[13px] font-light">mins</span
+		>
 	{:else if fromNow < 40 && !point}
-		{fromNow}<span class="pl-0.5 font-sans text-base font-light">mins</span>
+		<span class="text-base font-medium">{fromNow.toString().padStart(2, '0')}</span><span
+			class="pl-0.5 font-sans text-[13px] font-light">mins</span
+		>
 	{:else}
 		{time.format('HH:mm')}
 	{/if}
@@ -56,24 +56,19 @@
 
 <div
 	class={[
-		'flex flex-col items-end',
-		size === 'md' && 'text-lg',
+		'flex flex-col items-center',
+		size === 'md' && 'text-base',
 		size === 'sm' && 'text-base',
 		size === 'xs' && 'text-xs opacity-75'
 	]}
 >
 	{#if state === 'cancelled'}
-		<span class=" text-red-500">Cancelled</span>
-		<div
-			class={['font-mono line-through', size === 'md' ? '-mt-1 text-sm' : '-mt-1.5 text-[11px]']}
-		>
-			{sDate.format('HH:mm')}
-		</div>
+		<div class="font-mono text-red-500">{@render formatTime(sDate)}</div>
 	{:else if state === 'early'}
 		<div class="font-mono text-amber-500">{@render formatTime(eDate)}</div>
 		{#if size !== 'xs'}
 			<div
-				class={['font-mono line-through', size === 'md' ? '-mt-1 text-sm' : '-mt-1.5 text-[10px]']}
+				class={['font-mono line-through', size === 'md' ? '-mt-1 text-xs' : '-mt-1.5 text-[10px]']}
 			>
 				{sDate.format('HH:mm')}
 			</div>
@@ -84,7 +79,7 @@
 		<div class="border-border font-mono text-yellow-500">{@render formatTime(eDate)}</div>
 		{#if size !== 'xs'}
 			<div
-				class={['font-mono line-through', size === 'md' ? '-mt-1 text-sm' : '-mt-1.5 text-[10px]']}
+				class={['font-mono line-through', size === 'md' ? '-mt-1 text-xs' : '-mt-1.5 text-[10px]']}
 			>
 				{sDate.format('HH:mm')}
 			</div>
@@ -93,7 +88,7 @@
 		<div class="font-mono text-red-500">{@render formatTime(eDate)}</div>
 		{#if size !== 'xs'}
 			<div
-				class={['font-mono line-through', size === 'md' ? '-mt-1 text-sm' : '-mt-1.5 text-[10px]']}
+				class={['font-mono line-through', size === 'md' ? '-mt-1 text-xs' : '-mt-1.5 text-[10px]']}
 			>
 				{sDate.format('HH:mm')}
 			</div>
@@ -102,13 +97,13 @@
 		<div class="font-mono text-red-800">{@render formatTime(eDate)}</div>
 		{#if size !== 'xs'}
 			<div
-				class={['font-mono line-through', size === 'md' ? '-mt-1 text-sm' : '-mt-1.5 text-[10px]']}
+				class={['font-mono line-through', size === 'md' ? '-mt-1 text-xs' : '-mt-1.5 text-[10px]']}
 			>
 				{sDate.format('HH:mm')}
 			</div>
 		{/if}
 	{:else}
-		<div class=" font-medium text-red-500">Delayed</div>
+		<div class="text-sm font-semibold text-red-500">Delay</div>
 		{#if size !== 'xs'}
 			<div
 				class={['font-mono line-through', size === 'md' ? '-mt-1 text-sm' : '-mt-1.5 text-[11px]']}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { onNavigate } from '$app/navigation';
+	import { goto, onNavigate } from '$app/navigation';
+	import { page } from '$app/state';
 	import CallingPoint from '$lib/components/train/calling-point.svelte';
 	import Map from '$lib/components/train/map.svelte';
 	import TrainCard from '$lib/components/train/train-card.svelte';
@@ -11,69 +12,53 @@
 	import TimeDisplay from '$lib/components/ui/time-display.svelte';
 	import { operatorList } from '$lib/data/operators.js';
 	import { dontMove } from '$lib/state/dont-move.svelte.js';
-	import { Order, Status } from '$lib/types/train.js';
+	import { refresher } from '$lib/state/refresh.svelte.js';
+	import { Order, Status, type ServiceDetails } from '$lib/types/train.js';
 	import { receive, send } from '$lib/utils/transitions.js';
 	import { Accordion } from 'bits-ui';
 	import dayjs from 'dayjs';
 	import { Bookmark, ChevronLeft, Train, X } from 'lucide-svelte';
 	import { onDestroy, onMount } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { crossfade, fade } from 'svelte/transition';
 
 	let { data, drawer = false } = $props();
 
-	let service = $derived(data.service);
+	let service: ServiceDetails | null = $state(null);
+
+	$effect(() => {
+		service = null;
+		data.service.then((d) => (service = d));
+	});
 
 	let topheight = $state(0);
+
+	const md = new MediaQuery('(min-width: 768px)');
+
+	onMount(() => {
+		const refresh = refresher.add(async () => {
+			const res = await fetch(`/api/service/${data.id}/${data.crs}`);
+			const newData = await res.json();
+			service = newData;
+		});
+		return () => {
+			refresher.remove(refresh);
+		};
+	});
 </script>
 
 <div class="border-border bg-background flex h-full flex-col overflow-hidden rounded-lg border">
-	{#await service}
-		<div class="pt-safe">
-			<div class="border-border flex h-[50px] items-center overflow-hidden pb-3">
-				<a href="../.." class="flex w-14 justify-center"><X /></a>
-				<div class="flex-grow text-center font-medium"></div>
-				<div class="flex w-14 justify-center"></div>
-			</div>
-		</div>
-		<div class="h-20">
-			<div class={['relative flex min-h-20 items-center gap-4 pr-4 pl-5']}>
-				<div class={['flex flex-col items-center']}>
-					<Skeleton class="mb-[2px] h-[10px] w-[40px] rounded-full" />
-					<div class="overflow-hidden rounded-full">
-						<Skeleton class="h-7 w-7 rounded-full" />
-					</div>
-				</div>
-				<div class="flex-grow">
-					<div class="flex-grow text-xl font-semibold select-text">
-						<Skeleton class="h-8 w-40" />
-					</div>
-				</div>
-				<div>
-					<Skeleton class="h-4 w-20" />
-				</div>
-			</div>
-		</div>
-		<div class="-mt-2 h-[36px] px-4 pb-4">
-			<Skeleton class="h-[28px] w-40" />
-		</div>
-		<Skeleton class="min-h-[150px] w-full rounded-[0px]" />
-		<div class="flex flex-col py-4">
-			{#each Array(10)}
-				<Skeleton class="even:bg-accent/20 h-16 w-full rounded-[0px] opacity-60" />
-			{/each}
-		</div>
-	{:then service}
+	{#if service}
 		<div
 			bind:clientHeight={topheight}
 			class={[!drawer && 'bg-background top-0 z-50 w-full md:flex md:flex-col']}
 		>
 			<div class="pt-safe">
 				<div class="border-border flex h-[50px] items-center overflow-hidden pb-3">
-					<a
+					<button
 						data-sveltekit-noscroll
-						href="{data.url}?{data.searchParams}"
-						onclick={() => history.back()}
-						class="flex w-14 justify-center"><X /></a
+						onclick={() => goto(`/board/${data.crs}?${data.searchParams}`, { replaceState: true })}
+						class="flex w-14 justify-center"><X /></button
 					>
 					<div class="flex-grow text-center font-medium"></div>
 					<div class="flex w-14 justify-center">
@@ -109,8 +94,13 @@
 				</div>
 			{/if}
 		</div>
+		{#if !md.current}
+			<Refreshbar />
+		{/if}
 
-		<Map locations={service.locations} color={operatorList[service.trainCard.operator].bg} />
+		{#if service.callingPoints.filter((p) => !p.isCancelled).length > 0}
+			<Map locations={service.locations} color={operatorList[service.trainCard.operator].bg} />
+		{/if}
 
 		<Accordion.Root
 			class="border-border min-h-0 flex-grow overflow-y-scroll border-t py-4"
@@ -122,11 +112,49 @@
 					<CallingPoint
 						{i}
 						{location}
+						dest={service.destination.name}
 						length={service.callingPoints.length}
 						operator={service.trainCard.operator}
 					/>
 				{/each}
 			</div>
 		</Accordion.Root>
-	{/await}
+	{:else}
+		<div class="pt-safe">
+			<div class="border-border flex h-[50px] items-center overflow-hidden pb-3">
+				<a href="/board/{page.data.crs}?{page.data.searchParams}" class="flex w-14 justify-center"
+					><X /></a
+				>
+				<div class="flex-grow text-center font-medium"></div>
+				<div class="flex w-14 justify-center"></div>
+			</div>
+		</div>
+		<div class="h-20">
+			<div class={['relative flex min-h-20 items-center gap-4 pr-4 pl-5']}>
+				<div class={['flex flex-col items-center']}>
+					<Skeleton class="mb-[2px] h-[10px] w-[40px] rounded-full" />
+					<div class="overflow-hidden rounded-full">
+						<Skeleton class="h-7 w-7 rounded-full" />
+					</div>
+				</div>
+				<div class="flex-grow">
+					<div class="flex-grow text-xl font-semibold select-text">
+						<Skeleton class="h-8 w-40" />
+					</div>
+				</div>
+				<div>
+					<Skeleton class="h-4 w-20" />
+				</div>
+			</div>
+		</div>
+		<div class="-mt-2 h-[36px] px-4 pb-4">
+			<Skeleton class="h-[28px] w-40" />
+		</div>
+		<Skeleton class="min-h-[150px] w-full rounded-[0px]" />
+		<div class="flex flex-col py-4">
+			{#each Array(10)}
+				<Skeleton class="even:bg-accent/20 h-16 w-full rounded-[0px] opacity-60" />
+			{/each}
+		</div>
+	{/if}
 </div>

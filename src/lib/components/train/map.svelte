@@ -88,13 +88,7 @@
 				{/key}
 			</Marker>
 		{/each}
-		{#each locations.filter((l) => l.isCallingPoint && l.isCancelled) as l (l.tiploc)}
-			<Marker latLng={l.coords}>
-				{#key color}
-					<Icon options={cancelledIconOptions} />
-				{/key}
-			</Marker>
-		{/each}
+
 		{#if currentLoc.current}
 			<Marker latLng={tween.current} options={{ zIndexOffset: 1000 }}>
 				{#key color}
@@ -109,14 +103,6 @@
 					smoothFactor: 1,
 					weight: 5,
 					color
-				}}
-			/>
-			<Polyline
-				latLngs={locations.filter((l) => l.isCancelled).map((l) => l.coords)}
-				options={{
-					smoothFactor: 1,
-					weight: 5,
-					color: '#71717a'
 				}}
 			/>
 		{/key}

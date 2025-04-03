@@ -27,8 +27,10 @@
 		Edit,
 		Ellipsis,
 		EllipsisVertical,
+		House,
 		Pencil,
 		Plus,
+		TimerReset,
 		Tv,
 		X
 	} from 'lucide-svelte';
@@ -161,6 +163,7 @@
 		if (toc) {
 			params.set('toc', toc);
 		}
+		params.set('history', data.history);
 
 		goto(pathname + '?' + params.toString(), { replaceState: true });
 	}
@@ -181,7 +184,7 @@
 			const y = Math.max(-5, e.detail.y - startY);
 			coords.set({ x, y, scale: 1 });
 			if (Math.sqrt(x * x + y * y) > 250) {
-				goto(data.url + '?' + data.searchParams, { noScroll: true });
+				goto(data.url + '?' + data.searchParams, { noScroll: true, replaceState: true });
 			}
 		}
 	}
@@ -228,40 +231,19 @@
 					scrollYLocked > 10 && !md.current && 'border-b drop-shadow-sm'
 				]}
 			>
-				<div class="border-border flex h-[50px] items-center pb-3">
-					<a href="/" class="flex h-full w-14 items-center justify-center"><ChevronLeft /></a>
-					<button
-						class="flex flex-grow flex-col items-center justify-center text-center font-medium"
-						onclick={() => (headerExpanded = true)}
-					>
-						{navigating.to?.url.pathname.includes('board')}
-						{navigating.from?.url.pathname.includes('board')}
-						{#if details}
-							{#if !headerExpanded && !md.current}
-								<div
-									class="flex flex-col items-center justify-center"
-									in:titleReceive|global={{ key: 'title' }}
-									out:titleSend|global={{ key: 'title' }}
-								>
-									<div class="flex">
-										<div class="h-max w-max font-semibold backface-hidden">
-											{details.name}
-										</div>
-										<div class="h-1 w-1"></div>
-									</div>
-									<div class="-mt-0.5 flex gap-2">
-										<div class="text-foreground-muted flex items-center gap-1 text-xs font-light">
-											to {details?.to ?? 'anywhere'}
-										</div>
-										<div class="flex items-center gap-1 text-xs">
-											<Clock size={12} />
-											{data.time ?? 'now'}
-										</div>
-									</div>
-								</div>
-							{/if}
-						{/if}
+				<div class="border-border flex h-[50px] min-w-14 items-center pb-3 pl-3">
+					<button onclick={() => history.back()} class="flex h-full items-center justify-center"
+						><ChevronLeft />
+						<span
+							class="text-foreground-muted pl-2 text-sm font-light"
+							in:fade={{ duration: 200, delay: 200 }}
+						>
+							{data.history}</span
+						>
 					</button>
+
+					<div class="flex-grow"></div>
+					<a href="/" class="flex h-14 w-8 items-center justify-center"><House /></a>
 					<div class="flex w-14 justify-center">
 						{#if details}
 							<SaveToggle from={data.crs} to={data.to} time={data.time} />
@@ -270,18 +252,14 @@
 				</div>
 				<div
 					class={[
-						'flex w-full items-start px-4 transition-all duration-300',
-						headerExpanded || md.current ? 'h-[85px] duration-300' : 'h-0 delay-100'
+						'relative flex w-full items-start px-4 transition-all duration-300',
+						headerExpanded || md.current ? 'h-[85px] duration-300' : 'h-[42px]'
 					]}
 				>
 					{#if details}
 						<div in:fade|global={{ duration: 300 }} class="h-[90px]">
 							{#if headerExpanded || md.current}
-								<div
-									class="h-[90px] w-full pb-1"
-									in:titleReceive|global={{ key: 'title' }}
-									out:titleSend|global={{ key: 'title' }}
-								>
+								<div class="absolute top-0 left-0 h-[90px] w-max pb-1 pl-4">
 									<StationSearch
 										hidden={data.to}
 										class="w-full"
@@ -289,6 +267,8 @@
 									>
 										{#snippet children(selected)}
 											<div
+												in:titleReceive|global={{ key: 'title' }}
+												out:titleSend|global={{ key: 'title' }}
 												class="border-border/90 hover:bg-muted bg-card flex h-max w-max items-center gap-1 rounded-md border px-2.5 py-1 text-3xl font-semibold drop-shadow-xs transition-all"
 											>
 												<div class="z-30 w-max text-3xl font-semibold text-nowrap backface-hidden">
@@ -306,6 +286,8 @@
 											>
 												{#snippet children(selected)}
 													<div
+														in:titleReceive|global={{ key: 'dest' }}
+														out:titleSend|global={{ key: 'dest' }}
 														class={[
 															'bg-card hover:bg-muted border-border/90 flex w-max items-center gap-2 rounded-l-md border px-1.5 py-0.5 text-sm drop-shadow-xs transition-all',
 															!selected && !details?.to ? 'rounded-r-md opacity-80' : ''
@@ -338,7 +320,10 @@
 												</button>
 											{/if}
 										</div>
-										<div>
+										<div
+											in:titleReceive|global={{ key: 'time' }}
+											out:titleSend|global={{ key: 'time' }}
+										>
 											<TimeDropdown
 												time={data.time}
 												onselect={(s) => adjust(data.crs, data.to, s)}
@@ -346,6 +331,47 @@
 										</div>
 									</div>
 								</div>
+							{:else}
+								<button
+									class="-mt-1 flex flex-grow flex-col items-start justify-center text-center font-medium"
+									onclick={() => (headerExpanded = true)}
+								>
+									{navigating.to?.url.pathname.includes('board')}
+									{navigating.from?.url.pathname.includes('board')}
+									{#if details}
+										{#if !headerExpanded && !md.current}
+											<div class="flex flex-col items-start justify-center">
+												<div class="flex">
+													<div
+														in:titleReceive|global={{ key: 'title' }}
+														out:titleSend|global={{ key: 'title' }}
+														class="h-max w-max font-semibold backface-hidden"
+													>
+														{details.name}
+													</div>
+													<div class="h-1 w-1"></div>
+												</div>
+												<div class="-mt-0.5 flex gap-2">
+													<div
+														in:titleReceive|global={{ key: 'dest' }}
+														out:titleSend|global={{ key: 'dest' }}
+														class="text-foreground-muted flex items-center gap-1 text-xs font-light"
+													>
+														to {details?.to ?? 'anywhere'}
+													</div>
+													<div
+														class="flex items-center gap-1 text-xs"
+														in:titleReceive|global={{ key: 'time' }}
+														out:titleSend|global={{ key: 'time' }}
+													>
+														<Clock size={12} />
+														{data.time ? data.time.slice(0, 2) + ':' + data.time.slice(2) : 'now'}
+													</div>
+												</div>
+											</div>
+										{/if}
+									{/if}
+								</button>
 							{/if}
 						</div>
 					{:else}
@@ -420,20 +446,32 @@
 					in:fade|global={{ duration: 400 }}
 					class="md:border-border flex flex-grow flex-col overflow-y-scroll overscroll-y-auto"
 				>
-					<button
-						onclick={() => {
-							const time = data.time
-								? dayjs()
-										.set('hour', parseInt(data.time.substring(0, 2)))
-										.set('minute', parseInt(data.time.substring(2, 4)))
-										.subtract(30, 'minute')
-										.format('HHmm')
-								: dayjs().subtract(30, 'minute').format('HHmm');
-							adjust(data.crs, data.to, time, data.toc);
-						}}
-						class="flex items-center gap-1 p-4 text-left"
-						><ArrowUp size={16} /> Earlier trains</button
-					>
+					<div class="flex">
+						<button
+							onclick={() => {
+								const time = data.time
+									? dayjs()
+											.set('hour', parseInt(data.time.substring(0, 2)))
+											.set('minute', parseInt(data.time.substring(2, 4)))
+											.subtract(30, 'minute')
+											.format('HHmm')
+									: dayjs().subtract(30, 'minute').format('HHmm');
+								adjust(data.crs, data.to, time, data.toc);
+							}}
+							class="flex items-center gap-1 p-4 text-left"
+							><ArrowUp size={16} /> Earlier trains</button
+						>
+						<div class="flex-grow"></div>
+						{#if data.time !== null}
+							<button
+								onclick={() => {
+									adjust(data.crs, data.to, null, data.toc);
+								}}
+								class="flex items-center gap-1 p-4 text-left"
+								>Back to now <TimerReset size={16} />
+							</button>
+						{/if}
+					</div>
 					{#each trains as train, i (train.id)}
 						<div
 							class={['group relative flex h-20', i % 2 === 0 ? 'bg-muted' : 'bg-card']}
@@ -445,13 +483,17 @@
 								style:background={operatorList[train.operator].bg}
 							></div>
 
-							<a
+							<button
 								transition:fade={{ duration: 200, delay: 100 }}
-								href="{data.url}/train/{train.id}?{data.searchParams}"
-								class="flex-grow"
+								onclick={() => {
+									goto(`/board/${data.crs}/train/${train.id}?${data.searchParams}`, {
+										replaceState: true
+									});
+								}}
+								class="flex-grow text-left"
 							>
-								<TrainCard {train} />
-							</a>
+								<TrainCard {train} fixedWidthTime />
+							</button>
 						</div>
 					{/each}
 					<button
@@ -508,7 +550,7 @@
 						!md.current &&
 						!dontMove.current
 					) {
-						goto(data.url + '?' + data.searchParams, { noScroll: true });
+						goto(data.url + '?' + data.searchParams, { noScroll: true, replaceState: true });
 					}
 				}}
 				out:fly={{ duration: 200, y: 500 }}

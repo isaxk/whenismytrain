@@ -60,3 +60,14 @@ export type ServiceLocation = {
 export type CallingPoint = ServiceLocation & {
 	progress: number;
 };
+
+export type ServiceDetails = {
+	destination: { name: string; crs: string };
+	generatedAt: string;
+	focus: ServiceLocation;
+	cancelReason: { Value: string } | null;
+	delayReason: { Value: string } | null;
+	callingPoints: CallingPoint[];
+	locations: ServiceLocation[];
+	trainCard: Train;
+};

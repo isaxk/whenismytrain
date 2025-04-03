@@ -3,13 +3,14 @@ import type { RequestHandler } from './$types';
 import dayjs from 'dayjs';
 import { PUBLIC_DEPARTURES_KEY } from '$env/static/public';
 import { Status, type Train } from '$lib/types/train';
-import timezone from 'dayjs/plugin/timezone'
-import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 
-dayjs.extend(utc)
-dayjs.extend(timezone)
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 function parseItem(item: any, crs: string): Train {
+	console.log(item);
 	let status = Status.AWAY;
 	if (item.atd) {
 		status = Status.DEPARTED;
@@ -39,11 +40,15 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	const urlParams = new URLSearchParams(url.searchParams);
 
 	console.log(time);
- const hour = parseInt(time.split('')[0]+time.split('')[1])
- const minute = parseInt(time.split('')[2]+time.split('' )[3])
+	const hour = parseInt(time.split('')[0] + time.split('')[1]);
+	const minute = parseInt(time.split('')[2] + time.split('')[3]);
 	const date =
 		time !== 'null'
-			? dayjs().tz('Europe/London').set('hour', hour).set('minute', minute).format('YYYYMMDDTHHmmss')
+			? dayjs()
+					.tz('Europe/London')
+					.set('hour', hour)
+					.set('minute', minute)
+					.format('YYYYMMDDTHHmmss')
 			: dayjs().tz('Europe/London').format('YYYYMMDDTHHmmss');
 
 	const reqUrl = new URL(
@@ -57,7 +62,13 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		}
 	});
 	const data = await response.json();
-	const trains: Train[] = data.trainServices?.map((item) => parseItem(item, crs)) ?? [];
+	let trains: Train[] = data.trainServices?.map((item) => parseItem(item, crs)) ?? [];
+
+	trains = trains.toSorted((a, b) => {
+		if ((a.estimated ?? a.scheduled) < (b.estimated ?? b.scheduled)) return -1;
+		if ((a.estimated ?? a.scheduled) > (b.estimated ?? b.scheduled)) return 1;
+		return 0;
+	});
 
 	const operators = new Set<string>([]);
 

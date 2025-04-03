@@ -22,12 +22,12 @@ export const refresherVals = $state({
 	interval: 10000
 });
 
-const callbacks: (() => void)[] = $state([]);
+const callbacks: (() => Promise<void>)[] = $state([]);
 
 async function refresh() {
 	refresherVals.isRefreshing = true;
 	console.log('refreshing all');
-	callbacks.forEach(async (callback) => await callback());
+	await callbacks.forEach(async (callback) => await callback());
 	setTimeout(() => {
 		refresherVals.lastRefreshed = dayjs();
 		refresherVals.isRefreshing = false;

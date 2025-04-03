@@ -14,6 +14,7 @@ export const load: LayoutLoad<{
 	const time = url.searchParams.get('time') || null;
 	const to = url.searchParams.get('to') || null;
 	const toc = url.searchParams.get('toc') || null;
+	const history = url.searchParams.get('history') || 'Home';
 
 	const qparams = new URLSearchParams();
 	if (to) {
@@ -25,6 +26,7 @@ export const load: LayoutLoad<{
 	if (toc) {
 		qparams.set('toc', toc);
 	}
+	qparams.set('history', history);
 
 	const rootUrl = `/board/${crs}`;
 
@@ -33,6 +35,7 @@ export const load: LayoutLoad<{
 		time,
 		to,
 		toc,
+		history,
 		url: rootUrl,
 		searchParams: qparams.toString(),
 		board: fetch(`/api/board/${crs}/${to}/${time}/${toc}`).then(
