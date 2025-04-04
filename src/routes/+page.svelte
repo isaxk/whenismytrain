@@ -54,7 +54,7 @@
 <div class="bg-muted h-full min-h-screen w-full md:h-screen">
 	<div class="pt-safe mx-auto flex h-full w-full max-w-screen-xl flex-col gap-4 p-4 lg:flex-row">
 		<div
-			class="border-border bg-background flex w-full flex-col rounded-lg border pt-2 drop-shadow-xs lg:h-full lg:max-w-[500px]"
+			class="border-border bg-background flex w-full flex-col rounded-lg border pt-2 lg:h-full lg:max-w-[500px]"
 		>
 			<div class="p-4 px-6">
 				<div class="pb-4">
