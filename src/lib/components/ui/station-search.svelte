@@ -71,7 +71,7 @@
 					}, 200);
 				}
 			}}
-			class="bg-background pt-safe border-border fixed top-0 -right-3 -left-3 z-50 h-full transform-gpu md:absolute md:h-max md:min-w-[400px] md:rounded-lg md:border md:bg-white md:p-3 md:drop-shadow-md"
+			class="bg-background pt-safe border-border fixed top-0 z-50 h-full transform-gpu md:absolute md:-right-3 md:-left-3 md:h-max md:min-w-[400px] md:rounded-lg md:border md:bg-white md:p-3 md:drop-shadow-md"
 			transition:scale|global={{ duration: 200, start: 0.9 }}
 		>
 			<div class="flex items-center gap-2 bg-white">
