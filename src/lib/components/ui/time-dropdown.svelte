@@ -8,8 +8,8 @@
 
 	let { time = $bindable(null), onselect = () => {} } = $props();
 
-	let value = $state(time ? time[0] + time[1] + ':' + time[2] + time[3] : null);
-	let now = $state(time === null);
+	let value = $derived(time ? time[0] + time[1] + ':' + time[2] + time[3] : null);
+	let now = $derived(time === null);
 	let changed = $state(false);
 
 	$effect(() => {

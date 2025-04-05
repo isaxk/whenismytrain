@@ -1,4 +1,5 @@
 <script>
+	import { navigating } from '$app/state';
 	import { refresherVals } from '$lib/state/refresh.svelte';
 	import dayjs from 'dayjs';
 	import { onMount } from 'svelte';
@@ -32,7 +33,7 @@
 		style:background-color={color}
 		class={[
 			'h-full bg-blue-500 opacity-50 transition-[animation]',
-			refresherVals.isRefreshing && 'animate-pulse'
+			refresherVals.isRefreshing || (navigating.to && 'animate-pulse')
 		]}
 		style:width="{(1 - tween.current) * 100}%"
 	></div>
