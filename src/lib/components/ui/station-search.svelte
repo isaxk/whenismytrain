@@ -97,7 +97,7 @@
 				class="bg-background pt-safe border-border fixed inset-0 top-0 right-0 bottom-0 left-0 z-50 flex h-full transform-gpu flex-col md:absolute md:-right-3 md:bottom-auto md:-left-3 md:h-max md:min-w-[400px] md:rounded-lg md:border md:bg-white md:p-3 md:drop-shadow-md"
 				transition:scale|global={{ duration: 200, start: 0.9 }}
 			>
-				<div class="bg-background h-full w-full">
+				<div class="bg-background h-full w-full md:h-fit">
 					<div class="flex items-center gap-2 bg-white">
 						<input
 							bind:this={input}
