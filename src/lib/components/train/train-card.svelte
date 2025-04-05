@@ -30,6 +30,11 @@
 		/>
 	</div>
 	<div class="flex-grow">
+		{#if train.oldDestination}
+			<div class="-mb-1 flex-grow text-xs line-through">
+				{train.oldDestination.name}
+			</div>
+		{/if}
 		<div class="flex-grow text-xl font-semibold select-text">
 			{train.destination.name}
 		</div>

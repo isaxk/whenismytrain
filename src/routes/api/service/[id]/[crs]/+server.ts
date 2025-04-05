@@ -148,8 +148,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		.filter((l) => l.isCallingPoint)
 		.map(parseCallingPoint);
 	const notCancelled = locations.filter((l) => !l.isCancelled);
+	const cancelled = callingPoints.filter((l) => l.isCancelled);
+	const focus = locations[focusIndex];
 	const destination =
-		notCancelled.length > 0
+		notCancelled.length > 0 && notCancelled[notCancelled.length - 1].crs !== focus.crs
 			? {
 					name: notCancelled[notCancelled.length - 1].name,
 					crs: notCancelled[notCancelled.length - 1].crs
@@ -158,11 +160,24 @@ export const GET: RequestHandler = async ({ params, url }) => {
 					name: callingPoints[callingPoints.length - 1].name,
 					crs: callingPoints[callingPoints.length - 1].crs
 				};
-	const focus = locations[focusIndex];
+	let oldDestination: { name: string; crs: string } | null =
+		cancelled.length > 0
+			? {
+					name: cancelled[cancelled.length - 1].name,
+					crs: cancelled[cancelled.length - 1].crs
+				}
+			: null;
+	if (
+		oldDestination === destination ||
+		locations.findIndex((l) => l.crs === oldDestination?.crs) <
+			locations.findIndex((l) => l.crs === destination?.crs)
+	)
+		oldDestination = null;
 	const trainCard: Train = {
 		id: data.id,
 		platform: focus.platform,
 		destination,
+		oldDestination,
 		estimated: focus.times.estimated.departure ?? focus.times.estimated.arrival ?? null,
 		scheduled: focus.times.scheduled.departure ?? focus.times.scheduled.arrival ?? null,
 		status: focus.status,

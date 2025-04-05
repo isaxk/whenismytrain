@@ -18,6 +18,13 @@ export type Train = {
 		name: string;
 		crs: string;
 	};
+	oldDestination:
+		| {
+				name: string;
+				crs: string;
+		  }
+		| null
+		| undefined;
 	estimated: string;
 	scheduled: string;
 	status: Status;
