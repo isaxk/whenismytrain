@@ -9,7 +9,7 @@
 	import { Bookmark, Bug, Clock, Code, Trash, User, X } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { flip } from 'svelte/animate';
-	import AllStationsJSON from 'uk-railway-stations';
+	import AllStationsJSON from '$lib/data/stations.json';
 
 	let from: string | null = $state(null);
 	let to: string | null = $state(null);

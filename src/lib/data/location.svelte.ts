@@ -1,4 +1,4 @@
-import AllStationsJSON from 'uk-railway-stations';
+import AllStationsJSON from '$lib/data/stations.json';
 import { localStore } from './local-store.svelte';
 import { distance } from '$lib/utils/fn';
 

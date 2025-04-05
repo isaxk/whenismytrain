@@ -2,7 +2,7 @@
 	import { crossfade, scale } from 'svelte/transition';
 	import Fuse from 'fuse.js';
 	import format from 'format-fuse.js';
-	import AllStationsJSON from 'uk-railway-stations';
+	import AllStationsJSON from '$lib/data/stations.json';
 	import { browser } from '$app/environment';
 	import { Check } from 'lucide-svelte';
 	import Highlight from './highlight.svelte';
@@ -39,7 +39,28 @@
 
 	const fuzzySearch = new Fuse(AllStationsJSON, {
 		keys: ['stationName', 'crsCode'],
-		includeMatches: true
+		includeMatches: true,
+		includeScore: true,
+		sortFn: (a, b) => {
+			// Convert Fuse's search results to normalized scores
+			const scoreA = a.score || 0;
+			const scoreB = b.score || 0;
+
+			// Get popularity scores
+			const popularityA = a.item.popularity || 0;
+			const popularityB = b.item.popularity || 0;
+
+			// Adjust these weights to balance relevance vs popularity
+			const weightSearch = 0.7;
+			const weightPopularity = 0.3;
+
+			// Calculate combined scores (lower is better)
+			const combinedScoreA = scoreA * weightSearch - popularityA * weightPopularity;
+			const combinedScoreB = scoreB * weightSearch - popularityB * weightPopularity;
+
+			// Sort by combined score
+			return combinedScoreA - combinedScoreB;
+		}
 	});
 
 	const results = $derived(fuzzySearch.search(value).slice(0, 5));
@@ -84,9 +105,9 @@
 							bind:value
 							class="w-full p-4 text-lg"
 							onblur={() => {
-								// setTimeout(() => {
-								// 	open = false;
-								// }, 200);
+								setTimeout(() => {
+									open = false;
+								}, 200);
 							}}
 						/>
 						<button onclick={() => (open = false)} class="text-foreground-muted px-2">Cancel</button
@@ -154,7 +175,6 @@
 						{/if}
 					</div>
 				</div>
-				cla
 			</form>
 		{/if}
 	</MobileOnlyPortal>

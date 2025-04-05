@@ -4,7 +4,7 @@
 
 	let { children } = $props();
 
-	const md = new MediaQuery('(max-width: 768px)');
+	const md = new MediaQuery('(min-width: 768px)');
 </script>
 
 {#if md.current}
