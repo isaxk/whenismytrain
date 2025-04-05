@@ -4,7 +4,21 @@
 	import { Icon, Map, Marker, Polyline, TileLayer } from 'sveaflet';
 	import { Tween } from 'svelte/motion';
 
-	let { locations, color }: { locations: ServiceLocation[]; color: string } = $props();
+	let {
+		focusedStation,
+		locations,
+		color,
+		focus,
+		zoom,
+		onSelect
+	}: {
+		focusedStation: string | undefined;
+		locations: ServiceLocation[];
+		color: string;
+		focus: [number, number] | null;
+		zoom: number;
+		onSelect: (tiploc: string) => void;
+	} = $props();
 
 	const commonIconOptions = {
 		iconSize: [25, 25],
@@ -14,6 +28,11 @@
 	const stationIconOptions = $derived({
 		...commonIconOptions,
 		iconUrl: `/api/icons/${color.replace('#', '')}/pin`
+	});
+
+	const focusIconOptions = $derived({
+		...commonIconOptions,
+		iconUrl: `/api/icons/${color.replace('#', '')}/focus`
 	});
 
 	const cancelledIconOptions = $derived({
@@ -75,12 +94,14 @@
 		dontMove.current = true;
 	}}
 >
-	<Map options={{ center: tween.current, zoom: 9 }}>
+	<Map options={{ center: focus ?? tween.current, zoom }}>
 		<TileLayer url={'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} />
 		{#each locations.filter((l) => l.isCallingPoint && !l.isCancelled) as l (l.tiploc)}
-			<Marker latLng={l.coords}>
-				{#key color}
-					{#if l.status === Status.DEPARTED}
+			<Marker latLng={l.coords} onclick={() => onSelect(l.tiploc)}>
+				{#key color && focus}
+					{#if focusedStation == l.tiploc}
+						<Icon options={focusIconOptions} />
+					{:else if l.status === Status.DEPARTED}
 						<Icon options={doneIconOptions} />
 					{:else}
 						<Icon options={stationIconOptions} />

@@ -25,15 +25,27 @@
 	let { data, drawer = false } = $props();
 
 	let service: ServiceDetails | null = $state(null);
+	let zoom = $state(10);
 
 	$effect(() => {
 		service = null;
-		data.service.then((d) => (service = d));
+		data.service.then((d) => {
+			service = d;
+		});
 	});
 
 	let topheight = $state(0);
 
-	const md = new MediaQuery('(min-width: 768px)');
+	const md = new MediaQuery('(min-width:   768px)');
+
+	let mapFocus: [number, number] | null = $derived.by(() => {
+		if (!service) return null;
+		const found = service?.callingPoints.find((point) => point.tiploc === focusedStation);
+		return found?.coords || null;
+	});
+
+	let focusedStation: string | undefined = $state(undefined);
+	$inspect(focusedStation);
 
 	onMount(() => {
 		const refresh = refresher.add(async () => {
@@ -99,17 +111,25 @@
 		{/if}
 
 		{#if service.callingPoints.filter((p) => !p.isCancelled).length > 0}
-			<Map locations={service.locations} color={operatorList[service.trainCard.operator].bg} />
+			<Map
+				{focusedStation}
+				onSelect={(e) => (focusedStation = e)}
+				{zoom}
+				focus={mapFocus}
+				locations={service.locations}
+				color={operatorList[service.trainCard.operator].bg}
+			/>
 		{/if}
 
 		<Accordion.Root
 			class="border-border min-h-0 flex-grow overflow-y-scroll border-t py-4"
 			type="single"
-			value={undefined}
+			bind:value={focusedStation}
 		>
 			<div class="h-full" in:fade|global={{ duration: 200 }}>
 				{#each service.callingPoints as location, i (location.tiploc)}
 					<CallingPoint
+						{focusedStation}
 						{i}
 						{location}
 						dest={service.destination.name}

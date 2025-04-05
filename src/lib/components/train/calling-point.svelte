@@ -9,10 +9,11 @@
 	import dayjs from 'dayjs';
 	import { quadInOut } from 'svelte/easing';
 	import { page } from '$app/state';
+	import ScrollIntoView from '../ui/scroll-into-view.svelte';
 
 	const { send, receive } = pos;
 
-	let { i, operator, location, length, dest = '' } = $props();
+	let { i, operator, location, length, dest = '', focusedStation } = $props();
 
 	let clientHeight = $state();
 </script>
@@ -28,12 +29,13 @@
 <Accordion.Item
 	class={[
 		'even:bg-muted odd:bg-card group border-border relative transition-all duration-200 first:border-none',
-		location.isCancelled && 'opacity-75'
+		location.isCancelled && 'opacity-75',
+		focusedStation === location.tiploc ? 'font-medium text-black' : 'text-black/80'
 	]}
 	value={location.tiploc}
 >
 	<div bind:clientHeight class="flex gap-4 pr-0 pl-5">
-		<div class="flex h-16 w-12 items-center justify-end">
+		<div class={['flex w-12 items-center justify-end', location.isCancelled ? 'h-16' : 'h-16']}>
 			<TimeDisplay
 				size="sm"
 				point
@@ -117,100 +119,121 @@
 			{/if}
 		{/snippet}
 		<div class="flex-grow">
-			<Accordion.Trigger class={['left-4 flex h-16 w-full items-center text-left']}>
-				<div
-					class={[
-						'flex-grow',
-						location.order === Order.FOCUS && 'font-semibold',
-						location.order === Order.SUBSEQUENT && 'font-medium',
-						location.isCancelled && 'line-through'
-					]}
-				>
-					{location.name}
+			<Accordion.Trigger
+				class={[
+					'left-4 flex w-full items-center text-left',
+					location.isCancelled ? 'h-16' : 'h-16'
+				]}
+			>
+				<div class="flex-grow">
+					<div
+						class={[
+							'flex-grow',
+							location.order === Order.FOCUS && 'font-semibold',
+							location.order === Order.SUBSEQUENT && 'font-medium',
+							location.isCancelled && 'line-through'
+						]}
+					>
+						{location.name}
+					</div>
+					{#if location.isCancelled}
+						<div class="-mt-1 text-xs font-semibold text-red-600">Cancelled</div>
+					{/if}
 				</div>
 
-				<div class="flex h-16 min-w-10 flex-col items-center justify-center">
-					<div class="text-[10px]">Platform</div>
-					<div class="bg-accent flex h-7 w-7 items-center justify-center rounded-full text-sm">
-						{location.platform}
+				{#if !location.isCancelled}
+					<div
+						class={[
+							'flex min-w-10 flex-col items-center justify-center',
+							location.isCancelled ? 'h-16' : 'h-16'
+						]}
+					>
+						<div class="text-[10px]">Platform</div>
+						<div class="bg-accent flex h-7 w-7 items-center justify-center rounded-full text-sm">
+							{location.platform}
+						</div>
 					</div>
-				</div>
+				{/if}
 				<div class="w-2"></div>
 				<div
-					class="text-foreground-muted transition-all duration-200 group-data-[state=open]:rotate-180"
+					class={[
+						'text-foreground-muted pr-2 transition-all duration-200 group-data-[state=open]:rotate-180',
+						location.isCancelled && 'opacity-0'
+					]}
 				>
 					<ChevronDown size={18} />
 				</div>
 			</Accordion.Trigger>
 
-			<Accordion.Content forceMount={true}
-				>{#snippet child({ props, open })}
-					{@const time =
-						location.times.estimated.arrival ??
-						location.times.scheduled.arrival ??
-						location.times.scheduled.departure ??
-						'null'}
-					{#if open}
-						<div
-							transition:slide={{ duration: 200, easing: quadInOut }}
-							class="border-border border-t pt-1 pb-2"
-							{...props}
-						>
-							<div class="grid grid-cols-3 grid-rows-3 pt-3 text-sm">
-								<div class="flex h-7 items-center"></div>
-								<div
-									class={[
-										'flex h-7 items-center gap-0.5',
-										!location.times.scheduled.arrival
-											? 'text-foreground-muted font-medium'
-											: 'font-semibold'
-									]}
-								>
-									Arrival {#if location.status === Status.ARRIVED || (location.status === Status.DEPARTED && location.times.scheduled.arrival)}
-										<Check size={16} />{/if}
-								</div>
-								<div
-									class={[
-										'flex h-7 items-center gap-0.5',
-										!location.times.scheduled.departure
-											? 'text-foreground-muted font-medium'
-											: 'font-semibold'
-									]}
-								>
-									Departure {#if location.status === Status.DEPARTED}
-										<Check size={16} />{/if}
-								</div>
-								<div class="flex h-7 items-center font-semibold">Expected</div>
+			{#if !location.isCancelled}
+				<Accordion.Content forceMount={true}>
+					{#snippet child({ props, open })}
+						{@const time =
+							location.times.estimated.arrival ??
+							location.times.scheduled.arrival ??
+							location.times.scheduled.departure ??
+							'null'}
+						{#if open}
+							<ScrollIntoView />
+							<div
+								transition:slide={{ duration: 200, easing: quadInOut }}
+								class="border-border border-t pt-1 pb-2"
+								{...props}
+							>
+								<div class="grid grid-cols-3 grid-rows-3 pt-3 text-sm">
+									<div class="flex h-7 items-center"></div>
+									<div
+										class={[
+											'flex h-7 items-center gap-0.5',
+											!location.times.scheduled.arrival
+												? 'text-foreground-muted font-medium'
+												: 'font-semibold'
+										]}
+									>
+										Arrival {#if location.status === Status.ARRIVED || (location.status === Status.DEPARTED && location.times.scheduled.arrival)}
+											<Check size={16} />{/if}
+									</div>
+									<div
+										class={[
+											'flex h-7 items-center gap-0.5',
+											!location.times.scheduled.departure
+												? 'text-foreground-muted font-medium'
+												: 'font-semibold'
+										]}
+									>
+										Departure {#if location.status === Status.DEPARTED}
+											<Check size={16} />{/if}
+									</div>
+									<div class="flex h-7 items-center font-semibold">Expected</div>
 
-								<div class="flex h-7 items-center gap-0.5 font-mono">
-									{@render format(location.times.estimated.arrival)}
-								</div>
-								<div class="flex h-7 items-center gap-0.5 font-mono">
-									{@render format(location.times.estimated.departure)}
-								</div>
+									<div class="flex h-7 items-center gap-0.5 font-mono">
+										{@render format(location.times.estimated.arrival)}
+									</div>
+									<div class="flex h-7 items-center gap-0.5 font-mono">
+										{@render format(location.times.estimated.departure)}
+									</div>
 
-								<div class="flex h-7 items-center font-semibold">Scheduled</div>
-								<div class="flex h-7 items-center font-mono">
-									{@render format(location.times.scheduled.arrival)}
+									<div class="flex h-7 items-center font-semibold">Scheduled</div>
+									<div class="flex h-7 items-center font-mono">
+										{@render format(location.times.scheduled.arrival)}
+									</div>
+									<div class="flex h-7 items-center font-mono">
+										{@render format(location.times.scheduled.departure)}
+									</div>
 								</div>
-								<div class="flex h-7 items-center font-mono">
-									{@render format(location.times.scheduled.departure)}
-								</div>
+								<a
+									class="flex w-full items-center gap-2 rounded py-2 pt-4 underline"
+									href="/board/{location.crs}?time={dayjs(time).format('HHmm')}&history={dayjs(
+										time
+									).format('HH:MM')} to {dest}"
+									><ArrowLeftRight size={18} /> Transfer departures
+								</a>
 							</div>
-							<a
-								class="flex w-full items-center gap-2 rounded py-2 pt-4 underline"
-								href="/board/{location.crs}?time={dayjs(time).format('HHmm')}&history={dayjs(
-									time
-								).format('HH:MM')} to {dest}"
-								><ArrowLeftRight size={18} /> Transfer departures
-							</a>
-						</div>
-					{/if}
-				{/snippet}</Accordion.Content
-			>
+						{/if}
+					{/snippet}</Accordion.Content
+				>
+			{/if}
 		</div>
-
-		<div class="flex h-16 flex-col items-end justify-center"></div>
 	</div>
 	{#if location.divideTo}
 		<a
