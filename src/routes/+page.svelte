@@ -6,7 +6,7 @@
 	import { boardUrl } from '$lib/utils/fn';
 	import { Label, Switch, Tabs } from 'bits-ui';
 	import dayjs from 'dayjs';
-	import { Bookmark, Bug, Clock, Code, Trash, User, X } from 'lucide-svelte';
+	import { Bookmark, Bug, Clock, Code, RailSymbol, Trash, User, X } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import AllStationsJSON from '$lib/data/stations.json';
@@ -42,6 +42,10 @@
 		</a>
 	</div>
 	<div class="flex items-center gap-2">
+		<div class="w-6 max-w-6 min-w-6"><RailSymbol size={20} /></div>
+		<a href="https://www.nationalrail.co.uk"> Powered by offical National Rail data</a>
+	</div>
+	<div class="flex items-center gap-2">
 		<div class="w-6 max-w-6 min-w-6"><Code size={20} /></div>
 		<a href="https://github.com/isaxk/whenismytrain"> Open Source on GitHub </a>
 	</div>
@@ -59,7 +63,7 @@
 			<div class="p-4 px-6">
 				<div class="pb-4">
 					<div class="text-3xl font-bold">When is my train?</div>
-					<div class="text-base">The easiest UK train tracker</div>
+					<div class="text-base">Easy UK train tracker</div>
 				</div>
 				<div class="flex min-h-20 items-center">
 					<div class="box-content min-w-10 pr-3 text-right">from:</div>

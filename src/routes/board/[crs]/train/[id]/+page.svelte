@@ -59,14 +59,14 @@
 	});
 </script>
 
-<div class="border-border bg-background flex h-full flex-col overflow-hidden rounded-lg border">
+<div class="border-border bg-background flex h-full flex-col overflow-hidden rounded-t-xl border">
 	{#if service}
 		<div
 			bind:clientHeight={topheight}
 			class={[!drawer && 'bg-background top-0 z-50 w-full md:flex md:flex-col']}
 		>
-			<div class="pt-safe">
-				<div class="border-border flex h-[50px] items-center overflow-hidden pb-3">
+			<div class="pt-4">
+				<div class="border-border flex h-[40px] items-center overflow-hidden pb-0">
 					<button
 						data-sveltekit-noscroll
 						onclick={() => goto(`/board/${data.crs}?${data.searchParams}`, { replaceState: true })}
@@ -89,7 +89,7 @@
 
 			<div class="-mt-2 pb-2 pl-5" in:fade|global={{ duration: 200 }}>
 				<div
-					class="w-max rounded-lg px-2.5 py-1 text-sm"
+					class="w-max rounded-lg px-2 py-1 text-xs"
 					style:color={operatorList[service.trainCard.operator].text}
 					style:background={operatorList[service.trainCard.operator].bg}
 				>
@@ -140,8 +140,8 @@
 			</div>
 		</Accordion.Root>
 	{:else}
-		<div class="pt-safe">
-			<div class="border-border flex h-[50px] items-center overflow-hidden pb-3">
+		<div class="pt-4">
+			<div class="border-border flex h-[40px] items-center overflow-hidden pb-0">
 				<a href="/board/{page.data.crs}?{page.data.searchParams}" class="flex w-14 justify-center"
 					><X /></a
 				>

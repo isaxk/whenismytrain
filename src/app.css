@@ -37,6 +37,10 @@
 	padding-top: calc(8px + max(6px, env(safe-area-inset-top)));
 }
 
+.top-drawer {
+	top: calc(32px + max(6px, env(safe-area-inset-top)));
+}
+
 .pb-safe {
 	padding-bottom: env(safe-area-inset-bottom);
 }

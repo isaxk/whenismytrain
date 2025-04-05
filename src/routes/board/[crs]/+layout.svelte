@@ -45,7 +45,7 @@
 	import SaveToggle from '$lib/components/board/save-toggle.svelte';
 	import { DropdownMenu } from 'bits-ui';
 	import TimeDropdown from '$lib/components/ui/time-dropdown.svelte';
-	import { quadInOut, quadOut, quartInOut, quartOut } from 'svelte/easing';
+	import { quadIn, quadInOut, quadOut, quartInOut, quartOut } from 'svelte/easing';
 	import TrainSaveToggle from '$lib/components/train/train-save-toggle.svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { pan, swipe, type PanCustomEvent } from 'svelte-gestures';
@@ -180,7 +180,8 @@
 
 	function handlePan(e: PanCustomEvent) {
 		if (!md.current && !dontMove.current) {
-			const x = Math.max(-35, e.detail.x - startX);
+			const x = Math.max(-35, e.detail.x - startX) / 10;
+
 			const y = Math.max(-5, e.detail.y - startY);
 			coords.set({ x, y, scale: 1 });
 			if (Math.sqrt(x * x + y * y) > 250) {
@@ -533,9 +534,15 @@
 			{/if}
 		</div>
 		{#if md.current || page.data.id}
+			{#if !md.current}
+				<div
+					class="fixed inset-0 z-50 bg-black/80 backdrop-blur-[1px]"
+					transition:fade|global={{ duration: 200 }}
+				></div>
+			{/if}
 			<div
 				use:pan={() => ({ delay: 50 })}
-				use:swipe={() => ({ timeframe: 500, minSwipeDistance: 20 })}
+				use:swipe={() => ({ timeframe: 400, minSwipeDistance: 100 })}
 				onpandown={(e) => {
 					startX = e.detail.x;
 					startY = e.detail.y;
@@ -553,10 +560,10 @@
 						goto(data.url + '?' + data.searchParams, { noScroll: true, replaceState: true });
 					}
 				}}
-				out:fly={{ duration: 200, y: 500 }}
+				out:fly={{ duration: 250, y: 500 }}
 				in:fly={{ duration: 200, y: 500 }}
 				style:transform="translate({coords.current.x}px, {coords.current.y}px)"
-				class="fixed inset-0 z-50 flex h-full min-w-0 flex-grow flex-col overflow-y-scroll md:static"
+				class="top-drawer fixed right-0 bottom-0 left-0 z-50 flex min-w-0 flex-grow flex-col overflow-y-scroll md:static lg:h-full"
 			>
 				<div class="h-full w-full">
 					{@render children()}
