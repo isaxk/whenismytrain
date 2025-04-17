@@ -35,7 +35,13 @@
 	value={location.tiploc}
 >
 	<div bind:clientHeight class="flex gap-4 pr-0 pl-5">
-		<div class={['flex w-12 items-center justify-end', location.isCancelled ? 'h-16' : 'h-16']}>
+		<div
+			class={[
+				'flex w-12 items-center justify-end',
+				location.isCancelled ? 'h-16' : 'h-16',
+				i < focusI && 'opacity-60'
+			]}
+		>
 			<TimeDisplay
 				size="sm"
 				point
