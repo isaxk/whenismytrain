@@ -129,6 +129,7 @@
 			<div class="h-full" in:fade|global={{ duration: 200 }}>
 				{#each service.callingPoints as location, i (location.tiploc)}
 					<CallingPoint
+						focusI={service.callingPoints.findIndex((l) => l.crs === data.crs)}
 						{focusedStation}
 						{i}
 						{location}

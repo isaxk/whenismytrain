@@ -13,7 +13,7 @@
 
 	const { send, receive } = pos;
 
-	let { i, operator, location, length, dest = '', focusedStation } = $props();
+	let { i, focusI, operator, location, length, dest = '', focusedStation } = $props();
 
 	let clientHeight = $state();
 </script>
@@ -131,7 +131,8 @@
 							'flex-grow',
 							location.order === Order.FOCUS && 'font-semibold',
 							location.order === Order.SUBSEQUENT && 'font-medium',
-							location.isCancelled && 'line-through'
+							location.isCancelled && 'line-through',
+							i < focusI && 'text-foreground-muted/60'
 						]}
 					>
 						{location.name}
