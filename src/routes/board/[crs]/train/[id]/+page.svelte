@@ -1,7 +1,12 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { goto, onNavigate } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
+	import { fade } from 'svelte/transition';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { Accordion } from 'bits-ui';
+	import { X } from 'lucide-svelte';
+
 	import CallingPoint from '$lib/components/train/calling-point/calling-point.svelte';
 	import Map from '$lib/components/train/map.svelte';
 	import TrainCard from '$lib/components/train/train-card.svelte';
@@ -9,42 +14,23 @@
 	import Disruption from '$lib/components/ui/disruption.svelte';
 	import Refreshbar from '$lib/components/ui/refreshbar.svelte';
 	import Skeleton from '$lib/components/ui/skeleton.svelte';
-	import TimeDisplay from '$lib/components/ui/time-display.svelte';
 	import { operatorList } from '$lib/data/operators.js';
-	import { dontMove } from '$lib/state/dont-move.svelte.js';
 	import { refresher } from '$lib/state/refresh.svelte.js';
-	import { Order, Status, type ServiceDetails } from '$lib/types/train.js';
-	import { receive, send } from '$lib/utils/transitions.js';
-	import { Accordion } from 'bits-ui';
-	import dayjs from 'dayjs';
-	import { Bookmark, ChevronLeft, Train, X } from 'lucide-svelte';
-	import { onDestroy, onMount } from 'svelte';
-	import { MediaQuery } from 'svelte/reactivity';
-	import { crossfade, fade } from 'svelte/transition';
+	import { type ServiceDetails } from '$lib/types/train.js';
 
-	let { data, drawer = false } = $props();
+	let { data } = $props();
+
+	const md = new MediaQuery('(min-width: 768px)');
 
 	let service: ServiceDetails | null = $state(null);
 	let zoom = $state(10);
-
-	$effect(() => {
-		service = null;
-		data.service.then((d) => {
-			service = d;
-		});
-	});
-
-	let topheight = $state(0);
-
-	const md = new MediaQuery('(min-width:   768px)');
+	let focusedStation: string | undefined = $state(undefined);
 
 	let mapFocus: [number, number] | null = $derived.by(() => {
 		if (!service) return null;
 		const found = service?.callingPoints.find((point) => point.tiploc === focusedStation);
 		return found?.coords || null;
 	});
-
-	let focusedStation: string | undefined = $state(undefined);
 
 	onMount(() => {
 		const refresh = refresher.add(async () => {
@@ -56,14 +42,18 @@
 			refresher.remove(refresh);
 		};
 	});
+
+	$effect(() => {
+		service = null;
+		data.service.then((d) => {
+			service = d;
+		});
+	});
 </script>
 
 <div class="border-border bg-background flex h-full flex-col overflow-hidden rounded-t-xl border">
 	{#if service}
-		<div
-			bind:clientHeight={topheight}
-			class={[!drawer && 'bg-background top-0 z-50 w-full md:flex md:flex-col']}
-		>
+		<div class={['bg-background top-0 z-50 w-full md:flex md:flex-col']}>
 			<div class="pt-4">
 				<div class="border-border flex h-[40px] items-center overflow-hidden pb-0">
 					<button
@@ -132,7 +122,6 @@
 						{i}
 						{callingPoint}
 						dest={service.destination.name}
-						length={service.callingPoints.length}
 						operator={service.trainCard.operator}
 					/>
 				{/each}

@@ -1,35 +1,29 @@
 <script lang="ts">
-	import { Order, Status, type CallingPoint } from '$lib/types/train';
-	import { Accordion } from 'bits-ui';
-	import TimeDisplay from '$lib/components/ui/time-display.svelte';
-	import { pos } from '$lib/utils/transitions';
-	import { ArrowLeftRight, Check, ChevronDown, ChevronRight, Train } from 'lucide-svelte';
-	import { operatorList } from '$lib/data/operators';
 	import { slide } from 'svelte/transition';
-	import dayjs from 'dayjs';
 	import { quadInOut } from 'svelte/easing';
-	import ScrollIntoView from '$lib/components/ui/scroll-into-view.svelte';
-	import PositionIndicator from './position-indicator.svelte';
+	import { Accordion } from 'bits-ui';
+	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 
-	const { send, receive } = pos;
+	import ScrollIntoView from '$lib/components/ui/scroll-into-view.svelte';
+	import TimeDisplay from '$lib/components/ui/time-display.svelte';
+	import PositionIndicator from './position-indicator.svelte';
+	import TimeDetails from './time-details.svelte';
+	import { Order, type CallingPoint } from '$lib/types/train';
+	import { operatorList } from '$lib/data/operators';
 
 	let {
 		i,
 		operator,
 		callingPoint,
-		length,
 		dest = '',
 		focusedStation
 	}: {
 		i: number;
 		operator: string;
 		callingPoint: CallingPoint;
-		length: number;
 		dest: string;
 		focusedStation: string | undefined;
 	} = $props();
-
-	let clientHeight = $state();
 </script>
 
 {#if callingPoint.divideFrom}
@@ -48,7 +42,7 @@
 	]}
 	value={callingPoint.tiploc}
 >
-	<div bind:clientHeight class="flex gap-4 pr-0 pl-5">
+	<div class="flex gap-4 pr-0 pl-5">
 		<div
 			class={[
 				'flex w-12 items-center justify-end',
@@ -75,13 +69,6 @@
 			progress={callingPoint.progress}
 			{operator}
 		/>
-		{#snippet format(date: string)}
-			{#if date}
-				{dayjs(date).format('HH:mm:ss')}
-			{:else}
-				-
-			{/if}
-		{/snippet}
 		<div class="flex-grow">
 			<Accordion.Trigger
 				class={[
@@ -133,11 +120,6 @@
 			{#if !callingPoint.isCancelled}
 				<Accordion.Content forceMount={true}>
 					{#snippet child({ props, open })}
-						{@const time =
-							callingPoint.times.estimated.arrival ??
-							callingPoint.times.scheduled.arrival ??
-							callingPoint.times.scheduled.departure ??
-							'null'}
 						{#if open}
 							<ScrollIntoView />
 							<div
@@ -145,58 +127,11 @@
 								class="border-border border-t pt-1 pb-2"
 								{...props}
 							>
-								<div class="grid grid-cols-3 grid-rows-3 pt-3 text-sm">
-									<div class="flex h-7 items-center"></div>
-									<div
-										class={[
-											'flex h-7 items-center gap-0.5',
-											!callingPoint.times.scheduled.arrival
-												? 'text-foreground-muted font-medium'
-												: 'font-semibold'
-										]}
-									>
-										Arrival {#if callingPoint.status === Status.ARRIVED || (callingPoint.status === Status.DEPARTED && callingPoint.times.scheduled.arrival)}
-											<Check size={16} />{/if}
-									</div>
-									<div
-										class={[
-											'flex h-7 items-center gap-0.5',
-											!callingPoint.times.scheduled.departure
-												? 'text-foreground-muted font-medium'
-												: 'font-semibold'
-										]}
-									>
-										Departure {#if callingPoint.status === Status.DEPARTED}
-											<Check size={16} />{/if}
-									</div>
-									<div class="flex h-7 items-center font-semibold">Expected</div>
-
-									<div class="flex h-7 items-center gap-0.5 font-mono">
-										{@render format(callingPoint.times.estimated.arrival)}
-									</div>
-									<div class="flex h-7 items-center gap-0.5 font-mono">
-										{@render format(callingPoint.times.estimated.departure)}
-									</div>
-
-									<div class="flex h-7 items-center font-semibold">Scheduled</div>
-									<div class="flex h-7 items-center font-mono">
-										{@render format(callingPoint.times.scheduled.arrival)}
-									</div>
-									<div class="flex h-7 items-center font-mono">
-										{@render format(callingPoint.times.scheduled.departure)}
-									</div>
-								</div>
-								<a
-									class="flex w-full items-center gap-2 rounded py-2 pt-4 underline"
-									href="/board/{callingPoint.crs}?time={dayjs(time).format('HHmm')}&history={dayjs(
-										time
-									).format('HH:MM')} to {dest}"
-									><ArrowLeftRight size={18} /> Transfer departures
-								</a>
+								<TimeDetails {callingPoint} {dest} />
 							</div>
 						{/if}
-					{/snippet}</Accordion.Content
-				>
+					{/snippet}
+				</Accordion.Content>
 			{/if}
 		</div>
 	</div>

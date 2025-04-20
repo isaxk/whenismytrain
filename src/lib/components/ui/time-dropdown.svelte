@@ -1,16 +1,16 @@
-<script>
-	import { receive, send } from '$lib/utils/transitions';
-
-	import { DropdownMenu, Label, Popover, Switch } from 'bits-ui';
+<script lang="ts">
+	import { Label, Popover, Switch } from 'bits-ui';
 	import dayjs from 'dayjs';
 	import { Clock } from 'lucide-svelte';
 	import { fly } from 'svelte/transition';
 
-	let { time = $bindable(null), onselect = () => {} } = $props();
+	let {
+		time = $bindable(null),
+		onselect = () => {}
+	}: { time: string | null; onselect: (time: string) => void } = $props();
 
 	let value = $derived(time ? time[0] + time[1] + ':' + time[2] + time[3] : null);
 	let now = $derived(time === null);
-	let changed = $state(false);
 
 	$effect(() => {
 		if (now) value = dayjs().format('HH:mm');
