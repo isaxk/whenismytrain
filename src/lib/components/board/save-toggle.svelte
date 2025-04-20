@@ -10,6 +10,7 @@
 			(item) => item.from === from && item.to === to && item.time === time
 		)
 	);
+	
 	const saved = $derived(index > -1);
 
 	$inspect(index, savedBoards.value);

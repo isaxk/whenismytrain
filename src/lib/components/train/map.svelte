@@ -20,6 +20,8 @@
 		onSelect: (tiploc: string) => void;
 	} = $props();
 
+	$inspect(locations);
+
 	const commonIconOptions = {
 		iconSize: [25, 25],
 		iconAnchor: [12, 12]

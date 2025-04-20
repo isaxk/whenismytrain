@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment';
 	import { goto, onNavigate } from '$app/navigation';
 	import { page } from '$app/state';
-	import CallingPoint from '$lib/components/train/calling-point.svelte';
+	import CallingPoint from '$lib/components/train/calling-point/calling-point.svelte';
 	import Map from '$lib/components/train/map.svelte';
 	import TrainCard from '$lib/components/train/train-card.svelte';
 	import TrainSaveToggle from '$lib/components/train/train-save-toggle.svelte';
@@ -45,7 +45,6 @@
 	});
 
 	let focusedStation: string | undefined = $state(undefined);
-	$inspect(focusedStation);
 
 	onMount(() => {
 		const refresh = refresher.add(async () => {
@@ -127,12 +126,11 @@
 			bind:value={focusedStation}
 		>
 			<div class="h-full" in:fade|global={{ duration: 200 }}>
-				{#each service.callingPoints as location, i (location.tiploc)}
+				{#each service.callingPoints as callingPoint, i (callingPoint.tiploc)}
 					<CallingPoint
-						focusI={service.callingPoints.findIndex((l) => l.crs === data.crs)}
 						{focusedStation}
 						{i}
-						{location}
+						{callingPoint}
 						dest={service.destination.name}
 						length={service.callingPoints.length}
 						operator={service.trainCard.operator}

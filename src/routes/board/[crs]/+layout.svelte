@@ -8,7 +8,6 @@
 		pushState
 	} from '$app/navigation';
 	import { navigating, page } from '$app/state';
-	import PaneContent from '$lib/components/board/pane-content.svelte';
 	import TrainCard from '$lib/components/train/train-card.svelte';
 	import type { Train } from '$lib/types/train';
 	import { Spring } from 'svelte/motion';
