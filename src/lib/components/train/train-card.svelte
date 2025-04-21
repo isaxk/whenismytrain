@@ -59,20 +59,7 @@
 				<span class="font-semibold text-red-600 not-italic">Cancelled</span>
 			{:else if train.status === Status.ARRIVED}
 				<div>Arrived</div>
-				<div class="text-foreground-muted font-light italic">
-					Departs in <span class="font-normal text-black">
-						{#if fromNow(train.times.estimated.departure) < 1}
-							&lt;1 min
-						{:else}
-							{fromNow(train.times.estimated.departure)} mins
-						{/if}</span
-					>
-				</div>
-			{:else if train.status === Status.DEPARTED}
-				Departed
-			{:else if train.status === Status.STARTS_HERE}
-				<div class="text-foreground-muted">Starts Here</div>
-				{#if fromNow(train.times.estimated.departure) < 15}
+				{#if train.times.estimated.departure}
 					<div class="text-foreground-muted font-light italic">
 						Departs in <span class="font-normal text-black">
 							{#if fromNow(train.times.estimated.departure) < 1}
@@ -81,6 +68,21 @@
 								{fromNow(train.times.estimated.departure)} mins
 							{/if}</span
 						>
+					</div>
+				{/if}
+			{:else if train.status === Status.DEPARTED}
+				Departed
+			{:else if train.status === Status.STARTS_HERE}
+				<div class="text-foreground-muted">Starts Here</div>
+				{#if fromNow(train.times.estimated.departure) < 15 && train.times.estimated.departure}
+					<div class="text-foreground-muted font-light italic">
+						Departs in <span class="font-normal text-black">
+							{#if fromNow(train.times.estimated.departure) < 1}
+								&lt;1 min
+							{:else}
+								{fromNow(train.times.estimated.departure)} mins
+							{/if}
+						</span>
 					</div>
 				{/if}
 			{:else if train.times.estimated.arrival && fromNow(train.times.estimated.arrival) < 15}
