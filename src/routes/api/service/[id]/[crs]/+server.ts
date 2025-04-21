@@ -82,18 +82,20 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		}
 
 		const next = data.locations[i + 1];
-		const lastDeptTime = dayjs(
-			location.ata ?? location.atd ?? location.atd ?? location.etd ?? location.sta ?? location.std
+		const lastDeptTime = dayjs.tz(
+			location.ata ?? location.atd ?? location.atd ?? location.etd ?? location.sta ?? location.std,
+			'Europe/London'
 		);
 
-		const nextTime = dayjs(
-			next ? (next.ata ?? next.atd ?? next.atd ?? next.etd ?? next.sta ?? next.std) : undefined
+		const nextTime = dayjs.tz(
+			next ? (next.ata ?? next.atd ?? next.atd ?? next.etd ?? next.sta ?? next.std) : undefined,
+			'Europe/London'
 		);
 
 		// Calculate the progress of the train between the two timing point locations
 		const diff = nextTime.diff(lastDeptTime, 'seconds');
-		const time = dayjs().tz('Europe/London');
-		const now = dayjs().tz('Europe/London').diff(lastDeptTime, 'seconds');
+		const time = dayjs();
+		const now = dayjs().diff(lastDeptTime, 'seconds');
 		const timeProgress = now / diff;
 
 		return {
