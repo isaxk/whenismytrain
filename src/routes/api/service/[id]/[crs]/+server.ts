@@ -141,8 +141,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
 				// Calculate the progress of the train between the two timing point locations
 				const diff = nextTime.diff(lastDeptTime, 'seconds');
-				const now = dayjs().diff(lastDeptTime, 'seconds');
-				const timeProgress = Math.min(0.9, now / diff);
+				const now = dayjs().tz('Europe/London').diff(lastDeptTime, 'seconds');
+				const timeProgress = Math.min(0.9, Math.max(0.1, now / diff));
 
 				// Calculate the progress between the two calling points
 				const tiplocProgress = (lastDeparted - start + timeProgress) / (end - start);
