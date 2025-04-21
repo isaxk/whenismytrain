@@ -96,7 +96,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		const diff = nextTime.diff(lastDeptTime, 'seconds');
 		const time = dayjs();
 		const now = dayjs().diff(lastDeptTime, 'seconds');
-		const timeProgress = now / diff;
+		const timeProgress = Math.min(1, Math.max(0, now / diff));
 
 		return {
 			time,
