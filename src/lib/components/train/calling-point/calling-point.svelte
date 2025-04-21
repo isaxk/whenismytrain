@@ -108,9 +108,6 @@
 					{#if callingPoint.isCancelled}
 						<div class="-mt-1 text-xs font-semibold text-red-600">Cancelled</div>
 					{/if}
-					<div class="text-xs">
-						{callingPoint.progress.toFixed(2)}
-					</div>
 				</div>
 
 				{#if !callingPoint.isCancelled}
