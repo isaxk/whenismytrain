@@ -85,17 +85,15 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		const lastDeptTime = dayjs(
 			location.ata ?? location.atd ?? location.atd ?? location.etd ?? location.sta ?? location.std
 		);
-		let nextTime = dayjs().tz('Europe/London');
-		if (next) {
-			nextTime = dayjs(
-				next.ata ?? next.atd ?? next.atd ?? next.etd ?? next.sta ?? next.std ?? undefined
-			);
-		}
+
+		const nextTime = dayjs(
+			next ? (next.ata ?? next.atd ?? next.atd ?? next.etd ?? next.sta ?? next.std) : undefined
+		);
 
 		// Calculate the progress of the train between the two timing point locations
 		const diff = nextTime.diff(lastDeptTime, 'seconds');
 		const now = dayjs().tz('Europe/London').diff(lastDeptTime, 'seconds');
-		const timeProgress = Math.min(1, Math.max(0, now / diff));
+		const timeProgress = now / diff;
 
 		return {
 			isCallingPoint: !location.isPass && location.crs,
