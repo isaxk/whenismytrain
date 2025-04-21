@@ -145,63 +145,62 @@
 			<div class="pt-safe md:hidden"></div>
 			<div class="h-[170px] md:hidden"></div>
 
-			{#if notices.length > 0}
-				<div class="px-4 pt-4 pb-1">
-					<Accordion.Root type="single">
-						<Accordion.Item
-							class={[
-								'bg-background w-full overflow-hidden rounded-lg border drop-shadow transition-all data-[state=open]:border-neutral-300',
-								mostSevereNotice === NoticeSeverity.Major && 'border-red-500',
-								mostSevereNotice === NoticeSeverity.Minor && 'border-yellow-500',
-								mostSevereNotice === NoticeSeverity.Normal && 'border-blue-500',
-								mostSevereNotice === NoticeSeverity.Severe && 'border-red-950'
-							]}
-						>
-							<Accordion.Trigger
-								class={[
-									'data-[state=open]:bg-background group flex w-full items-center gap-2 overflow-hidden py-3 pr-2 pl-4 text-left transition-all',
-									mostSevereNotice === NoticeSeverity.Major && 'bg-red-100',
-									mostSevereNotice === NoticeSeverity.Severe && 'bg-red-100',
-									mostSevereNotice === NoticeSeverity.Minor && 'bg-yellow-100',
-									mostSevereNotice === NoticeSeverity.Normal && 'bg-blue-100'
-								]}
-							>
-								{#if mostSevereNotice === NoticeSeverity.Normal}
-									<Info size={20} />
-								{:else}
-									<TriangleAlert size={20} />
-								{/if}
-								<div class="flex-grow">
-									{#if mostSevereNotice === NoticeSeverity.Minor}
-										Minor
-									{:else if mostSevereNotice === NoticeSeverity.Major}
-										Major
-									{:else if mostSevereNotice === NoticeSeverity.Severe}
-										Severe
-									{/if}
-									Status Updates
-								</div>
-								<div
-									class="flex h-6 w-6 items-center justify-center transition-all group-data-[state=open]:rotate-180"
-								>
-									<ChevronDown size={21} />
-								</div>
-							</Accordion.Trigger>
-							<Accordion.Content class="flex flex-col gap-4 border-t border-neutral-200 p-3">
-								{#each notices as notice, i (notice.html + i)}
-									<Notice {notice} />
-								{/each}
-							</Accordion.Content>
-						</Accordion.Item>
-					</Accordion.Root>
-				</div>
-			{/if}
-
 			{#if trains !== null}
 				<div
 					in:fade|global={{ duration: 400 }}
 					class="md:border-border flex flex-grow flex-col overflow-y-scroll overscroll-y-auto"
 				>
+					{#if notices.length > 0}
+						<div class="px-4 pt-4 pb-1">
+							<Accordion.Root type="single">
+								<Accordion.Item
+									class={[
+										'bg-background w-full overflow-hidden rounded-lg border drop-shadow transition-all data-[state=open]:border-neutral-300',
+										mostSevereNotice === NoticeSeverity.Major && 'border-red-500',
+										mostSevereNotice === NoticeSeverity.Minor && 'border-yellow-500',
+										mostSevereNotice === NoticeSeverity.Normal && 'border-blue-500',
+										mostSevereNotice === NoticeSeverity.Severe && 'border-red-950'
+									]}
+								>
+									<Accordion.Trigger
+										class={[
+											'data-[state=open]:bg-background group flex w-full items-center gap-2 overflow-hidden py-3 pr-2 pl-4 text-left transition-all',
+											mostSevereNotice === NoticeSeverity.Major && 'bg-red-100',
+											mostSevereNotice === NoticeSeverity.Severe && 'bg-red-100',
+											mostSevereNotice === NoticeSeverity.Minor && 'bg-yellow-100',
+											mostSevereNotice === NoticeSeverity.Normal && 'bg-blue-100'
+										]}
+									>
+										{#if mostSevereNotice === NoticeSeverity.Normal}
+											<Info size={20} />
+										{:else}
+											<TriangleAlert size={20} />
+										{/if}
+										<div class="flex-grow">
+											{#if mostSevereNotice === NoticeSeverity.Minor}
+												Minor
+											{:else if mostSevereNotice === NoticeSeverity.Major}
+												Major
+											{:else if mostSevereNotice === NoticeSeverity.Severe}
+												Severe
+											{/if}
+											Status Updates
+										</div>
+										<div
+											class="flex h-6 w-6 items-center justify-center transition-all group-data-[state=open]:rotate-180"
+										>
+											<ChevronDown size={21} />
+										</div>
+									</Accordion.Trigger>
+									<Accordion.Content class="flex flex-col gap-4 border-t border-neutral-200 p-3">
+										{#each notices as notice, i (notice.html + i)}
+											<Notice {notice} />
+										{/each}
+									</Accordion.Content>
+								</Accordion.Item>
+							</Accordion.Root>
+						</div>
+					{/if}
 					<div class="flex">
 						<button onclick={earlier} class="flex items-center gap-1 p-4 text-left"
 							><ArrowUp size={16} /> Earlier trains</button
