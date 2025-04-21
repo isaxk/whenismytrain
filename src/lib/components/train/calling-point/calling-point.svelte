@@ -16,13 +16,15 @@
 		operator,
 		callingPoint,
 		dest = '',
-		focusedStation
+		focusedStation,
+		length
 	}: {
 		i: number;
 		operator: string;
 		callingPoint: CallingPoint;
 		dest: string;
 		focusedStation: string | undefined;
+  length: number
 	} = $props();
 </script>
 
