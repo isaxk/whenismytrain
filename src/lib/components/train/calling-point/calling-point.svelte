@@ -24,7 +24,7 @@
 		callingPoint: CallingPoint;
 		dest: string;
 		focusedStation: string | undefined;
-  length: number
+		length: number;
 	} = $props();
 </script>
 
@@ -52,24 +52,38 @@
 				callingPoint.order === Order.PREVIOUS && 'opacity-60'
 			]}
 		>
-			<TimeDisplay
-				size="sm"
-				point
-				isCancelled={callingPoint.isCancelled}
-				estimated={callingPoint.times.estimated.departure ??
-					callingPoint.times.estimated.arrival ??
-					null}
-				scheduled={callingPoint.times.scheduled.departure ??
-					callingPoint.times.scheduled.arrival ??
-					null}
-			/>
+			{#if callingPoint.order === Order.PREVIOUS || callingPoint.order === Order.FOCUS}
+				<TimeDisplay
+					size="sm"
+					point
+					isCancelled={callingPoint.isCancelled}
+					estimated={callingPoint.times.estimated.departure ??
+						callingPoint.times.estimated.arrival ??
+						null}
+					scheduled={callingPoint.times.scheduled.departure ??
+						callingPoint.times.scheduled.arrival ??
+						null}
+				/>
+			{:else}
+				<TimeDisplay
+					size="sm"
+					point
+					isCancelled={callingPoint.isCancelled}
+					estimated={callingPoint.times.estimated.arrival ??
+						callingPoint.times.estimated.departure ??
+						null}
+					scheduled={callingPoint.times.scheduled.arrival ??
+						callingPoint.times.scheduled.departure ??
+						null}
+				/>
+			{/if}
 		</div>
 		<PositionIndicator
 			{i}
 			status={callingPoint.status}
 			isCancelled={callingPoint.isCancelled}
 			progress={callingPoint.progress}
-   {length}
+			{length}
 			{operator}
 		/>
 		<div class="flex-grow">
@@ -94,6 +108,9 @@
 					{#if callingPoint.isCancelled}
 						<div class="-mt-1 text-xs font-semibold text-red-600">Cancelled</div>
 					{/if}
+					<div class="text-xs">
+						{callingPoint.progress.toFixed(2)}
+					</div>
 				</div>
 
 				{#if !callingPoint.isCancelled}
