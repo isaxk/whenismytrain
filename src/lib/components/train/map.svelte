@@ -2,6 +2,7 @@
 	import { dontMove } from '$lib/state/dont-move.svelte';
 	import { Status, type ServiceLocation } from '$lib/types/train';
 	import { Icon, Map, Marker, Polyline, TileLayer } from 'sveaflet';
+	import { untrack } from 'svelte';
 	import { Tween } from 'svelte/motion';
 
 	let {
@@ -15,7 +16,7 @@
 		focusedStation: string | undefined;
 		locations: ServiceLocation[];
 		color: string;
-		focus: [number, number] | null;
+		focus: string | null;
 		zoom: number;
 		onSelect: (tiploc: string) => void;
 	} = $props();
@@ -60,6 +61,10 @@
 		return { i, current };
 	});
 
+	const tween = new Tween([0, 0]);
+
+	$effect(() => {});
+
 	const coords = $derived.by(() => {
 		const { i, current } = currentLoc;
 		if (!current) return [locations[0].coords[0], locations[0].coords[1]];
@@ -68,15 +73,33 @@
 		} else {
 			const next = locations[i + 1];
 			if (!next) return current.coords;
-			return [(current.coords[0] + next.coords[0]) / 2, (current.coords[1] + next.coords[1]) / 2];
+			const x = current.coords[0] + (next.coords[0] - current.coords[0]) * current.progress;
+			const y = current.coords[1] + (next.coords[1] - current.coords[1]) * current.progress;
+			return [x, y];
 		}
 	});
 	$effect(() => {
 		tween.set(coords);
 	});
-	const tween = new Tween([0, 0]);
+	let init = false;
+	let focusCoords = $state([locations[0].coords[0], locations[0].coords[1]]);
+	$effect(() => {
+		if (tween.target[0] !== 0 && tween.target[1] !== 0 && !init) {
+			focusCoords = tween.target;
+			init = true;
+		}
+	});
 
-	console.log(locations.map((l) => l.coords));
+	$effect(() => {
+		if (focus) {
+			focusCoords = locations.find((l) => l.tiploc === focus)?.coords ?? [
+				locations[0].coords[0],
+				locations[0].coords[1]
+			];
+		} else {
+			focusCoords = untrack(() => tween.target);
+		}
+	});
 </script>
 
 <svelte:window
@@ -96,7 +119,7 @@
 		dontMove.current = true;
 	}}
 >
-	<Map options={{ center: focus ?? tween.current, zoom }}>
+	<Map options={{ center: focusCoords, zoom }}>
 		<TileLayer url={'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} />
 		{#each locations.filter((l) => l.isCallingPoint && !l.isCancelled) as l (l.tiploc)}
 			<Marker latLng={l.coords} onclick={() => onSelect(l.tiploc)}>

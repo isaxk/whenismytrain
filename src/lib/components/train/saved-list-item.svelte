@@ -11,7 +11,6 @@
 	let error = $state(false);
 
 	data.then((d) => {
-		console.log(d);
 		const index = savedServices.value.findIndex((service) => service.id === id);
 		if (!d.trainCard) {
 			error = true;

@@ -58,7 +58,6 @@
 			{ instant: true }
 		);
 		const y = window.scrollY ?? 0;
-		console.log(y);
 		root.style.position = 'fixed';
 		root.style.top = `-${y}px`;
 		root.style.right = '0';
@@ -107,7 +106,6 @@
 					(touch.clientX < window.innerWidth * 0.1 || touch.clientX > window.innerWidth * 0.9) &&
 					fixed
 				) {
-					console.log('touchstart');
 					e.preventDefault();
 				}
 			},

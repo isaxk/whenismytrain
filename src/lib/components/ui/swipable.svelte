@@ -73,9 +73,7 @@
 		}
 	}
 
-	onNavigate((e) => {
-		console.log(e.from?.url.pathname, e.to?.url.pathname);
-	});
+	onNavigate((e) => {});
 
 	function explicitEffect(fn, depsFn) {
 		$effect(() => {

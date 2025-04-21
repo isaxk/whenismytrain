@@ -1,12 +1,12 @@
 import type { LayoutLoad } from './$types';
 import type { Train } from '$lib/types/train';
-import type { BoardDetails } from '$lib/types';
+import type { BoardDetails, NoticeType } from '$lib/types';
 
 export const ssr = false;
 export const load: LayoutLoad<{
 	board: Promise<{
 		details: BoardDetails;
-
+		notices: NoticeType[];
 		trains: Train[];
 	}>;
 }> = ({ params, url, fetch }) => {
@@ -39,7 +39,10 @@ export const load: LayoutLoad<{
 		url: rootUrl,
 		searchParams: qparams.toString(),
 		board: fetch(`/api/board/${crs}/${to}/${time}/${toc}`).then(
-			async (response): Promise<{ details: BoardDetails; trains: Train[] }> => await response.json()
+			async (
+				response
+			): Promise<{ details: BoardDetails; notices: NoticeType[]; trains: Train[] }> =>
+				await response.json()
 		)
 	};
 };

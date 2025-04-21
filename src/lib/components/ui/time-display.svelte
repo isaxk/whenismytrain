@@ -37,7 +37,7 @@
 </script>
 
 {#snippet formatTime(time: Dayjs)}
-	{#if fromNow < -1 && !point}
+	<!-- {#if fromNow < -1 && !point}
 		<span class={[!point && 'text-black']}>
 			{time.format('HH:mm')}
 		</span>
@@ -59,9 +59,9 @@
 				{time.format('HH:mm')}
 			</div>
 		{/if}
-	{:else}
-		{time.format('HH:mm')}
-	{/if}
+{:else} -->
+	{time.format('HH:mm')}
+	<!-- {/if} -->
 {/snippet}
 
 <div

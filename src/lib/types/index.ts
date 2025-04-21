@@ -5,3 +5,15 @@ export type BoardDetails = {
 	to: string | null;
 	operators: string[];
 };
+
+export type NoticeType = {
+	severity: number;
+	html: string;
+};
+
+export enum NoticeSeverity {
+	Normal,
+	Minor,
+	Major,
+	Severe
+}

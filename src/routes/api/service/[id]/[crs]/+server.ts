@@ -10,6 +10,11 @@ import {
 	type Train
 } from '$lib/types/train';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export const GET: RequestHandler = async ({ params, url }) => {
 	const { id, crs } = params;
@@ -76,6 +81,22 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			}
 		}
 
+		const next = data.locations[i + 1];
+		const lastDeptTime = dayjs(
+			location.ata ?? location.atd ?? location.atd ?? location.etd ?? location.sta ?? location.std
+		);
+		let nextTime = dayjs().tz('Europe/London');
+		if (next) {
+			nextTime = dayjs(
+				next.ata ?? next.atd ?? next.atd ?? next.etd ?? next.sta ?? next.std ?? undefined
+			);
+		}
+
+		// Calculate the progress of the train between the two timing point locations
+		const diff = nextTime.diff(lastDeptTime, 'seconds');
+		const now = dayjs().tz('Europe/London').diff(lastDeptTime, 'seconds');
+		const timeProgress = Math.min(1, Math.max(0, now / diff));
+
 		return {
 			isCallingPoint: !location.isPass && location.crs,
 			order: focusIndex === i ? Order.FOCUS : focusIndex < i ? Order.SUBSEQUENT : Order.PREVIOUS,
@@ -97,7 +118,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			},
 			divideFrom,
 			divideTo,
-			coords: filteredTiplocs.find((t) => t.tiploc === location.tiploc)?.coords ?? null
+			coords: filteredTiplocs.find((t) => t.tiploc === location.tiploc)?.coords ?? null,
+			progress: timeProgress
 		};
 	}
 
@@ -121,31 +143,14 @@ export const GET: RequestHandler = async ({ params, url }) => {
 				// Train has already left/arrived the station
 				return { ...location, progress: 1 };
 			} else {
-				// Train is currently between this location and the next
-
 				// Calculate the last Timing Point the train has departed
 				const lastDeparted = locations.findLastIndex(
 					(l, i) => l.status === Status.DEPARTED && i >= start && i < end
 				);
-				// Calculate the next Timing Point the train will arrive at
-				const next = locations[lastDeparted + 1];
-				const lastDeptTime = dayjs(
-					locations[lastDeparted].times.estimated.departure ?? location.times.scheduled.departure
-				);
-				const nextTime = dayjs(
-					next.times.estimated.arrival ??
-						next.times.estimated.departure ??
-						next.times.scheduled.arrival ??
-						next.times.scheduled.departure
-				);
 
-				// Calculate the progress of the train between the two timing point locations
-				const diff = nextTime.diff(lastDeptTime, 'seconds');
-				const now = dayjs().tz('Europe/London').diff(lastDeptTime, 'seconds');
-				const timeProgress = Math.min(0.9, Math.max(0.1, now / diff));
-
-				// Calculate the progress between the two calling points
-				const tiplocProgress = (lastDeparted - start + timeProgress) / (end - start);
+				// Calculate the progress between the two calling points, including the progress between timing points
+				const tiplocProgress =
+					(lastDeparted - start + locations[lastDeparted].progress) / (end - start);
 
 				return { ...location, progress: tiplocProgress };
 			}
@@ -204,6 +209,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		oldDestination,
 		estimated: focus.times.estimated.departure ?? focus.times.estimated.arrival ?? null,
 		scheduled: focus.times.scheduled.departure ?? focus.times.scheduled.arrival ?? null,
+		times: focus.times,
 		status: focus.status,
 		operator: data.operatorCode,
 		isCancelled: focus.isCancelled

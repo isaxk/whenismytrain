@@ -14,7 +14,6 @@
 	const tween = new Tween(0, { duration: 200 });
 
 	$effect(() => {
-		console.log(refresherVals.interval);
 		tween.set(refresherVals.isRefreshing ? 0 : progress / (refresherVals.interval - 250));
 	});
 

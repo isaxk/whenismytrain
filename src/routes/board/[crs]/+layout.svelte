@@ -9,7 +9,15 @@
 	import { scrollY } from 'svelte/reactivity/window';
 	import dayjs from 'dayjs';
 
-	import { ArrowDown, ArrowUp, TimerReset } from 'lucide-svelte';
+	import {
+		ArrowDown,
+		ArrowUp,
+		ChevronDown,
+		Info,
+		MailWarning,
+		TimerReset,
+		TriangleAlert
+	} from 'lucide-svelte';
 
 	import SkeletonTrainCard from '$lib/components/train/skeleton-train-card.svelte';
 	import TrainCard from '$lib/components/train/train-card.svelte';
@@ -18,9 +26,11 @@
 
 	import { operatorList } from '$lib/data/operators';
 	import { refresher } from '$lib/state/refresh.svelte';
-	import type { BoardDetails } from '$lib/types';
+	import { NoticeSeverity, type BoardDetails, type NoticeType } from '$lib/types';
 	import type { Train } from '$lib/types/train';
 	import type { PageData } from './$types';
+	import Notice from '$lib/components/board/notice.svelte';
+	import { Accordion } from 'bits-ui';
 
 	let { data, children }: { data: PageData; children: Snippet } = $props();
 
@@ -29,11 +39,17 @@
 	let scrollYLocked = $state(0);
 	let details: BoardDetails | null = $state(null);
 	let trains: Train[] | null = $state(null);
+	let notices: NoticeType[] = $state([]);
+
+	let mostSevereNotice = $derived(
+		notices.reduce((max, notice) => Math.max(max, notice.severity), 0)
+	);
 
 	$effect(() => {
 		data.board.then((b) => {
 			details = b.details;
 			trains = b.trains;
+			notices = b.notices;
 		});
 	});
 
@@ -69,7 +85,6 @@
 
 	onMount(() => {
 		const refresh = refresher.add(async () => {
-			console.log('refreshing trains');
 			const res = await fetch(
 				`/api/board/${page.params.crs}/${data.to ?? 'null'}/${data.time ?? 'null'}/${data.toc ?? 'null'}`
 			);
@@ -90,7 +105,7 @@
 				.set('hour', parseInt(data.time.substring(0, 2)))
 				.set('minute', parseInt(data.time.substring(2, 4)))
 				.add(20, 'minutes');
-			console.log(time.diff(dayjs().add(1, 'day').set('hour', 0).set('minute', 0)), 'minute');
+
 			if (time.diff(dayjs().add(1, 'day').set('hour', 0).set('minute', 0), 'minute') < 0) {
 				return;
 			}
@@ -129,6 +144,59 @@
 
 			<div class="pt-safe md:hidden"></div>
 			<div class="h-[170px] md:hidden"></div>
+
+			{#if notices.length > 0}
+				<div class="px-4 pt-4 pb-1">
+					<Accordion.Root type="single">
+						<Accordion.Item
+							class={[
+								'bg-background w-full overflow-hidden rounded-lg border drop-shadow transition-all data-[state=open]:border-neutral-300',
+								mostSevereNotice === NoticeSeverity.Major && 'border-red-500',
+								mostSevereNotice === NoticeSeverity.Minor && 'border-yellow-500',
+								mostSevereNotice === NoticeSeverity.Normal && 'border-blue-500',
+								mostSevereNotice === NoticeSeverity.Severe && 'border-red-950'
+							]}
+						>
+							<Accordion.Trigger
+								class={[
+									'data-[state=open]:bg-background group flex w-full items-center gap-2 overflow-hidden py-3 pr-2 pl-4 text-left transition-all',
+									mostSevereNotice === NoticeSeverity.Major && 'bg-red-100',
+									mostSevereNotice === NoticeSeverity.Severe && 'bg-red-100',
+									mostSevereNotice === NoticeSeverity.Minor && 'bg-yellow-100',
+									mostSevereNotice === NoticeSeverity.Normal && 'bg-blue-100'
+								]}
+							>
+								{#if mostSevereNotice === NoticeSeverity.Normal}
+									<Info size={20} />
+								{:else}
+									<TriangleAlert size={20} />
+								{/if}
+								<div class="flex-grow">
+									{#if mostSevereNotice === NoticeSeverity.Minor}
+										Minor
+									{:else if mostSevereNotice === NoticeSeverity.Major}
+										Major
+									{:else if mostSevereNotice === NoticeSeverity.Severe}
+										Severe
+									{/if}
+									Status Updates
+								</div>
+								<div
+									class="flex h-6 w-6 items-center justify-center transition-all group-data-[state=open]:rotate-180"
+								>
+									<ChevronDown size={21} />
+								</div>
+							</Accordion.Trigger>
+							<Accordion.Content class="flex flex-col gap-4 border-t border-neutral-200 p-3">
+								{#each notices as notice, i (notice.html + i)}
+									<Notice {notice} />
+								{/each}
+							</Accordion.Content>
+						</Accordion.Item>
+					</Accordion.Root>
+				</div>
+			{/if}
+
 			{#if trains !== null}
 				<div
 					in:fade|global={{ duration: 400 }}

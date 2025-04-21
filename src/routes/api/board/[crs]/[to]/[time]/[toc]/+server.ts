@@ -5,12 +5,12 @@ import { PUBLIC_DEPARTURES_KEY } from '$env/static/public';
 import { Status, type Train } from '$lib/types/train';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
+import { NoticeSeverity } from '$lib/types';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 function parseItem(item: any, crs: string): Train {
-	console.log(item);
 	let status = Status.AWAY;
 	if (item.atd) {
 		status = Status.DEPARTED;
@@ -26,9 +26,20 @@ function parseItem(item: any, crs: string): Train {
 			name: item.destination.map((d) => d.locationName).join(', '),
 			crs: item.destination.map((d) => d.crs).join('')
 		},
+		oldDestination: null,
 		operator: item.operatorCode,
 		estimated: item.atd ?? item.etd ?? null,
 		scheduled: item.std,
+		times: {
+			estimated: {
+				arrival: item.atd ?? item.etd ?? null,
+				departure: item.atd ?? item.etd ?? null
+			},
+			scheduled: {
+				arrival: item.std ?? null,
+				departure: item.std ?? null
+			}
+		},
 		isCancelled: item.isCancelled ?? false,
 		status
 	};
@@ -38,8 +49,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	const { crs, to, time, toc } = params;
 
 	const urlParams = new URLSearchParams(url.searchParams);
-
-	console.log(time);
 	const hour = parseInt(time.split('')[0] + time.split('')[1]);
 	const minute = parseInt(time.split('')[2] + time.split('')[3]);
 	const date =
@@ -54,7 +63,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	const reqUrl = new URL(
 		`https://api1.raildata.org.uk/1010-live-departure-board---staff-version1_0/LDBSVWS/api/20220120/GetDepartureBoardByCRS/${crs}/${date}?numRows=15${to !== 'null' ? `&filterCRS=${to}` : ''}${toc !== 'null' ? `&filterTOC=${toc}` : ''}`
 	);
-	console.log(reqUrl.toString());
 
 	const response = await fetch(reqUrl, {
 		headers: {
@@ -62,6 +70,16 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		}
 	});
 	const data = await response.json();
+	console.log(data.nrccMessages);
+	const notices =
+		data.nrccMessages?.map((m) => {
+			return {
+				severity: NoticeSeverity[m.severity],
+				html: m.xhtmlMessage
+			};
+		}) ?? [];
+
+	notices.sort((a, b) => b.severity - a.severity);
 	let trains: Train[] = data.trainServices?.map((item) => parseItem(item, crs)) ?? [];
 
 	trains = trains.toSorted((a, b) => {
@@ -84,6 +102,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			date: urlParams.get('date') ?? null,
 			operators: Array.from(operators)
 		},
+		notices,
 		trains
 	});
 };

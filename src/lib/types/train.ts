@@ -27,6 +27,16 @@ export type Train = {
 		| undefined;
 	estimated: string;
 	scheduled: string;
+	times: {
+		estimated: {
+			arrival: string;
+			departure: string;
+		};
+		scheduled: {
+			arrival: string;
+			departure: string;
+		};
+	};
 	status: Status;
 	operator: string;
 	isCancelled: boolean;
@@ -62,6 +72,7 @@ export type ServiceLocation = {
 		destination: string;
 		crs: string;
 	} | null;
+	progress: number;
 };
 
 export type CallingPoint = ServiceLocation & {

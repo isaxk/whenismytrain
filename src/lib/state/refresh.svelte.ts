@@ -26,7 +26,6 @@ const callbacks: (() => Promise<void>)[] = $state([]);
 
 async function refresh() {
 	refresherVals.isRefreshing = true;
-	console.log('refreshing all');
 	await callbacks.forEach(async (callback) => await callback());
 	setTimeout(() => {
 		refresherVals.lastRefreshed = dayjs();

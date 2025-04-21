@@ -26,12 +26,6 @@
 	let zoom = $state(10);
 	let focusedStation: string | undefined = $state(undefined);
 
-	let mapFocus: [number, number] | null = $derived.by(() => {
-		if (!service) return null;
-		const found = service?.callingPoints.find((point) => point.tiploc === focusedStation);
-		return found?.coords || null;
-	});
-
 	onMount(() => {
 		const refresh = refresher.add(async () => {
 			const res = await fetch(`/api/service/${data.id}/${data.crs}`);
@@ -104,7 +98,7 @@
 				{focusedStation}
 				onSelect={(e) => (focusedStation = e)}
 				{zoom}
-				focus={mapFocus}
+				focus={focusedStation ?? null}
 				locations={service.locations}
 				color={operatorList[service.trainCard.operator].bg}
 			/>
@@ -123,7 +117,7 @@
 						{callingPoint}
 						dest={service.destination.name}
 						operator={service.trainCard.operator}
-      length={service.callingPoints.length}
+						length={service.callingPoints.length}
 					/>
 				{/each}
 			</div>
