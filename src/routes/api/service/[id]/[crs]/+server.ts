@@ -96,6 +96,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		const timeProgress = now / diff;
 
 		return {
+			now,
+			diff,
 			isCallingPoint: !location.isPass && location.crs,
 			order: focusIndex === i ? Order.FOCUS : focusIndex < i ? Order.SUBSEQUENT : Order.PREVIOUS,
 			platform: location.platform ?? null,
