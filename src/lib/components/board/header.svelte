@@ -35,9 +35,13 @@
 	});
 
 	function selectOperator(op: string) {
-		if ((details?.operators?.length ?? 0) > 1) {
-			adjust(data.crs, data.to, data.time, data.toc ? null : op);
-			data.toc = data.toc ? null : op;
+		if (data.toc) {
+			adjust(data.crs, data.to, data.time, null);
+		} else {
+			if ((details?.operators?.length ?? 0) > 1) {
+				adjust(data.crs, data.to, data.time, data.toc ? null : op);
+				data.toc = data.toc ? null : op;
+			}
 		}
 	}
 </script>
@@ -223,7 +227,7 @@
 						{#if data.toc === op}
 							<button
 								class="border-border bg-card flex aspect-square h-[26px] min-w-[26px] items-center justify-center rounded-r-md border"
-								onclick={() => selectOperator(null)}><X size={14} /></button
+								onclick={() => adjust(data.crs, data.to, data.time, null)}><X size={14} /></button
 							>
 						{/if}
 					</div>
