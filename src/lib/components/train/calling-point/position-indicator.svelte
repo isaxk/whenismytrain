@@ -9,8 +9,9 @@
 		status,
 		isCancelled,
 		progress,
-		operator
-	}: { i: number; status: Status; isCancelled: boolean; progress: number; operator: string } =
+		operator,
+		length
+	}: { i: number; status: Status; isCancelled: boolean; progress: number; operator: string; length: number } =
 		$props();
 </script>
 
