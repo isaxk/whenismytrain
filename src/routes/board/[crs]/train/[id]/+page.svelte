@@ -41,6 +41,7 @@
 		service = null;
 		data.service.then((d) => {
 			service = d;
+			console.log(d);
 		});
 	});
 </script>
