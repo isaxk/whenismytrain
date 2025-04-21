@@ -123,6 +123,7 @@
 						{callingPoint}
 						dest={service.destination.name}
 						operator={service.trainCard.operator}
+      length={service.callingPoints.length}
 					/>
 				{/each}
 			</div>
