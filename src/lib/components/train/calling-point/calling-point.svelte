@@ -69,6 +69,7 @@
 			status={callingPoint.status}
 			isCancelled={callingPoint.isCancelled}
 			progress={callingPoint.progress}
+   {length}
 			{operator}
 		/>
 		<div class="flex-grow">
