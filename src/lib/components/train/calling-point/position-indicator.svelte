@@ -58,7 +58,7 @@
 				<div
 					class="flex w-full items-end pt-4 transition-all duration-200"
 					style:background={operatorList[operator].bg}
-					style:height="{parseInt(progress.toFixed(2)) * 100}%"
+					style:height="{progress * 100}%"
 				>
 					<div class="flex h-1 w-full items-center justify-center">
 						<div
