@@ -87,11 +87,11 @@
 				{/if}
 			{:else if train.times.estimated.arrival && fromNow(train.times.estimated.arrival) < 15}
 				<div class="text-foreground-muted font-light italic">
-					{#if fromNow(train.times.estimated.departure) < 1.2}
+					{#if fromNow(train.times.estimated.arrival) < 1.2}
 						<div class="">Arriving</div>
 					{:else}
 						Arrives in <span class="font-normal text-black">
-							{Math.min(1, fromNow(train.times.estimated.departure))} mins
+							{Math.max(1, fromNow(train.times.estimated.arrival))} mins
 						</span>
 					{/if}
 				</div>
