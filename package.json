@@ -21,6 +21,8 @@
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/typography": "^0.5.15",
 		"@tailwindcss/vite": "^4.0.0",
+		"@types/geojson": "^7946.0.16",
+		"@types/tinycolor2": "^1.4.6",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
@@ -30,6 +32,7 @@
 		"prettier-plugin-tailwindcss": "^0.6.11",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
+		"sveltekit-view-transition": "^0.5.3",
 		"tailwindcss": "^4.0.0",
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",
@@ -39,5 +42,20 @@
 		"onlyBuiltDependencies": [
 			"esbuild"
 		]
+	},
+	"dependencies": {
+		"@turf/bbox": "^7.2.0",
+		"@turf/turf": "^7.2.0",
+		"bbox": "link:@types/@turf/bbox",
+		"bits-ui": "^1.4.4",
+		"dayjs": "^1.11.13",
+		"dompurify": "^3.2.5",
+		"format-fuse.js": "^1.0.3",
+		"fuse.js": "^7.1.0",
+		"geojson": "^0.5.0",
+		"lucide-svelte": "^0.503.0",
+		"maplibre-gl": "^5.4.0",
+		"svelte-maplibre": "^1.0.0",
+		"tinycolor2": "^1.6.0"
 	}
 }

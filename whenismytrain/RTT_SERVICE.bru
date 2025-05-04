@@ -1,0 +1,29 @@
+meta {
+  name: RTT_SERVICE
+  type: http
+  seq: 5
+}
+
+get {
+  url: {#if trains && trains.some((t) => !t.platform)}
+					<div class="flex flex-col items-end justify-center px-4 pb-4 text-sm">
+						Hidden Platforms (by RealTimeTrains):
+						<div class="flex gap-2 text-xs">
+							<div class="flex items-center gap-1">
+								<div class="h-max w-max rounded-full bg-green-100"><Info size={16} /></div>
+								Confirmed
+							</div>
+							<div class="flex items-center gap-1">
+								<div class="h-max w-max rounded-full bg-amber-100"><Info size={16} /></div>
+								Predicted
+							</div>
+						</div>
+					</div>
+				{/if}
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Basic rttapi_isaxk:a3cb74f32e08d4ffb398722d5c50fdf045765110
+}
