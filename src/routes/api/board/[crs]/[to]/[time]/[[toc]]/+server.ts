@@ -7,6 +7,11 @@ import { NoticeSeverity, type BoardItem, type Details, type TrainFilter } from '
 import { Position } from '$lib/types';
 import tiplocsData from '$lib/data/tiplocs.json';
 import { operatorList } from '$lib/data/operators';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export const GET: RequestHandler = async ({ params, request }) => {
 	const { crs, to, time, toc } = params;
