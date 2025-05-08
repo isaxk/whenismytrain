@@ -14,9 +14,10 @@ export const GET: RequestHandler = async ({ params, request }) => {
 	const date = (
 		time != 'null'
 			? dayjs()
+					.tz('Europe/London')
 					.set('hour', parseInt(time.substring(0, 2)))
 					.set('minute', parseInt(time.substring(2, 4)))
-			: dayjs()
+			: dayjs().tz('Europe/London')
 	).format('YYYYMMDDTHHmmss');
 	const reqUrl = paramUrl(
 		`https://api1.raildata.org.uk/1010-live-departure-board---staff-version1_0/LDBSVWS/api/20220120/GetDepBoardWithDetails/${crs}/${date}`,
