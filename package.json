@@ -23,7 +23,6 @@
 		"@tailwindcss/vite": "^4.0.0",
 		"@types/geojson": "^7946.0.16",
 		"@types/tinycolor2": "^1.4.6",
-		"@vite-pwa/sveltekit": "^1.0.0",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
