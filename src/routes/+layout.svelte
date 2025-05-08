@@ -7,6 +7,11 @@
 	import { Bookmark, ChevronRight, Train, X } from 'lucide-svelte';
 	import { expandedMap, saved } from '$lib/data/saved.svelte';
 	import SavedTrain from '$lib/components/train/saved-train.svelte';
+	import { preloadData } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import { refresher } from '$lib/data/refresh.svelte';
+	import { Tooltip } from 'bits-ui';
 
 	let { children } = $props();
 
@@ -57,64 +62,6 @@
 		if (page.data.filter) {
 			to = page.data.filter;
 		}
-	});
-
-	// Register service worker
-	$effect(() => {
-		if (!browser) return;
-		
-		if ('serviceWorker' in navigator) {
-			navigator.serviceWorker.register('/service-worker.js')
-				.then((registration) => {
-					// Check for updates every hour
-					setInterval(() => {
-						registration.update();
-					}, 1000 * 60 * 60);
-
-					// When an update is found, either refresh immediately or notify the user
-					registration.addEventListener('updatefound', () => {
-						const newWorker = registration.installing;
-						newWorker?.addEventListener('statechange', () => {
-							if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-								// Optional: Show a notification to the user about the update
-								if (confirm('New version available! Reload to update?')) {
-									newWorker.postMessage({ type: 'SKIP_WAITING' });
-									window.location.reload();
-								}
-							}
-						});
-					});
-				})
-				.catch((error) => {
-					console.error('Service worker registration failed:', error);
-				});
-		}
-	});
-
-	import { onNavigate, preloadData } from '$app/navigation';
-	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
-	import { refresher, refreshing } from '$lib/data/refresh.svelte';
-	import { Tooltip } from 'bits-ui';
-
-	onNavigate((navigation) => {
-		expandedMap.current = false;
-		if (!document.startViewTransition) return;
-
-		if (isIOSSwipeGesture) {
-			// Reset the flag after the navigation completes
-			navigation.complete.then(() => {
-				isIOSSwipeGesture = false;
-			});
-			return; // No transition for swipe gesture
-		}
-
-		return new Promise((resolve) => {
-			document.startViewTransition(async () => {
-				resolve();
-				await navigation.complete;
-			});
-		});
 	});
 
 	$effect(() => {
