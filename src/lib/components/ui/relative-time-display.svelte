@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Position } from '$lib/types';
 	import dayjs from 'dayjs';
+	import { ArrowDown, ArrowDownRight, ArrowUp, ArrowUpRight, Check, Home, X } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
 	let {
@@ -24,35 +25,39 @@
 	$inspect('relativeDeparture', relativeDeparture);
 </script>
 
-<div class="text-foreground-muted flex gap-1 text-xs/3">
-	{#if position === Position.CANCELLED}
+{#if position === Position.CANCELLED}
+	<div class="flex items-center gap-1 text-red-600">
+		<X size={12} />
 		<div class="text-red-600">Cancelled</div>
-	{:else if position === Position.DEPARTED}
-		<div class="text-foreground">Departed</div>
-	{:else if position === Position.ARRIVED}
-		<div class="text-foreground">Arrived</div>
-		-
-		{#if relativeDeparture !== null}
-			<div class="">
-				{#if relativeDeparture < 1}Departing soon{:else}Departs in {relativeDeparture}m{/if}
-			</div>
-		{/if}
-	{:else if position === Position.STARTS_HERE}
-		<div class="">Starts here</div>
-
-		{#if relativeDeparture !== null && relativeDeparture < 20}
-			-
-			<div class="">
-				{#if relativeDeparture < 1}Departing soon{:else}Departs in {relativeDeparture}m{/if}
-			</div>
-		{/if}
-	{:else if position === Position.AWAY && relativeArrival !== null && (relativeArrival ?? 0) < 15}
-		<div class="">
-			{#if relativeArrival < 1}Arriving soon{:else}Arrives in {relativeArrival}m{/if}
-		</div>
-	{:else if relativeDeparture && (relativeDeparture ?? 0) < 15}
-		<div class="">
-			{#if relativeDeparture < 1}Departing soon{:else}Departs in {relativeDeparture}m{/if}
+	</div>
+{:else if position === Position.DEPARTED}
+	<div class="flex items-center gap-1"><Check size={12} />Departed</div>
+{:else if position === Position.ARRIVED}
+	<div class="flex items-center gap-1"><ArrowDownRight size={12} /> Arrived</div>
+	{#if relativeDeparture !== null}
+		<div class="flex items-center gap-1">
+			<ArrowUpRight size={12} />
+			{#if relativeDeparture < 1}Departing soon{:else}Departing in {relativeDeparture}m{/if}
 		</div>
 	{/if}
-</div>
+{:else if position === Position.STARTS_HERE}
+	<div class="flex items-center gap-1">
+		<Home size={12} />
+	</div>
+	{#if relativeDeparture !== null && relativeDeparture < 20}
+		<div class="flex items-center gap-1">
+			<ArrowUpRight size={12} />
+			{#if relativeDeparture < 1}Departing soon{:else}Departing in {relativeDeparture}m{/if}
+		</div>
+	{/if}
+{:else if position === Position.AWAY && relativeArrival !== null && (relativeArrival ?? 0) < 15}
+	<div class="flex items-center gap-1">
+		<ArrowDownRight size={12} />
+		{#if relativeArrival < 1}Arriving soon{:else}Arriving in {relativeArrival}m{/if}
+	</div>
+{:else if relativeDeparture && (relativeDeparture ?? 0) < 15}
+	<div class="flex items-center gap-1">
+		<ArrowUpRight size={12} />
+		{#if relativeDeparture < 1}Departing soon{:else}Departing in {relativeDeparture}m{/if}
+	</div>
+{/if}

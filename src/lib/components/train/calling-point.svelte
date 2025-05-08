@@ -1,10 +1,11 @@
 <script lang="ts">
 	import type { CallingPoint } from '$lib/types/train';
-	import { slide } from 'svelte/transition';
+	import { fade, slide } from 'svelte/transition';
 	import TimeDisplay from '../ui/time-display.svelte';
-	import { ChevronDown, ChevronUp } from 'lucide-svelte';
+	import { ChevronDown, ChevronUp, Train } from 'lucide-svelte';
 	import RelativeTimeDisplay from '../ui/relative-time-display.svelte';
 	import RttPlatform from './rtt-platform.svelte';
+	import { Position } from '$lib/types';
 
 	let {
 		i,
@@ -14,7 +15,10 @@
 		end = null,
 		uid,
 		sdd,
-		hideDetails = false
+		hideDetails = false,
+		showJoin = true,
+		showDivide = true,
+		next = null
 	}: {
 		i: number;
 		callingPoint: CallingPoint;
@@ -24,32 +28,224 @@
 		uid: string;
 		sdd: string;
 		hideDetails?: boolean;
+		showJoin?: boolean;
+		showDivide?: boolean;
+		next?: CallingPoint | null;
 	} = $props();
 
 	let showDiv = $state(false);
 
 	console.log(uid);
+
+	if (callingPoint.divisionType) {
+		console.log(callingPoint.times);
+	}
 </script>
 
-{#if callingPoint.formedFrom && !callingPoint.division}
-	<a
-		href="/board/{callingPoint.formedFrom.origin.crs}/{callingPoint.formedFrom.id}"
-		class="flex h-14 items-center gap-2 px-4"
-	>
-		<div class="min-w-14"></div>
-		<div class="flex h-full flex-col pr-3">
-			<div class="w-2 flex-grow" style:background={color}></div>
-		</div>
-		<div class="text-xs">
-			Divides from a train from {callingPoint.formedFrom.origin.name} to {callingPoint.formedFrom
-				.destination.name}
-		</div>
-	</a>
+{#snippet division(type: 'divide' | 'join', callingPoints: CallingPoint[])}
+	{#if type === 'divide'}
+		<button onclick={() => (showDiv = !showDiv)} class="flex h-10 items-center pl-6">
+			<div class="min-w-12"></div>
+			<div class="relative flex h-full flex-col pr-4">
+				<div
+					class="z-20 h-[80%] w-2"
+					style:background={[Position.ARRIVED, Position.DEPARTED].includes(
+						next?.trainRelativePosition ?? 0
+					)
+						? color
+						: color + 'B3'}
+				></div>
+				{#if showDiv}
+					<div
+						transition:fade={{ duration: 0 }}
+						class="absolute -bottom-3 left-0 z-20 h-1/2 w-2"
+						style:background="linear-gradient(to top, transparent, {[
+							Position.ARRIVED,
+							Position.DEPARTED
+						].includes(next?.trainRelativePosition ?? 0)
+							? color
+							: color + 'B3'})"
+					></div>
+				{:else}
+					<div
+						class="absolute -bottom-4 left-0 z-20 h-6 w-2"
+						style:background={[Position.ARRIVED, Position.DEPARTED].includes(
+							next?.trainRelativePosition ?? 0
+						)
+							? color
+							: color + 'B3'}
+					></div>
+				{/if}
+
+				<div
+					class="absolute -bottom-1.5 left-2 z-0 h-6 w-2 -rotate-45"
+					style:background="#d4d4d8"
+				></div>
+				<div class="absolute right-0 -bottom-4 h-4 w-2" style:background="#d4d4d8"></div>
+			</div>
+			{#if showDiv}
+				<div class="mt-8 flex items-center gap-1 pl-6">Hide division <ChevronUp size={18} /></div>
+			{:else}
+				<div class="mt-8 flex items-center gap-1 pl-6">Show division <ChevronDown size={18} /></div>
+			{/if}
+		</button>
+	{/if}
+	<div class="py-4">
+		{#if showDiv}
+			<div transition:slide={{ duration: 200 }}>
+				{#each callingPoints as point, i (point.tiploc)}
+					<div class="flex h-14 items-center pl-10">
+						<div class="min-w-12 -translate-x-2 opacity-80">
+							<TimeDisplay
+								expected={order === 'previous' || order === 'focus'
+									? (point.times.estimated.departure ?? point.times.estimated.arrival)
+									: (point.times.estimated.arrival ?? point.times.estimated.departure)}
+								scheduled={order === 'previous' || order === 'focus'
+									? (point.times.scheduled.departure ?? point.times.scheduled.arrival)
+									: (point.times.scheduled.arrival ?? point.times.scheduled.departure)}
+								isCancelled={point.isCancelled}
+							/>
+						</div>
+
+						<div class="relative flex h-full flex-col pr-4">
+							{#if type === 'join' && i === 0}
+								<div class="flex-grow"></div>
+								<div
+									class="absolute -top-4 -left-4 h-4 w-2"
+									style:background="linear-gradient(to bottom, {color + 'B3'}, transparent)"
+								></div>
+							{:else}
+								<div class="w-2 flex-grow" style:background="#d4d4d8"></div>
+							{/if}
+							<div
+								class={['rounded-r', ['focus', 'filter'].includes(order) ? 'h-2 w-4' : 'h-1.5 w-4']}
+								style:background="#d4d4d8"
+							></div>
+							{#if type === 'divide' && i === callingPoints.length - 1}
+								<div class="flex-grow"></div>
+								<div
+									class="absolute -bottom-4 -left-4 h-4 w-2"
+									style:background="linear-gradient(to top, {color + 'B3'}, transparent)"
+								></div>
+							{:else}
+								<div class="w-2 flex-grow" style:background="#d4d4d8"></div>
+							{/if}
+						</div>
+						{#if (type === 'divide' && i === callingPoints.length - 1) || (type === 'join' && i === 0)}
+							<div class="font-medium text-black">{point.name}</div>
+						{:else}
+							<div class="text-foreground-muted/80">{point.name}</div>
+						{/if}
+					</div>
+				{/each}
+			</div>
+		{:else}
+			{@const destOri =
+				type === 'divide' ? callingPoints[callingPoints.length - 1] : callingPoints[0]}
+			<div class="flex h-14 items-center pl-6">
+				<div class="min-w-12"></div>
+				<div class="relative flex h-full flex-col pr-2">
+					<div
+						class="w-2 flex-grow"
+						style:background={[Position.ARRIVED, Position.DEPARTED].includes(
+							next?.trainRelativePosition ?? 0
+						)
+							? color
+							: color + 'B3'}
+					></div>
+				</div>
+
+				<div class="relative flex h-full flex-col pr-4">
+					{#if type === 'join'}
+						<div class="flex-grow"></div>
+
+						<div
+							class="absolute -top-4 -left-4 z-20 h-4 w-2"
+							style:background={[Position.ARRIVED, Position.DEPARTED].includes(
+								next?.trainRelativePosition ?? 0
+							)
+								? color
+								: color + 'B3'}
+						></div>
+					{:else}
+						<div class="w-2 flex-grow" style:background="#d4d4d8"></div>
+					{/if}
+					<div
+						class={['rounded-r', ['focus', 'filter'].includes(order) ? 'h-2 w-4' : 'h-1.5 w-4']}
+						style:background="#d4d4d8"
+					></div>
+					{#if type === 'divide'}
+						<div class="flex-grow"></div>
+
+						<div
+							class="absolute -bottom-4 -left-4 z-20 h-4 w-2"
+							style:background={[Position.ARRIVED, Position.DEPARTED].includes(
+								next?.trainRelativePosition ?? 0
+							)
+								? color
+								: color + 'B3'}
+						></div>
+					{:else}
+						<div class="w-2 flex-grow" style:background="#d4d4d8"></div>
+					{/if}
+				</div>
+				<div class="font-medium text-black">{destOri.name}</div>
+			</div>
+		{/if}
+	</div>
+	{#if type === 'join'}
+		<button onclick={() => (showDiv = !showDiv)} class="flex h-10 items-center pl-6">
+			<div class="min-w-12"></div>
+			<div class="relative flex h-full flex-col pr-4">
+				<div
+					class="z-20 h-[100%] w-2"
+					style:background={[Position.ARRIVED, Position.DEPARTED].includes(
+						next?.trainRelativePosition ?? 0
+					)
+						? color
+						: color + 'B3'}
+				></div>
+				{#if showDiv}
+					<div
+						transition:fade={{ duration: 0 }}
+						class="absolute -top-3 left-0 h-1/2 w-2"
+						style:background="linear-gradient(to bottom, transparent, {[
+							Position.ARRIVED,
+							Position.DEPARTED
+						].includes(next?.trainRelativePosition ?? 0)
+							? color
+							: color + 'B3'})"
+					></div>
+				{:else}
+					<div
+						class="absolute -top-4 left-0 h-4 w-2"
+						style:background={[Position.ARRIVED, Position.DEPARTED].includes(
+							next?.trainRelativePosition ?? 0
+						)
+							? color
+							: color + 'B3'}
+					></div>
+				{/if}
+
+				<div class="absolute -top-1.5 left-2 h-6 w-2 rotate-45" style:background="#d4d4d8"></div>
+				<div class="absolute -top-4 right-0 h-4 w-2" style:background="#d4d4d8"></div>
+			</div>
+			{#if showDiv}
+				<div class="mb-8 flex items-center gap-1 pl-6">Hide merge <ChevronUp size={18} /></div>
+			{:else}
+				<div class="mb-8 flex items-center gap-1 pl-6">Show merge <ChevronDown size={18} /></div>
+			{/if}
+		</button>
+	{/if}
+{/snippet}
+
+{#if callingPoint.divisionType === 'join' && callingPoint.divisionCallingPoints && showJoin}
+	{@render division('join', callingPoint.divisionCallingPoints)}
 {/if}
-<div class="flex h-14 items-center gap-2 px-4">
+<div class="flex h-14 w-full items-center gap-2 px-4">
 	<div
 		class={[
-			'min-w-14',
+			'flex max-w-12 min-w-12 flex-col items-end justify-center pr-2',
 			['previous', 'subsequent', 'further', 'destination'].includes(order) && 'opacity-60'
 		]}
 	>
@@ -65,21 +261,42 @@
 			/>
 		{/if}
 	</div>
-	<div class="flex h-full flex-col pr-2">
+	<div class="relative flex h-full flex-col pr-2">
 		{#if end === 'start' && !callingPoint.formedFrom}
 			<div class="flex-grow"></div>
-		{:else}
+		{:else if [Position.ARRIVED, Position.DEPARTED].includes(callingPoint.trainRelativePosition)}
 			<div class="w-2 flex-grow" style:background={color}></div>
+		{:else}
+			<div class="w-2 flex-grow" style:background={color + 'B3'}></div>
 		{/if}
 		<div
 			class={['rounded-r', ['focus', 'filter'].includes(order) ? 'h-2 w-4' : 'h-1.5 w-4']}
-			style:background={color}
+			style:background={[Position.ARRIVED, Position.DEPARTED].includes(
+				callingPoint.trainRelativePosition
+			)
+				? color
+				: `${color}B3`}
 		></div>
-		{#if end === 'end'}
+
+		{#if end === 'end' && !callingPoint.formedFrom}
 			<div class="flex-grow"></div>
+		{:else if [Position.DEPARTED].includes(callingPoint.trainRelativePosition)}
+			{#if next && [Position.ARRIVED, Position.DEPARTED].includes(next.trainRelativePosition)}
+				<div class="w-2 flex-grow" style:background={color}></div>
+			{:else}
+				<div
+					class="w-2 flex-grow"
+					style:background="linear-gradient(to bottom, {color}, {color}B3)"
+				></div>
+			{/if}
 		{:else}
-			<div class="w-2 flex-grow" style:background={color}></div>
+			<div class="w-2 flex-grow" style:background={color + 'B3'}></div>
 		{/if}
+		<!-- {#if callingPoint.trainRelativePosition === Position.ARRIVED}
+			<div class="absolute top-1/2 -translate-y-1/2"><Train /></div>
+		{:else if callingPoint.trainRelativePosition === Position.DEPARTED}
+			<div class="absolute top-2/3"><Train /></div>
+		{/if} -->
 	</div>
 	<div
 		class={[
@@ -89,17 +306,19 @@
 					? 'text-sm text-black md:text-base'
 					: 'text-foreground-muted/80 text-sm md:text-base',
 			order === 'destination' && 'text-foreground font-medium',
-			'flex-grow'
+			'w-0 flex-grow truncate'
 		]}
 	>
-		<div class="">
-			{callingPoint.name}
+		<div class="flex w-full items-center gap-1 truncate">
+			<div class="min-w-0 truncate">
+				{callingPoint.name}
+			</div>
 			<span class="text-foreground-muted/80 text-xs font-light">({callingPoint.crs})</span>
 		</div>
 		{#if callingPoint.isCancelled}
 			<div class="-mb-0.5 text-xs/4 text-red-600">Cancelled</div>
 		{:else if order === 'focus'}
-			<div class="-mb-0.5 font-normal">
+			<div class="-mb-0 flex gap-2 text-xs font-normal">
 				<RelativeTimeDisplay
 					arrival={callingPoint.times.estimated.arrival}
 					departure={callingPoint.times.estimated.departure}
@@ -126,158 +345,7 @@
 		</div>
 	{/if}
 </div>
-{#if callingPoint.division}
-	{@const dest =
-		callingPoint.division.callingPoints[callingPoint.division.callingPoints.length - 1]}
-	<div class={['flex items-center gap-2 px-4', showDiv ? 'h-10' : 'h-8']}>
-		<div class="w-14 pl-1"></div>
-		<div class="relative flex h-full flex-col pr-0">
-			<div class="h-5 w-2" style:background={color}></div>
-			{#if showDiv}
-				<div
-					class="absolute top-5 h-6 w-2"
-					style:background="linear-gradient(to bottom, {color}, transparent)"
-				></div>
-			{:else}
-				<div class="h-5 w-2 flex-grow" style:background={color}></div>
-			{/if}
-		</div>
-		<div class="relative h-5">
-			<div
-				style:background={color}
-				class="h-[130%] w-2 -translate-x-2 translate-y-[0.45rem] -rotate-45"
-			></div>
-			<div class="absolute top-[26px] h-6 w-2" style:background={color}></div>
-		</div>
-	</div>
-	{#if showDiv}
-		<div transition:slide={{ duration: 200 }}>
-			{#each callingPoint.division.callingPoints.slice(1, -1) as divPoint, i (divPoint.tiploc + i)}
-				<div class="flex h-14 items-center gap-2 px-4">
-					<div class="w-18 pl-4 opacity-60">
-						<TimeDisplay
-							expected={divPoint.times.estimated.arrival}
-							scheduled={divPoint.times.scheduled.arrival}
-							isCancelled={divPoint.isCancelled}
-						/>
-					</div>
-					<div class="flex h-full flex-col pr-2">
-						<div class="w-2 flex-grow" style:background={color}></div>
-						<div
-							class={['rounded-r', ['focus', 'filter'].includes(order) ? 'h-2 w-4' : 'h-1.5 w-4']}
-							style:background={color}
-						></div>
-						{#if i === callingPoint.division.callingPoints.length - 1}
-							<div class="flex-grow"></div>
-						{:else}
-							<div class="w-2 flex-grow" style:background={color}></div>
-						{/if}
-					</div>
-					<div
-						class={[
-							'text-foreground-muted/70',
-							'text-foreground flex-grow text-sm font-medium md:text-base'
-						]}
-					>
-						{divPoint.name}
-						<span class="text-foreground-muted/80 text-xs font-light">({divPoint.crs})</span>
-					</div>
-					<div class="flex flex-col items-center opacity-60">
-						<div class="text-[10px]">Platform</div>
-						<div
-							class="bg-muted relative flex h-7 w-7 items-center justify-center rounded-full text-sm"
-						>
-							{divPoint.platform ?? '?'}
-						</div>
-					</div>
-				</div>
-			{/each}
-		</div>
-	{/if}
-	<button
-		onclick={() => (showDiv = !showDiv)}
-		class={['text-foreground-tint flex h-6 items-center gap-2 px-4']}
-	>
-		{#if !showDiv}
-			<div class="w-14"></div>
-			<div class="flex h-full flex-col pr-0">
-				<div class="w-2 flex-grow" style:background={color}></div>
-			</div>
-			<div class="flex h-full flex-col pr-4">
-				<div class="w-2 flex-grow" style:background={color}></div>
-			</div>
-			<div class="flex items-center gap-1">
-				Show division <ChevronDown size={20} />
-			</div>
-		{:else}
-			<div class="w-18"></div>
-			<div class="flex h-full flex-col pr-4">
-				<div class="w-2 flex-grow" style:background={color}></div>
-			</div>
-			<div class="flex items-center gap-1">
-				Hide division <ChevronUp size={20} />
-			</div>
-		{/if}
-	</button>
 
-	<div class="flex h-14 items-center gap-2 px-4">
-		{#if !showDiv}
-			<div class="w-14"></div>
-			<div class="flex h-full flex-col pr-0">
-				<div class="w-2 flex-grow" style:background={color}></div>
-			</div>
-			<div class="flex h-full flex-col pr-0">
-				<div class="w-2 flex-grow" style:background={color}></div>
-				<div class="flex h-full flex-col pr-2">
-					<div class="w-2 flex-grow" style:background={color}></div>
-					<div
-						class={['rounded-r', ['focus', 'filter'].includes(order) ? 'h-2 w-4' : 'h-1.5 w-4']}
-						style:background={color}
-					></div>
-					<div class="flex-grow"></div>
-				</div>
-				<div class="flex-grow"></div>
-			</div>
-		{:else}
-			<div class="relative w-18 pl-4">
-				<TimeDisplay
-					expected={dest.times.estimated.arrival}
-					scheduled={dest.times.scheduled.arrival}
-					isCancelled={dest.isCancelled}
-				/>
-				<div
-					class="absolute right-0 -bottom-7 h-5 w-2 flex-grow"
-					style:background="linear-gradient(to top, {color}, transparent)"
-				></div>
-			</div>
-			<div class="flex h-full flex-col pr-0">
-				<div class="w-2 flex-grow" style:background={color}></div>
-				<div class="flex h-full flex-col pr-2">
-					<div class="w-2 flex-grow" style:background={color}></div>
-					<div
-						class={['rounded-r', ['focus', 'filter'].includes(order) ? 'h-2 w-4' : 'h-1.5 w-4']}
-						style:background={color}
-					></div>
-					<div class="flex-grow"></div>
-				</div>
-				<div class="flex-grow"></div>
-			</div>
-		{/if}
-		<div class={['text-foreground flex-grow text-sm font-medium md:text-base']}>
-			{dest.name} <span class="text-foreground-muted/80 text-xs font-light">({dest.crs})</span>
-		</div>
-		{#if showDiv}
-			<div class="flex flex-col items-center">
-				<div class="text-[10px]">Platform</div>
-				<div
-					class="bg-muted relative flex h-7 w-7 items-center justify-center rounded-full text-sm"
-				>
-					{dest.platform ?? '?'}
-				</div>
-			</div>
-		{/if}
-	</div>
-	{#if showDiv}
-		<div class="h-3"></div>
-	{/if}
+{#if callingPoint.divisionType === 'divide' && callingPoint.divisionCallingPoints && showDivide}
+	{@render division('divide', callingPoint.divisionCallingPoints)}
 {/if}

@@ -41,14 +41,17 @@
 </script>
 
 <button
-	class="border-border bg-background flex min-h-16 flex-grow transform-gpu items-center rounded-lg border px-4 text-left drop-shadow-xs"
+	class={[
+		'border-border bg-background flex h-16 w-full min-w-0 flex-grow transform-gpu items-center px-4 py-4 text-left drop-shadow-xs',
+		to && selected ? 'rounded-l-lg border border-r-0' : 'rounded-lg border'
+	]}
 	onclick={() => (focused = true)}
 	>{#if selectedStation}
-		<div class="flex h-max flex-col">
-			<div class="text-lg font-medium">
+		<div class="flex h-max w-full flex-col">
+			<div class="text-2xl/6 font-medium">{selectedStation.crsCode}</div>
+			<div class="truncate text-xs/4">
 				{selectedStation.stationName}
 			</div>
-			<div class="pb-1 text-xs/2">{selectedStation.crsCode}</div>
 		</div>
 	{/if}
 	{#if !selectedStation}

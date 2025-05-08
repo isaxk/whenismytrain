@@ -4,20 +4,29 @@ const subscriptions: { api: string; callbacks: { key: string; fn: <T>(data: T) =
 
 let timeout: ReturnType<typeof setTimeout>;
 
+export const refreshing = $state({ value: false });
+
 async function runRefresh(duration: number) {
 	if (navigating.to) {
 		await navigating.complete;
 	}
 
-	await Promise.all(
-		subscriptions.map(async (sub) => {
-			const response = await fetch(sub.api);
-			const data = await response.json();
-			sub.callbacks.forEach((callback) => callback.fn(data));
-		})
-	);
+	refreshing.value = true;
 
-	timeout = setTimeout(() => runRefresh(duration), duration);
+	setTimeout(async () => {
+		await Promise.all(
+			subscriptions.map(async (sub) => {
+				const response = await fetch(sub.api);
+				const data = await response.json();
+				sub.callbacks.forEach((callback) => callback.fn(data));
+			})
+		);
+
+		setTimeout(async () => {
+			refreshing.value = false;
+		}, 100);
+		timeout = setTimeout(() => runRefresh(duration), duration);
+	}, 200);
 }
 
 export const refresher = {
@@ -35,9 +44,11 @@ export const refresher = {
 		const subscriptionIndex = subscriptions.findIndex((sub) => sub.api === api);
 		return () => {
 			const subscription = subscriptions[subscriptionIndex];
-			subscription.callbacks = subscription.callbacks.filter((cb) => cb.key !== key);
-			if (subscription.callbacks.length === 0) {
-				subscriptions.splice(subscriptionIndex, 1);
+			if (subscription) {
+				subscription.callbacks = subscription.callbacks.filter((cb) => cb.key !== key);
+				if (subscription.callbacks.length === 0) {
+					subscriptions.splice(subscriptionIndex, 1);
+				}
 			}
 		};
 	}

@@ -15,6 +15,8 @@ export type Location = {
 		locations: Location[];
 		callingPoints: CallingPoint[];
 	} | null;
+	divisionType: 'join' | 'divide' | null; // Added this property
+	divisionCallingPoints: CallingPoint[] | null; // Added this property
 	formedFrom: {
 		id: string;
 		origin: DestinationOrigin;
@@ -45,4 +47,6 @@ export type ServiceDetails = {
 	filterDetails: TrainFilter;
 	operator: string;
 	genAt: string;
+	lateReason: string | null;
+	cancelReason: string | null;
 };

@@ -26,6 +26,11 @@ export type BoardItem = {
 	position: Position;
 };
 
+export type SpiderMap = {
+	color: string;
+	coordsList: { name: string; crs: string; coords: [number, number] }[];
+};
+
 export type Details = {
 	name: string;
 	crs: string;
@@ -33,6 +38,7 @@ export type Details = {
 	filterName: string | null;
 	notices: NoticeType[];
 	manager: string;
+	spiderMap: SpiderMap[];
 };
 
 export enum NoticeSeverity {

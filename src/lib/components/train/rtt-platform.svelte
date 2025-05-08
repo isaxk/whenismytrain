@@ -28,12 +28,12 @@
 	}
 </script>
 
-{#if data}
+{#if data && data.platform}
 	{data.platform}
 	<Tooltip.Root>
 		<Tooltip.Trigger
 			class={[
-				'absolute -right-1.5 -bottom-1.5 rounded-full  p-0',
+				'absolute -right-1.5 -bottom-1.5 flex items-center justify-center rounded-full',
 				data.isConfirmed ? 'bg-green-100' : 'bg-amber-100'
 			]}
 		>
@@ -47,4 +47,6 @@
 			{/if}
 		</Tooltip.Content>
 	</Tooltip.Root>
+{:else if data}
+	?
 {/if}

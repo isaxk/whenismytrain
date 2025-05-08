@@ -11,6 +11,10 @@
 	import { Tooltip } from 'bits-ui';
 	import { Info } from 'lucide-svelte';
 	import NoticeList from '$lib/components/board/notice-list.svelte';
+	import { flip } from 'svelte/animate';
+	import { expandedMap } from '$lib/data/saved.svelte';
+	import SpiderMap from '$lib/components/board/spider-map.svelte';
+	import { fade } from 'svelte/transition';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
@@ -22,6 +26,7 @@
 
 	$effect(() => {
 		data.board.then((board) => {
+			console.log(board.details.spiderMap);
 			if (clearer) clearer();
 			trains = board.trains;
 			clearer = refresher.subscribe<{ details: Details; trains: Train[] }>(
@@ -35,7 +40,7 @@
 	});
 </script>
 
-{#if !page.data.train_id || md.current}
+{#if (!page.data.train_id || md.current) && !expandedMap.current}
 	<div
 		class="bg-background md:border-border flex h-full min-h-screen w-full flex-col md:min-h-auto md:w-[400px] md:min-w-[400px] md:rounded-lg md:border"
 	>
@@ -43,7 +48,8 @@
 			{#if !md.current}
 				<Header {details} />
 			{/if}
-			<div class="flex-grow overflow-y-scroll pt-4">
+			<!-- <SpiderMap spiderMap={details.spiderMap} /> -->
+			<div class="flex-grow overflow-y-scroll md:pt-4" in:fade={{ duration: 150 }}>
 				{#if details.notices.length > 0}
 					<div class="px-4 pb-4">
 						<NoticeList notices={details.notices} />
@@ -67,7 +73,9 @@
 					{/if}
 					<Tooltip.Provider>
 						{#each trains as train, i (train.id)}
-							<BoardItem {i} {train} url="/board/{data.crs}/{train.id}{page.url.search}" />
+							<div class="group" animate:flip={{ duration: 200 }}>
+								<BoardItem {i} {train} url="/board/{data.crs}/{train.id}{page.url.search}" />
+							</div>
 						{/each}
 					</Tooltip.Provider>
 				{:else}
@@ -105,7 +113,7 @@
 {/if}
 {#if page.data.train_id}
 	<div
-		class="bg-background md:border-border flex h-full max-h-full flex-grow flex-col md:rounded-lg md:border"
+		class="bg-background md:border-border flex h-full max-h-full max-w-screen-xl flex-grow flex-col md:rounded-lg md:border"
 	>
 		{@render children()}
 	</div>

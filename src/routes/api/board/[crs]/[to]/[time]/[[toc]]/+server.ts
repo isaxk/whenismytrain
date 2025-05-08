@@ -5,11 +5,19 @@ import dayjs from 'dayjs';
 import { PUBLIC_DEPARTURES_KEY } from '$env/static/public';
 import { NoticeSeverity, type BoardItem, type Details, type TrainFilter } from '$lib/types/board';
 import { Position } from '$lib/types';
+import tiplocsData from '$lib/data/tiplocs.json';
+import { operatorList } from '$lib/data/operators';
 
 export const GET: RequestHandler = async ({ params, request }) => {
 	const { crs, to, time, toc } = params;
 
-	const date = dayjs().format('YYYYMMDDTHHmmss');
+	const date = (
+		time != 'null'
+			? dayjs()
+					.set('hour', parseInt(time.substring(0, 2)))
+					.set('minute', parseInt(time.substring(2, 4)))
+			: dayjs()
+	).format('YYYYMMDDTHHmmss');
 	const reqUrl = paramUrl(
 		`https://api1.raildata.org.uk/1010-live-departure-board---staff-version1_0/LDBSVWS/api/20220120/GetDepBoardWithDetails/${crs}/${date}`,
 		{
@@ -28,6 +36,14 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		let position = Position.AWAY;
 		let filter: TrainFilter | null = null;
 
+		let filterCrs = to;
+		let filterLocationName = data.filterLocationName;
+
+		if (filterCrs === null || filterCrs === undefined || filterCrs === 'null') {
+			filterCrs = item.destination[0].crs;
+			filterLocationName = item.destination[0].locationName;
+		}
+
 		if (item.isCancelled) {
 			position = Position.CANCELLED;
 		} else if (item.atdSpecified) {
@@ -38,25 +54,24 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			position = Position.STARTS_HERE;
 		}
 
-		if (to && to != null && to != 'null') {
-			const callingPoints = item.subsequentLocations.filter((p) => p.crs && !p.isPass);
-			const filterIndex = callingPoints.findIndex((p) => p.crs === to);
-			const filterLocation = filterIndex !== -1 ? callingPoints[filterIndex] : null;
+		const callingPoints = item.subsequentLocations.filter((p) => p.crs && !p.isPass);
+		const filterIndex = callingPoints.findIndex((p) => p.crs === filterCrs);
+		const filterLocation = filterIndex !== -1 ? callingPoints[filterIndex] : null;
 
-			if (filterLocation) {
-				const durations = dayjs(
-					filterLocation.ata ?? filterLocation.eta ?? filterLocation.sta
-				).diff(item.atd ?? item.etd ?? item.std, 'minute');
-				const hours = Math.floor(durations / 60);
-				const minutes = durations % 60;
-				filter = {
-					crs: to,
-					name: data.filterLocationName,
-					stops: filterIndex,
-					time: filterLocation.ata ?? filterLocation.eta ?? filterLocation.sta,
-					duration: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
-				};
-			}
+		if (filterLocation) {
+			const durations = dayjs(filterLocation.ata ?? filterLocation.eta ?? filterLocation.sta).diff(
+				item.atd ?? item.etd ?? item.std,
+				'minute'
+			);
+			const hours = Math.floor(durations / 60);
+			const minutes = durations % 60;
+			filter = {
+				crs: filterCrs,
+				name: filterLocationName,
+				stops: filterIndex,
+				time: filterLocation.ata ?? filterLocation.eta ?? filterLocation.sta,
+				duration: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+			};
 		}
 
 		return {
@@ -104,13 +119,42 @@ export const GET: RequestHandler = async ({ params, request }) => {
 
 	notices.sort((a, b) => b.severity - a.severity);
 
+	const coords = tiplocsData.find((tp) => tp.crs === data.crs);
+
+	console.log(data);
+
+	const current = {
+		crs: crs,
+		name: data.locationName,
+		coords: [coords?.longitude, coords?.latitude]
+	};
+
+	const spiderMap = (data.trainServices ?? []).map((t) => {
+		const coordsList = [
+			current,
+			...(t.subsequentLocations ?? []).map((l) => {
+				const tiploc = tiplocsData.find((tp) => tp.tiploc === l.tiploc);
+				return {
+					crs: l.crs,
+					name: l.name,
+					coords: [tiploc?.longitude, tiploc?.latitude]
+				};
+			})
+		];
+		return {
+			color: operatorList[t.operatorCode].bg,
+			coordsList
+		};
+	});
+
 	const details: Details = {
 		name: data.locationName,
 		notices,
 		crs: crs,
 		filterName: data.filterLocationName ?? null,
-		filterCrs: to != null || to != 'null' ? to : null,
-		manager: data.stationManager
+		filterCrs: to != null && to != 'null' ? to : null,
+		manager: data.stationManager,
+		spiderMap
 	};
 
 	return json({

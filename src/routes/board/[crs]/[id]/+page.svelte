@@ -7,12 +7,15 @@
 	import Skeleton from '$lib/components/ui/skeleton.svelte';
 	import { operatorList } from '$lib/data/operators';
 	import { refresher } from '$lib/data/refresh.svelte.js';
+	import { expandedMap } from '$lib/data/saved.svelte.js';
+	import { Position } from '$lib/types/index.js';
 	import type { ServiceDetails } from '$lib/types/train.js';
 	import { Tooltip } from 'bits-ui';
 
 	import dayjs from 'dayjs';
-	import { ChevronDown, ChevronUp, X } from 'lucide-svelte';
+	import { ChevronDown, ChevronUp, ClockAlert, Info, X } from 'lucide-svelte';
 	import { onDestroy } from 'svelte';
+	import { linear } from 'svelte/easing';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { fade, slide } from 'svelte/transition';
 
@@ -25,6 +28,7 @@
 		subsequent: false,
 		further: false
 	});
+	let expandMap = $state(false);
 
 	let train: ServiceDetails | null = $state(null);
 
@@ -56,8 +60,15 @@
 	let clientHeight = $state();
 </script>
 
+<svelte:window onscroll={() => (expandedMap.current = false)} />
+
 <Tooltip.Provider>
-	<div class="min-h-screen md:flex md:h-full md:min-h-full md:flex-col">
+	<div
+		class={[
+			'min-h-screen md:flex md:h-full md:min-h-full md:flex-col',
+			expandedMap.current ? 'md:flex-row' : 'md:flex-col'
+		]}
+	>
 		{#await data.train}
 			<div class="flex min-h-16 items-center gap-0">
 				<a
@@ -106,10 +117,17 @@
 			</div>
 		{:then}
 			{#if train}
-				{@const { grouped, locations, filterDetails, operator } = train}
+				{@const { grouped, locations, filterDetails, operator, lateReason, cancelReason } = train}
 
-				<div class="bg-background fixed top-0 right-0 left-0 z-[1000] md:static" bind:clientHeight>
-					<div class="bg-background flex min-h-16 items-center gap-0" in:fade={{ duration: 200 }}>
+				<div
+					class={[
+						'bg-background fixed top-0 right-0 left-0 z-[1000] md:static',
+						expandedMap.current && 'flex h-[85%] min-h-[400px] flex-col md:h-full md:w-2/3'
+					]}
+					bind:clientHeight
+					in:fade|global={{ duration: 150 }}
+				>
+					<div class="bg-background flex min-h-16 items-center gap-0">
 						<a
 							href={data.closeToHome ? '/' : `/board/${data.crs}${page.url.search}`}
 							class="flex h-full w-14 items-center justify-center"
@@ -133,8 +151,74 @@
 						</div>
 						<SaveToggle id={data.train_id} focus={data.crs} filter={data.to} />
 					</div>
-					<div in:fade={{ duration: 200 }} class="min-h-42">
-						<Map {locations} {operator} focus={data.crs} filter={data.filter} />
+					{#if (grouped.focus.isCancelled || grouped.filter.isCancelled) && cancelReason}
+						<div class="px-4 pb-2">
+							<div
+								class="flex min-h-8 items-center gap-2 rounded border border-red-600 bg-red-100 p-1 px-3 text-xs"
+							>
+								<div>
+									<X size={16} />
+								</div>
+								<div>
+									{cancelReason}
+								</div>
+							</div>
+						</div>
+					{:else if lateReason}
+						<div class="px-4 pb-2">
+							<div
+								class="flex min-h-8 items-center gap-2 rounded border border-yellow-600 bg-amber-100 p-1 px-3 text-xs"
+							>
+								<div>
+									<ClockAlert size={16} />
+								</div>
+								<div>
+									{lateReason}
+								</div>
+							</div>
+						</div>
+					{/if}
+					{#if locations.some((l) => l.divisionType)}
+						<div class="px-4 pb-2">
+							<div
+								class="flex min-h-8 items-center gap-2 rounded border border-blue-600 bg-blue-100 p-1 px-3 text-xs"
+							>
+								<div>
+									<Info size={16} />
+								</div>
+								<div>
+									This service divides, please check departure boards to ensure you are in the
+									correct carriage
+								</div>
+							</div>
+						</div>
+					{/if}
+					<div
+						in:fade={{ duration: 200 }}
+						class={['relative', expandedMap.current ? 'flex-grow' : 'h-42 min-h-42']}
+					>
+						<div class={['h-full w-full overflow-hidden']}>
+							<Map
+								expanded={expandedMap.current}
+								{locations}
+								{operator}
+								focus={data.crs}
+								filter={data.filter}
+								focusedCallingPoints={[grouped.focus, ...grouped.subsequent, grouped.filter]}
+							/>
+						</div>
+						<button
+							onclick={() => (expandedMap.current = !expandedMap.current)}
+							class="absolute bottom-2 left-2 z-[200] flex items-center gap-1 rounded-full px-2 py-1 text-sm drop-shadow-2xl"
+							style:background={operatorList[operator].bg}
+							style:color={operatorList[operator].text}
+						>
+							{#if expandedMap.current}
+								<ChevronUp size={16} /> Collapse Map
+							{:else}
+								<ChevronDown size={16} /> Expand Map
+							{/if}
+						</button>
 					</div>
 				</div>
 				{#if !md.current}
@@ -152,6 +236,7 @@
 									color={operatorList[operator].bg}
 									order="previous"
 									end={i === 0 ? 'start' : null}
+									next={grouped.previous[i + 1] ?? grouped.focus ?? null}
 								/>
 							{/each}
 						</div>
@@ -161,9 +246,20 @@
 							onclick={() => (show.previous = !show.previous)}
 							class="text-foreground-tint flex h-10 items-center gap-2 px-4"
 						>
-							<div class="w-14"></div>
+							<div class="w-12"></div>
 							<div class="flex h-full flex-col pr-4">
-								<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+								{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.focus.trainRelativePosition)}
+									<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+								{:else if grouped.previous.some((l) => l.trainRelativePosition === Position.DEPARTED) && !show.previous}
+									<div
+										class="w-2 flex-grow"
+										style:background="linear-gradient(to bottom, {operatorList[operator].bg} 50%, {operatorList[
+											operator
+										].bg}B3 100%)"
+									></div>
+								{:else}
+									<div class="w-2 flex-grow" style:background="{operatorList[operator].bg}B3"></div>
+								{/if}
 							</div>
 							{#if show.previous}
 								<div class="flex items-center gap-1">Hide previous <ChevronUp size={20} /></div>
@@ -180,6 +276,9 @@
 						color={operatorList[operator].bg}
 						order="focus"
 						end={grouped.previous.length === 0 ? 'start' : null}
+						showJoin={show.previous}
+						showDivide={show.subsequent}
+						next={grouped.subsequent[0] ?? grouped.filter ?? null}
 					/>
 					{#if show.subsequent}
 						<div transition:slide={{ duration: 200 }}>
@@ -191,6 +290,7 @@
 									{i}
 									color={operatorList[operator].bg}
 									order="subsequent"
+									next={grouped.subsequent[i + 1] ?? grouped.filter ?? null}
 								/>
 							{/each}
 						</div>
@@ -200,9 +300,20 @@
 							onclick={() => (show.subsequent = !show.subsequent)}
 							class="text-foreground-tint flex h-10 items-center gap-2 px-4"
 						>
-							<div class="w-14"></div>
+							<div class="w-12"></div>
 							<div class="flex h-full flex-col pr-4">
-								<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+								{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
+									<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+								{:else if ([Position.ARRIVED, Position.DEPARTED].includes(grouped.subsequent[0].trainRelativePosition) && !show.subsequent) || [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
+									<div
+										class="w-2 flex-grow"
+										style:background="linear-gradient(to bottom, {operatorList[operator].bg}, {operatorList[
+											operator
+										].bg}B3)"
+									></div>
+								{:else}
+									<div class="w-2 flex-grow" style:background="{operatorList[operator].bg}B3"></div>
+								{/if}
 							</div>
 							{#if show.subsequent}
 								<div class="flex items-center gap-1">Hide stops <ChevronUp size={20} /></div>
@@ -215,9 +326,13 @@
 						</button>
 					{:else}
 						<div class="text-foreground-tint flex h-10 items-center gap-2 px-4">
-							<div class="w-14"></div>
+							<div class="w-12"></div>
 							<div class="flex h-full flex-col pr-4">
-								<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+								{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
+									<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+								{:else}
+									<div class="w-2 flex-grow" style:background="{operatorList[operator].bg}B3"></div>
+								{/if}
 							</div>
 							<div class="flex items-center gap-1">Non-stop - {filterDetails.duration}</div>
 						</div>
@@ -230,6 +345,7 @@
 						color={operatorList[operator].bg}
 						order="filter"
 						end={grouped.filter.crs === grouped.destination.crs ? 'end' : null}
+						next={grouped.further[0] ?? grouped.destination ?? null}
 					/>
 					{#if show.further}
 						<div transition:slide={{ duration: 200 }}>
@@ -241,6 +357,7 @@
 									{i}
 									color={operatorList[operator].bg}
 									order="further"
+									next={grouped.further[i + 1] ?? grouped.destination ?? null}
 								/>
 							{/each}
 						</div>
@@ -250,9 +367,20 @@
 							onclick={() => (show.further = !show.further)}
 							class="text-foreground-tint flex h-10 items-center gap-2 px-4"
 						>
-							<div class="w-14"></div>
+							<div class="w-12"></div>
 							<div class="flex h-full flex-col pr-4">
-								<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+								{#if [Position.DEPARTED, Position.ARRIVED].includes(grouped.destination.trainRelativePosition)}
+									<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+								{:else if [Position.DEPARTED, Position.ARRIVED].includes(grouped.further[0].trainRelativePosition) && !show.further}
+									<div
+										class="w-2 flex-grow"
+										style:background="linear-gradient(to bottom, {operatorList[operator].bg}, {operatorList[
+											operator
+										].bg}B3)"
+									></div>
+								{:else}
+									<div class="w-2 flex-grow" style:background="{operatorList[operator].bg}B3"></div>
+								{/if}
 							</div>
 							{#if show.further}
 								<div class="flex items-center gap-1">Hide further <ChevronUp size={20} /></div>
@@ -271,6 +399,7 @@
 							color={operatorList[operator].bg}
 							order="destination"
 							end="end"
+							next={null}
 						/>
 					{/if}
 				</div>
