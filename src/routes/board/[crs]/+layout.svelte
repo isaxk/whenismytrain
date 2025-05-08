@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Details, BoardItem as Train } from '$lib/types/board';
 	import Header from '$lib/components/board/header.svelte';
-	import type { Snippet } from 'svelte';
+	import { onDestroy, type Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 	import { page } from '$app/state';
 	import { MediaQuery } from 'svelte/reactivity';
@@ -37,6 +37,10 @@
 				}
 			);
 		});
+	});
+
+	onDestroy(() => {
+		clearer();
 	});
 </script>
 

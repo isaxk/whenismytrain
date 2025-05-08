@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { MediaQuery } from 'svelte/reactivity';
+	import { MediaQuery, SvelteMap } from 'svelte/reactivity';
 	import '../app.css';
 	import { navigating, page } from '$app/state';
 	import Search from '$lib/components/ui/search.svelte';
@@ -7,11 +7,14 @@
 	import { Bookmark, ChevronRight, Train, X } from 'lucide-svelte';
 	import { expandedMap, saved } from '$lib/data/saved.svelte';
 	import SavedTrain from '$lib/components/train/saved-train.svelte';
-	import { preloadData } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { onNavigate, preloadData } from '$app/navigation';
+	import { onMount, untrack } from 'svelte';
 	import { browser } from '$app/environment';
 	import { refresher, refreshing } from '$lib/data/refresh.svelte';
 	import { Tooltip } from 'bits-ui';
+	import dayjs from 'dayjs';
+	import { flip } from 'svelte/animate';
+	import { localStore } from '$lib/utils/localStore.svelte';
 
 	let { children } = $props();
 
@@ -20,6 +23,17 @@
 	let from = $derived(null);
 	let to = $derived(null);
 	let isIOSSwipeGesture = false;
+
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 
 	onMount(() => {
 		if (!browser) return;
@@ -72,6 +86,21 @@
 				preloadData(`/board/${from}`);
 			}
 		}
+	});
+
+	let savedTrainsTimes = localStore<{ id: string; time: string }[]>('saved-trains-times', []);
+
+	$effect(() => {
+		console.log(savedTrainsTimes.value);
+		untrack(() => {
+			saved.value = saved.value.toSorted((a, b) => {
+				const aSaved = savedTrainsTimes.value.find((saved) => saved.id === a.id);
+				const bSaved = savedTrainsTimes.value.find((saved) => saved.id === b.id);
+				const aTime = aSaved ? dayjs(aSaved.time).unix() : Infinity;
+				const bTime = bSaved ? dayjs(bSaved.time).unix() : Infinity;
+				return aTime - bTime;
+			});
+		});
 	});
 </script>
 
@@ -131,12 +160,29 @@
 				<Tooltip.Provider>
 					{#if saved.value.length}
 						{#each saved.value as { id, filter, focus }, i (id + filter + focus)}
-							<svelte:boundary>
-								<SavedTrain {i} {id} {filter} {focus} />
-								{#snippet failed(error)}
-									{error}
-								{/snippet}
-							</svelte:boundary>
+							<div animate:flip={{ duration: 200 }}>
+								<svelte:boundary>
+									<SavedTrain
+										onTime={(t) => {
+											if (savedTrainsTimes.value.find((t) => t.id === id)) {
+												savedTrainsTimes.value = [
+													...savedTrainsTimes.value.filter((item) => item.id !== id),
+													{ id, time: t }
+												];
+											} else {
+												savedTrainsTimes.value = [...savedTrainsTimes.value, { id, time: t }];
+											}
+										}}
+										{i}
+										{id}
+										{filter}
+										{focus}
+									/>
+									{#snippet failed(error)}
+										{error}
+									{/snippet}
+								</svelte:boundary>
+							</div>
 						{/each}
 					{:else}
 						<div class="font-medium">No saved trains</div>

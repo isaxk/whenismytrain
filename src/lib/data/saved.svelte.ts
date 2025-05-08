@@ -7,6 +7,4 @@ export const saved = localStore<{ id: string; focus: string; filter: string }[]>
 	[]
 );
 
-export const cache = new SvelteMap<string, ServiceDetails>();
-
 export const expandedMap = $state({ current: false });

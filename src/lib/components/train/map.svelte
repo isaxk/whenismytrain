@@ -32,7 +32,7 @@
 		return tinycolor(hex).desaturate(percentage).toHexString();
 	}
 
-	const coordinates = $derived(locations.map((l) => l.coordinates));
+	const coordinates = $derived(locations.filter((c) => !c.isCancelled).map((l) => l.coordinates));
 	const toBoundsCoords = $derived(focusedCallingPoints.map((l) => l.coordinates));
 
 	const data: Feature = $derived({

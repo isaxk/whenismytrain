@@ -22,7 +22,8 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		`https://api1.raildata.org.uk/1010-live-departure-board---staff-version1_0/LDBSVWS/api/20220120/GetDepBoardWithDetails/${crs}/${date}`,
 		{
 			filterCrs: to,
-			filterToc: toc ?? null
+			filterToc: toc ?? null,
+			timeWindow: '480'
 		}
 	);
 	const response = await fetch(reqUrl.toString(), {
