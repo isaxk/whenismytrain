@@ -10,7 +10,7 @@
 	import { preloadData } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { refresher } from '$lib/data/refresh.svelte';
+	import { refresher, refreshing } from '$lib/data/refresh.svelte';
 	import { Tooltip } from 'bits-ui';
 
 	let { children } = $props();
