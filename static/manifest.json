@@ -1,0 +1,9 @@
+{
+	"name": "When Is My Train?",
+	"short_name": "WhenIsMyTrain?",
+	"description": "UK Train Times",
+	"start_url": "/",
+	"display": "standalone",
+	"background_color": "#ffffff",
+	"theme_color": "#fff"
+}
