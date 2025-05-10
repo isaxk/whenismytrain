@@ -75,6 +75,13 @@
 	>
 		{#if train && train.data}
 			{@const { grouped, filterDetails, operator, uid, sdd } = train.data}
+			{#if dayjs(grouped.focus.times.estimated.departure ?? grouped.focus.times.scheduled.departure).day() !== now.day()}
+				<div class="text-foreground-muted px-1.5 text-sm">
+					{dayjs(
+						grouped.focus.times.estimated.departure ?? grouped.focus.times.scheduled.departure
+					).format('DD MMM')}
+				</div>
+			{/if}
 			<div
 				in:fade={{ duration: 200 }}
 				class={[

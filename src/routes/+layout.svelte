@@ -5,9 +5,9 @@
 	import Search from '$lib/components/ui/search.svelte';
 	import { fade } from 'svelte/transition';
 	import { Bookmark, ChevronRight, Train, X } from 'lucide-svelte';
-	import { expandedMap, saved } from '$lib/data/saved.svelte';
+	import { cancelVt, expandedMap, saved } from '$lib/data/saved.svelte';
 	import SavedTrain from '$lib/components/train/saved-train.svelte';
-	import { onNavigate, preloadData } from '$app/navigation';
+	import { goto, onNavigate, preloadData } from '$app/navigation';
 	import { onMount, untrack } from 'svelte';
 	import { browser } from '$app/environment';
 	import { refresher, refreshing } from '$lib/data/refresh.svelte';
@@ -15,18 +15,25 @@
 	import dayjs from 'dayjs';
 	import { flip } from 'svelte/animate';
 	import { localStore } from '$lib/utils/localStore.svelte';
+	import TimeInput from '$lib/components/ui/time-input.svelte';
 
-	let { children } = $props();
+	let { children, data } = $props();
 
 	const md = new MediaQuery('(min-width: 768px)');
 
-	let from = $derived(null);
-	let to = $derived(null);
+	let from = $state(page.data.from ?? null);
+	let to = $state(page.data.to ?? null);
+	let time: string | null = $state(page.data.time ?? null);
+	let tomorrow: boolean = $state(false);
 	let isIOSSwipeGesture = false;
 
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) return;
 
+		if (cancelVt.current) {
+			cancelVt.current = false;
+			return;
+		}
 		return new Promise((resolve) => {
 			document.startViewTransition(async () => {
 				resolve();
@@ -80,11 +87,12 @@
 
 	$effect(() => {
 		if (from || to) {
-			if (to) {
-				preloadData(`/board/${from}?to=${to ?? ''}`);
-			} else {
-				preloadData(`/board/${from}`);
-			}
+			const timeQ = time ? time.replace(':', '') : null;
+			preloadData(
+				to
+					? `/board/${from}?to=${to ?? ''}${timeQ ? `&time=${timeQ}` : ''}`
+					: `/board/${from}${timeQ ? `?time=${timeQ}` : ''}`
+			);
 		}
 	});
 
@@ -110,7 +118,8 @@
 	<div
 		class={['flex h-full w-full max-w-screen-xl gap-4', expandedMap.current && 'md:justify-center']}
 	>
-		<div
+		<form
+			onsubmit={(e) => e.preventDefault()}
 			class={[
 				(!md.current && page.data.crs) || expandedMap.current ? 'hidden' : 'flex',
 				'bg-background md:border-border h-full min-h-screen w-full flex-col p-4 md:relative md:min-h-auto md:w-[400px] md:min-w-[400px] md:rounded-lg md:border'
@@ -118,15 +127,20 @@
 		>
 			<div class="p-2 text-3xl font-semibold">When is my train?</div>
 
-			<div class="flex w-full items-center py-4 pt-6">
+			<TimeInput
+				value={page.data.time ?? null}
+				onChange={(v: string | null) => (time = v)}
+				bind:tomorrow
+			/>
+			<div class="flex w-full items-center pt-0 pb-4">
 				<div class="w-full min-w-0 flex-grow text-right">
-					<Search bind:selected={from} />
+					<Search bind:selected={from} to={false} stations={data.stations} />
 				</div>
 				<div class="px-2">
 					<ChevronRight size={22} />
 				</div>
 				<div class="w-full min-w-0 flex-grow text-right">
-					<Search bind:selected={to} to />
+					<Search bind:selected={to} to stations={data.stations} />
 				</div>
 				{#if to}
 					<button
@@ -137,11 +151,26 @@
 			</div>
 
 			{#if from}
+				{@const timeQ = time ? time.replace(':', '') : null}
 				<a
+					type="submit"
 					in:fade={{ duration: 200 }}
-					href={to ? `/board/${from}?to=${to ?? ''}` : `/board/${from}`}
+					href={to
+						? `/board/${from}?to=${to ?? ''}${timeQ ? `&time=${timeQ}` : ''}&tomorrow=${tomorrow ?? false}`
+						: `/board/${from}${timeQ ? `?time=${timeQ}&tomorrow=${tomorrow ?? false}` : `?tomorrow=${tomorrow}`}`}
 					class="flex w-full transform-gpu justify-center rounded-lg bg-blue-500 px-3 py-2 font-medium text-white drop-shadow-sm"
 					>Go</a
+				>
+				<button
+					type="submit"
+					class="hidden"
+					onclick={() => {
+						goto(
+							to
+								? `/board/${from}?to=${to ?? ''}${timeQ ? `&time=${timeQ}` : ''}`
+								: `/board/${from}${timeQ ? `?time=${timeQ}` : ''}`
+						);
+					}}>Submit</button
 				>
 			{:else}
 				<div
@@ -192,7 +221,7 @@
 					{/if}
 				</Tooltip.Provider>
 			</div>
-		</div>
+		</form>
 		{@render children()}
 	</div>
 </div>

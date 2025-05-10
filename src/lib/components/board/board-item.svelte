@@ -8,6 +8,7 @@
 	import RttPlatform from '../train/rtt-platform.svelte';
 	import { Clock } from 'lucide-svelte';
 	import { destination, flip } from '@turf/turf';
+	import { Position } from '$lib/types';
 
 	let { i, train, url }: { i: number; train: BoardItem; url: string } = $props();
 
@@ -25,7 +26,12 @@
 >
 	<div class="h-full min-w-1.5" style:background={operatorList[train.operator].bg}></div>
 	<div class="flex h-full min-w-0 flex-grow flex-col justify-center gap-1">
-		<div class="flex h-max items-end gap-2 px-2">
+		<div
+			class={[
+				'flex h-max items-end gap-2 px-2',
+				train.position === Position.DEPARTED && 'opacity-60'
+			]}
+		>
 			<div class="flex h-max min-w-0 flex-grow items-end gap-2">
 				<div class="flex h-max w-12 min-w-12 flex-col items-start justify-end pl-2">
 					<TimeDisplay
@@ -39,7 +45,12 @@
 				</div>
 			</div>
 		</div>
-		<div class="text-foreground-muted/90 flex min-h-4 w-full items-center gap-2 px-4 text-xs/4">
+		<div
+			class={[
+				'text-foreground-muted/90 flex min-h-4 w-full items-center gap-2 px-4 text-xs/4',
+				train.position === Position.DEPARTED && 'opacity-60'
+			]}
+		>
 			<RelativeTimeDisplay
 				departure={train.times.estimated.departure}
 				arrival={train.times.estimated.arrival}
@@ -56,7 +67,12 @@
 			{/if}
 		</div>
 	</div>
-	<div class="flex flex-col items-center pr-4">
+	<div
+		class={[
+			'flex flex-col items-center pr-4',
+			train.position === Position.DEPARTED && 'opacity-60'
+		]}
+	>
 		<div class="text-foreground-muted text-[10px]">Platform</div>
 		<div class="bg-muted relative flex size-6 items-center justify-center rounded-full text-xs">
 			{#if train.platform}

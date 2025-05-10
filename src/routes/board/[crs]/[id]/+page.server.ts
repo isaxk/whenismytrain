@@ -8,8 +8,15 @@ export const load: PageServerLoad = async ({ params, url, fetch }) => {
 	const to = url.searchParams.get('to') || null;
 	const closeToHome = (url.searchParams.get('closeToHome') || 'false') === 'true';
 
-	const train: Promise<ServiceDetails> = fetch(`/api/service/${id}/${crs}/${to}`).then(
-		async (r) => await r.json()
-	);
+	const train: Promise<ServiceDetails> = new Promise<ServiceDetails>((resolve, reject) => {
+		fetch(`/api/service/${id}/${crs}/${to}`).then(async (r) => {
+			if (r.ok) {
+				resolve(await r.json());
+			} else {
+				const error = await r.json();
+				reject(new Error(error.message));
+			}
+		});
+	});
 	return { train, crs, train_id: id, filter: to, closeToHome };
 };

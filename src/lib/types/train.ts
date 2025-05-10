@@ -49,4 +49,12 @@ export type ServiceDetails = {
 	genAt: string;
 	lateReason: string | null;
 	cancelReason: string | null;
+	formation: {
+		number: string;
+		coachClass: string;
+		toilet: boolean;
+		toiletIsAccessible: boolean;
+		loading: number | null;
+		toiletStatus: 'Unknown' | 'InService' | 'NotInService';
+	}[];
 };

@@ -9,6 +9,21 @@ export const operatorList: Record<string, { name: string; bg: string; text: stri
 		bg: '#773dbd',
 		text: '#fff'
 	},
+	LT: {
+		name: 'London Underground',
+		bg: '#C9382C',
+		text: '#fff'
+	},
+	TW: {
+		name: 'Tyne and Wear Metro',
+		bg: '#00308F',
+		text: '#fff'
+	},
+	IL: {
+		name: 'Island Line (SWR)',
+		bg: '#357AA9',
+		text: '#fff'
+	},
 	CS: {
 		name: 'Caledonian Sleeper',
 		bg: '#12282E',

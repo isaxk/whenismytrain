@@ -14,13 +14,14 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export const GET: RequestHandler = async ({ params, request }) => {
-	const { crs, to, time, toc } = params;
+	const { crs, to, time, tomorrow } = params;
 
 	const date = (
 		time != 'null'
 			? dayjs()
 					.set('hour', parseInt(time.substring(0, 2)))
 					.set('minute', parseInt(time.substring(2, 4)))
+					.add(tomorrow == 'true' ? 1 : 0, 'day')
 			: dayjs()
 	)
 		.tz('Europe/London')
@@ -29,16 +30,17 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		`https://api1.raildata.org.uk/1010-live-departure-board---staff-version1_0/LDBSVWS/api/20220120/GetDepBoardWithDetails/${crs}/${date}`,
 		{
 			filterCrs: to,
-			filterToc: toc ?? null,
 			timeWindow: '480'
 		}
 	);
+
 	const response = await fetch(reqUrl.toString(), {
 		headers: {
 			'x-apikey': PUBLIC_DEPARTURES_KEY
 		}
 	});
 	const data = await response.json();
+	console.log(data.busServices);
 
 	function parseService(item: any, i: number): BoardItem {
 		let position = Position.AWAY;
@@ -115,7 +117,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			position
 		};
 	}
-	const trains = (data.trainServices ?? []).map(parseService);
+	let trains = (data.trainServices ?? []).map(parseService);
 
 	const notices =
 		data.nrccMessages?.map((m) => {
@@ -129,44 +131,28 @@ export const GET: RequestHandler = async ({ params, request }) => {
 
 	const coords = tiplocsData.find((tp) => tp.crs === data.crs);
 
-	console.log(data);
-
 	const current = {
 		crs: crs,
 		name: data.locationName,
 		coords: [coords?.longitude, coords?.latitude]
 	};
 
-	const spiderMap = (data.trainServices ?? []).map((t) => {
-		const coordsList = [
-			current,
-			...(t.subsequentLocations ?? []).map((l) => {
-				const tiploc = tiplocsData.find((tp) => tp.tiploc === l.tiploc);
-				return {
-					crs: l.crs,
-					name: l.name,
-					coords: [tiploc?.longitude, tiploc?.latitude]
-				};
-			})
-		];
-		return {
-			color: operatorList[t.operatorCode].bg,
-			coordsList
-		};
-	});
-
 	const details: Details = {
 		name: data.locationName,
 		notices,
 		crs: crs,
+		time: time && time != 'null' ? time.substring(0, 2) + ':' + time.substring(2, 4) : null,
 		filterName: data.filterLocationName ?? null,
 		filterCrs: to != null && to != 'null' ? to : null,
-		manager: data.stationManager,
-		spiderMap
+		manager: data.stationManager
 	};
+
+	trains = trains.filter((t) => t.operator !== 'LT');
 
 	return json({
 		details,
-		trains
+		trains: trains
+			.filter((l) => l.position === Position.DEPARTED)
+			.concat(trains.filter((l) => l.position !== Position.DEPARTED))
 	});
 };

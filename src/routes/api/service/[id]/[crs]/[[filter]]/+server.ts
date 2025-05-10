@@ -100,6 +100,14 @@ export const GET: RequestHandler = async ({ params }) => {
 			progress = Math.max(0, Math.min(0.95, elapsed / diff));
 		}
 
+		const formation = data.formation.find((f) => f.tiploc === l.tiploc);
+		let loading: number | null = null;
+
+		if (formation && formation.serviceLoading?.loadingPercentage?.Value) {
+			console.log('ffff', formation);
+			loading = formation.serviceLoading.loadingPercentage.Value;
+		}
+
 		return {
 			name: l.locationName?.replace('(Elizabeth line)', '') ?? '',
 			crs: l.crs ?? null,
@@ -123,7 +131,8 @@ export const GET: RequestHandler = async ({ params }) => {
 			divisionType,
 			divisionCallingPoints,
 			formedFrom,
-			progress
+			progress,
+			loading
 		};
 	}
 
@@ -524,7 +533,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 
 	// Make sure filter is after focus
-	if (filterIndex < focusIndex) {
+	if (filterIndex <= focusIndex) {
 		// Look for another instance of the filter after the focus
 		const laterFilterIndex = callingPoints.findIndex(
 			(l, i) => l.crs === filterCrs && i > focusIndex
@@ -640,6 +649,8 @@ export const GET: RequestHandler = async ({ params }) => {
 	// Determine destination - either last calling point or ultimate destination for case 2c
 	let destination = callingPoints[callingPoints.length - 1] || filterLoc;
 
+	console.log(isCase2c);
+
 	// For case 2c, set the destination to the ultimate destination after join
 	if (isCase2c && ultimateDestinationCrs && ultimateDestinationName) {
 		if (stationsAfterJoin.length > 0) {
@@ -657,6 +668,10 @@ export const GET: RequestHandler = async ({ params }) => {
 		further = [];
 	}
 
+	if (focusIndex >= filterIndex) {
+		error(403, 'Focus cannot be after filter');
+	}
+
 	let lateReason: string | null = null;
 	let cancelReason: string | null = null;
 
@@ -671,6 +686,30 @@ export const GET: RequestHandler = async ({ params }) => {
 		console.log(reasonData);
 		lateReason = reasonData.lateReason;
 		cancelReason = reasonData.cancReason;
+	}
+
+	let focusFormationIndex = data.formation.findLastIndex((f) => {
+		return f.coaches?.some((c) => c.loading !== undefined);
+	});
+	focusFormationIndex =
+		focusFormationIndex !== -1
+			? focusFormationIndex
+			: data.formation.findIndex((f) => f.tiploc === focusLoc.tiploc);
+	const focusFormation = focusFormationIndex !== -1 ? data.formation[focusFormationIndex] : null;
+	let formation = null;
+	if (focusFormation && focusFormation.coaches) {
+		formation = focusFormation.coaches.map((c) => {
+			console.log(c.toilet?.Value);
+			return {
+				coachClass: c.coachClass,
+				number: c.number,
+				toilet: c.toilet !== undefined && c.toilet?.Value !== 'None',
+				toiletIsAccessible: c.toilet?.Value === 'Accessible',
+				toiletStatus: c.toilet?.status ?? null,
+				loading: c.loading?.Value ?? null
+			};
+		});
+		console.log(formation);
 	}
 
 	const returnData: ServiceDetails = {
@@ -690,7 +729,8 @@ export const GET: RequestHandler = async ({ params }) => {
 		},
 		lateReason,
 		cancelReason,
-		genAt: new Date().toISOString()
+		genAt: new Date().toISOString(),
+		formation
 	};
 
 	return json(returnData);

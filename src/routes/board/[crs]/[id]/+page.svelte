@@ -13,7 +13,15 @@
 	import { Tooltip } from 'bits-ui';
 
 	import dayjs from 'dayjs';
-	import { ChevronDown, ChevronUp, ClockAlert, Info, X } from 'lucide-svelte';
+	import {
+		Accessibility,
+		ChevronDown,
+		ChevronUp,
+		ClockAlert,
+		Info,
+		Toilet,
+		X
+	} from 'lucide-svelte';
 	import { onDestroy } from 'svelte';
 	import { linear } from 'svelte/easing';
 	import { MediaQuery } from 'svelte/reactivity';
@@ -39,25 +47,43 @@
 	});
 
 	$effect(() => {
-		data.train.then((details) => {
-			if (clearer) clearer();
-			train = details;
-			show = {
-				previous: false,
-				subsequent: false,
-				further: false
-			};
-			clearer = refresher.subscribe<ServiceDetails>(
-				`/api/service/${data.train_id}/${data.crs}/${data.filter}`,
-				'page-data' + Date.now(),
-				(data) => {
-					train = data;
-				}
-			);
-		});
+		if (clearer) clearer();
+		data.train
+			.then((details) => {
+				console.log(details);
+				train = details;
+				console.log(train);
+				show = {
+					previous: false,
+					subsequent: false,
+					further: false
+				};
+				clearer = refresher.subscribe<ServiceDetails>(
+					`/api/service/${data.train_id}/${data.crs}/${data.filter}`,
+					'page-data' + Date.now(),
+					(data) => {
+						train = data;
+					}
+				);
+			})
+			.catch((error) => {
+				console.error(error);
+			});
 	});
 
 	let clientHeight = $state();
+
+	function loadPercentage(p: number) {
+		if (p < 40) {
+			return 'bg-green-200/60';
+		} else if (p < 60) {
+			return 'bg-yellow-200/60';
+		} else if (p < 80) {
+			return 'bg-orange-200/60';
+		} else {
+			return 'bg-red-200/60';
+		}
+	}
 </script>
 
 <svelte:window onscroll={() => (expandedMap.current = false)} />
@@ -65,7 +91,7 @@
 <Tooltip.Provider>
 	<div
 		class={[
-			'min-h-screen md:flex md:h-full md:min-h-full md:flex-col',
+			'min-h-screen min-w-0 md:flex md:h-full md:min-h-full md:flex-col',
 			expandedMap.current ? 'md:flex-row' : 'md:flex-col'
 		]}
 	>
@@ -117,7 +143,15 @@
 			</div>
 		{:then}
 			{#if train}
-				{@const { grouped, locations, filterDetails, operator, lateReason, cancelReason } = train}
+				{@const {
+					grouped,
+					locations,
+					filterDetails,
+					operator,
+					lateReason,
+					cancelReason,
+					formation
+				} = train}
 
 				<div
 					class={[
@@ -144,6 +178,14 @@
 							</div>
 							<div class="flex min-w-0 flex-grow items-center gap-1 truncate text-sm/4 font-medium">
 								<div>
+									{#if dayjs(grouped.focus.times.estimated.departure ?? grouped.focus.times.scheduled.departure).day() !== dayjs().day()}
+										<span class="text-foreground-muted">
+											{dayjs(
+												grouped.focus.times.estimated.departure ??
+													grouped.focus.times.scheduled.departure
+											).format('DD MMM YYYY')}
+										</span> -
+									{/if}
 									{dayjs(grouped.focus.times.scheduled.departure).format('HH:mm')} to {grouped
 										.destination.name}
 								</div>
@@ -224,186 +266,242 @@
 				{#if !md.current}
 					<div style:min-height="{clientHeight}px"></div>
 				{/if}
-				<div class="md:flex-grow md:overflow-y-scroll" in:fade={{ duration: 200 }}>
-					{#if show.previous}
-						<div transition:slide={{ duration: 200 }}>
-							{#each grouped.previous as callingPoint, i (callingPoint.tiploc + i)}
-								<CallingPoint
-									uid={train.uid}
-									sdd={train.sdd}
-									{callingPoint}
-									{i}
-									color={operatorList[operator].bg}
-									order="previous"
-									end={i === 0 ? 'start' : null}
-									next={grouped.previous[i + 1] ?? grouped.focus ?? null}
-								/>
-							{/each}
-						</div>
-					{/if}
-					{#if grouped.previous.length > 0}
-						<button
-							onclick={() => (show.previous = !show.previous)}
-							class="text-foreground-tint flex h-10 items-center gap-2 px-4"
-						>
-							<div class="w-12"></div>
-							<div class="flex h-full flex-col pr-4">
-								{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.focus.trainRelativePosition)}
-									<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
-								{:else if grouped.previous.some((l) => l.trainRelativePosition === Position.DEPARTED) && !show.previous}
-									<div
-										class="w-2 flex-grow"
-										style:background="linear-gradient(to bottom, {operatorList[operator].bg} 50%, {operatorList[
-											operator
-										].bg}B3 100%)"
-									></div>
-								{:else}
-									<div class="w-2 flex-grow" style:background="{operatorList[operator].bg}B3"></div>
-								{/if}
-							</div>
-							{#if show.previous}
-								<div class="flex items-center gap-1">Hide previous <ChevronUp size={20} /></div>
-							{:else}
-								<div class="flex items-center gap-1">Show previous <ChevronDown size={20} /></div>
-							{/if}
-						</button>
-					{/if}
-					<CallingPoint
-						uid={train.uid}
-						sdd={train.sdd}
-						callingPoint={grouped.focus}
-						i={0}
-						color={operatorList[operator].bg}
-						order="focus"
-						end={grouped.previous.length === 0 ? 'start' : null}
-						showJoin={show.previous}
-						showDivide={show.subsequent}
-						next={grouped.subsequent[0] ?? grouped.filter ?? null}
-					/>
-					{#if show.subsequent}
-						<div transition:slide={{ duration: 200 }}>
-							{#each grouped.subsequent as callingPoint, i (callingPoint.tiploc + i)}
-								<CallingPoint
-									uid={train.uid}
-									sdd={train.sdd}
-									{callingPoint}
-									{i}
-									color={operatorList[operator].bg}
-									order="subsequent"
-									next={grouped.subsequent[i + 1] ?? grouped.filter ?? null}
-								/>
-							{/each}
-						</div>
-					{/if}
-					{#if grouped.subsequent.length > 0}
-						<button
-							onclick={() => (show.subsequent = !show.subsequent)}
-							class="text-foreground-tint flex h-10 items-center gap-2 px-4"
-						>
-							<div class="w-12"></div>
-							<div class="flex h-full flex-col pr-4">
-								{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
-									<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
-								{:else if ([Position.ARRIVED, Position.DEPARTED].includes(grouped.subsequent[0].trainRelativePosition) && !show.subsequent) || [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
-									<div
-										class="w-2 flex-grow"
-										style:background="linear-gradient(to bottom, {operatorList[operator].bg}, {operatorList[
-											operator
-										].bg}B3)"
-									></div>
-								{:else}
-									<div class="w-2 flex-grow" style:background="{operatorList[operator].bg}B3"></div>
-								{/if}
-							</div>
-							{#if show.subsequent}
-								<div class="flex items-center gap-1">Hide stops <ChevronUp size={20} /></div>
-							{:else}
-								<div class="flex items-center gap-1">
-									{filterDetails.stops} stops - {filterDetails.duration}
-									<ChevronDown size={20} />
+				<div class="flex min-h-0 flex-grow flex-col">
+					{#if formation}
+						<div class="flex min-h-16 w-full gap-1 overflow-x-scroll px-4 pt-4 pb-1">
+							{#each formation as coach (JSON.stringify(coach))}
+								<div
+									class="border-border relative flex min-w-10 flex-col items-center justify-center rounded-lg border py-1"
+								>
+									<div class="z-[10] flex flex-col items-center">
+										<div>
+											{coach.number}
+										</div>
+										{#if formation.some((f) => f.toilet)}
+											<div class="flex h-4">
+												{#if coach.toilet}
+													<Toilet size={12} />
+													{#if coach.toiletIsAccessible}
+														<Accessibility size={12} />
+													{/if}
+												{/if}
+											</div>
+										{/if}
+									</div>
+
+									{#if coach.loading}
+										<div
+											class={[
+												'absolute right-0 bottom-0  left-0 min-h-2 w-full',
+												loadPercentage(coach.loading)
+											]}
+											style:height="{coach.loading}%"
+										></div>
+									{/if}
 								</div>
-							{/if}
-						</button>
-					{:else}
-						<div class="text-foreground-tint flex h-10 items-center gap-2 px-4">
-							<div class="w-12"></div>
-							<div class="flex h-full flex-col pr-4">
-								{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
-									<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
-								{:else}
-									<div class="w-2 flex-grow" style:background="{operatorList[operator].bg}B3"></div>
-								{/if}
-							</div>
-							<div class="flex items-center gap-1">Non-stop - {filterDetails.duration}</div>
-						</div>
-					{/if}
-					<CallingPoint
-						uid={train.uid}
-						sdd={train.sdd}
-						callingPoint={grouped.filter}
-						i={0}
-						color={operatorList[operator].bg}
-						order="filter"
-						end={grouped.filter.crs === grouped.destination.crs ? 'end' : null}
-						next={grouped.further[0] ?? grouped.destination ?? null}
-					/>
-					{#if show.further}
-						<div transition:slide={{ duration: 200 }}>
-							{#each grouped.further as callingPoint, i (callingPoint.tiploc + i)}
-								<CallingPoint
-									uid={train.uid}
-									sdd={train.sdd}
-									{callingPoint}
-									{i}
-									color={operatorList[operator].bg}
-									order="further"
-									next={grouped.further[i + 1] ?? grouped.destination ?? null}
-								/>
 							{/each}
 						</div>
 					{/if}
-					{#if grouped.further.length > 0}
-						<button
-							onclick={() => (show.further = !show.further)}
-							class="text-foreground-tint flex h-10 items-center gap-2 px-4"
-						>
-							<div class="w-12"></div>
-							<div class="flex h-full flex-col pr-4">
-								{#if [Position.DEPARTED, Position.ARRIVED].includes(grouped.destination.trainRelativePosition)}
-									<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
-								{:else if [Position.DEPARTED, Position.ARRIVED].includes(grouped.further[0].trainRelativePosition) && !show.further}
-									<div
-										class="w-2 flex-grow"
-										style:background="linear-gradient(to bottom, {operatorList[operator].bg}, {operatorList[
-											operator
-										].bg}B3)"
-									></div>
-								{:else}
-									<div class="w-2 flex-grow" style:background="{operatorList[operator].bg}B3"></div>
-								{/if}
-							</div>
-							{#if show.further}
-								<div class="flex items-center gap-1">Hide further <ChevronUp size={20} /></div>
-							{:else}
-								<div class="flex items-center gap-1">Show further <ChevronDown size={20} /></div>
-							{/if}
-						</button>
+					{#if formation?.some((f) => f.loading) || locations?.some((l) => l.loading)}
+						<div class="px-4 pb-2 text-xs">
+							* Colours indicate seat availability, not standing capacity.
+						</div>
 					{/if}
-					{#if grouped.destination.crs !== grouped.filter.crs}
+					<div class="md:flex-grow md:overflow-y-scroll" in:fade={{ duration: 200 }}>
+						{#if show.previous}
+							<div transition:slide={{ duration: 200 }}>
+								{#each grouped.previous as callingPoint, i (callingPoint.tiploc + i)}
+									<CallingPoint
+										uid={train.uid}
+										sdd={train.sdd}
+										{callingPoint}
+										{i}
+										color={operatorList[operator].bg}
+										order="previous"
+										end={i === 0 ? 'start' : null}
+										next={grouped.previous[i + 1] ?? grouped.focus ?? null}
+									/>
+								{/each}
+							</div>
+						{/if}
+						{#if grouped.previous.length > 0}
+							<button
+								onclick={() => (show.previous = !show.previous)}
+								class="text-foreground-tint flex h-10 items-center gap-2 px-4"
+							>
+								<div class="w-12"></div>
+								<div class="flex h-full flex-col pr-4">
+									{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.focus.trainRelativePosition)}
+										<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+									{:else if grouped.previous.some((l) => l.trainRelativePosition === Position.DEPARTED) && !show.previous}
+										<div
+											class="w-2 flex-grow"
+											style:background="linear-gradient(to bottom, {operatorList[operator].bg} 50%, {operatorList[
+												operator
+											].bg}B3 100%)"
+										></div>
+									{:else}
+										<div
+											class="w-2 flex-grow"
+											style:background="{operatorList[operator].bg}B3"
+										></div>
+									{/if}
+								</div>
+								{#if show.previous}
+									<div class="flex items-center gap-1">Hide previous <ChevronUp size={20} /></div>
+								{:else}
+									<div class="flex items-center gap-1">Show previous <ChevronDown size={20} /></div>
+								{/if}
+							</button>
+						{/if}
 						<CallingPoint
 							uid={train.uid}
 							sdd={train.sdd}
-							callingPoint={grouped.destination}
+							callingPoint={grouped.focus}
 							i={0}
-							hideDetails={!show.further && grouped.further.length > 0}
 							color={operatorList[operator].bg}
-							order="destination"
-							end="end"
-							next={null}
+							order="focus"
+							end={grouped.previous.length === 0 ? 'start' : null}
+							showJoin={show.previous}
+							showDivide={show.subsequent}
+							next={grouped.subsequent[0] ?? grouped.filter ?? null}
 						/>
-					{/if}
+						{#if show.subsequent}
+							<div transition:slide={{ duration: 200 }}>
+								{#each grouped.subsequent as callingPoint, i (callingPoint.tiploc + i)}
+									<CallingPoint
+										uid={train.uid}
+										sdd={train.sdd}
+										{callingPoint}
+										{i}
+										color={operatorList[operator].bg}
+										order="subsequent"
+										next={grouped.subsequent[i + 1] ?? grouped.filter ?? null}
+									/>
+								{/each}
+							</div>
+						{/if}
+						{#if grouped.subsequent.length > 0}
+							<button
+								onclick={() => (show.subsequent = !show.subsequent)}
+								class="text-foreground-tint flex h-10 items-center gap-2 px-4"
+							>
+								<div class="w-12"></div>
+								<div class="flex h-full flex-col pr-4">
+									{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
+										<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+									{:else if ([Position.ARRIVED, Position.DEPARTED].includes(grouped.subsequent[0].trainRelativePosition) && !show.subsequent) || [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
+										<div
+											class="w-2 flex-grow"
+											style:background="linear-gradient(to bottom, {operatorList[operator].bg}, {operatorList[
+												operator
+											].bg}B3)"
+										></div>
+									{:else}
+										<div
+											class="w-2 flex-grow"
+											style:background="{operatorList[operator].bg}B3"
+										></div>
+									{/if}
+								</div>
+								{#if show.subsequent}
+									<div class="flex items-center gap-1">Hide stops <ChevronUp size={20} /></div>
+								{:else}
+									<div class="flex items-center gap-1">
+										{filterDetails.stops} stops - {filterDetails.duration}
+										<ChevronDown size={20} />
+									</div>
+								{/if}
+							</button>
+						{:else}
+							<div class="text-foreground-tint flex h-10 items-center gap-2 px-4">
+								<div class="w-12"></div>
+								<div class="flex h-full flex-col pr-4">
+									{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
+										<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+									{:else}
+										<div
+											class="w-2 flex-grow"
+											style:background="{operatorList[operator].bg}B3"
+										></div>
+									{/if}
+								</div>
+								<div class="flex items-center gap-1">Non-stop - {filterDetails.duration}</div>
+							</div>
+						{/if}
+						<CallingPoint
+							uid={train.uid}
+							sdd={train.sdd}
+							callingPoint={grouped.filter}
+							i={0}
+							color={operatorList[operator].bg}
+							order="filter"
+							end={grouped.filter.crs === grouped.destination.crs ? 'end' : null}
+							next={grouped.further[0] ?? grouped.destination ?? null}
+						/>
+						{#if show.further}
+							<div transition:slide={{ duration: 200 }}>
+								{#each grouped.further as callingPoint, i (callingPoint.tiploc + i)}
+									<CallingPoint
+										uid={train.uid}
+										sdd={train.sdd}
+										{callingPoint}
+										{i}
+										color={operatorList[operator].bg}
+										order="further"
+										next={grouped.further[i + 1] ?? grouped.destination ?? null}
+									/>
+								{/each}
+							</div>
+						{/if}
+						{#if grouped.further.length > 0}
+							<button
+								onclick={() => (show.further = !show.further)}
+								class="text-foreground-tint flex h-10 items-center gap-2 px-4"
+							>
+								<div class="w-12"></div>
+								<div class="flex h-full flex-col pr-4">
+									{#if [Position.DEPARTED, Position.ARRIVED].includes(grouped.destination.trainRelativePosition)}
+										<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
+									{:else if [Position.DEPARTED, Position.ARRIVED].includes(grouped.further[0].trainRelativePosition) && !show.further}
+										<div
+											class="w-2 flex-grow"
+											style:background="linear-gradient(to bottom, {operatorList[operator].bg}, {operatorList[
+												operator
+											].bg}B3)"
+										></div>
+									{:else}
+										<div
+											class="w-2 flex-grow"
+											style:background="{operatorList[operator].bg}B3"
+										></div>
+									{/if}
+								</div>
+								{#if show.further}
+									<div class="flex items-center gap-1">Hide further <ChevronUp size={20} /></div>
+								{:else}
+									<div class="flex items-center gap-1">Show further <ChevronDown size={20} /></div>
+								{/if}
+							</button>
+						{/if}
+						{#if grouped.destination.crs !== grouped.filter.crs}
+							<CallingPoint
+								uid={train.uid}
+								sdd={train.sdd}
+								callingPoint={grouped.destination}
+								i={0}
+								hideDetails={!show.further && grouped.further.length > 0}
+								color={operatorList[operator].bg}
+								order="destination"
+								end="end"
+								next={null}
+							/>
+						{/if}
+					</div>
 				</div>
 			{/if}
+		{:catch error}
+			<div class="flex items-center gap-1">{error.message}</div>
 		{/await}
 	</div>
 </Tooltip.Provider>

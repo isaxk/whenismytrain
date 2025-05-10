@@ -36,9 +36,9 @@ export type Details = {
 	crs: string;
 	filterCrs: string | null;
 	filterName: string | null;
+	time: string | null;
 	notices: NoticeType[];
 	manager: string;
-	spiderMap: SpiderMap[];
 };
 
 export enum NoticeSeverity {

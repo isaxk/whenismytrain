@@ -2,7 +2,7 @@
 	import type { CallingPoint } from '$lib/types/train';
 	import { fade, slide } from 'svelte/transition';
 	import TimeDisplay from '../ui/time-display.svelte';
-	import { ChevronDown, ChevronUp, Train } from 'lucide-svelte';
+	import { ChevronDown, ChevronUp, PersonStanding, Train, Users } from 'lucide-svelte';
 	import RelativeTimeDisplay from '../ui/relative-time-display.svelte';
 	import RttPlatform from './rtt-platform.svelte';
 	import { Position } from '$lib/types';
@@ -39,6 +39,18 @@
 
 	if (callingPoint.divisionType) {
 		console.log(callingPoint.times);
+	}
+
+	function loadPercentage(p: number) {
+		if (p < 40) {
+			return 'bg-green-200/80';
+		} else if (p < 60) {
+			return 'bg-yellow-200/80';
+		} else if (p < 80) {
+			return 'bg-orange-200/80';
+		} else {
+			return 'bg-red-200/80';
+		}
 	}
 </script>
 
@@ -252,11 +264,11 @@
 		{#if !hideDetails}
 			<TimeDisplay
 				expected={order === 'previous' || order === 'focus'
-					? (callingPoint.times.estimated.departure ?? callingPoint.times.estimated.arrival)
-					: (callingPoint.times.estimated.arrival ?? callingPoint.times.estimated.departure)}
+					? callingPoint.times.estimated.departure
+					: callingPoint.times.estimated.arrival}
 				scheduled={order === 'previous' || order === 'focus'
-					? (callingPoint.times.scheduled.departure ?? callingPoint.times.scheduled.arrival)
-					: (callingPoint.times.scheduled.arrival ?? callingPoint.times.scheduled.departure)}
+					? callingPoint.times.scheduled.departure
+					: callingPoint.times.scheduled.arrival}
 				isCancelled={callingPoint.isCancelled}
 			/>
 		{/if}
@@ -328,6 +340,22 @@
 		{/if}
 	</div>
 	{#if !hideDetails}
+		{#if callingPoint.loading}
+			<div class="relative flex h-8 w-6 items-end">
+				<div
+					style:height="{callingPoint.loading}%"
+					class="min absolute right-0 left-0 flex min-h-5 items-center justify-center"
+				>
+					<Users size={14} />
+				</div>
+				<div
+					class="bg-background border-border min-h-2 w-6 rounded"
+					style:height="{callingPoint.loading}%"
+				>
+					<div class={['h-full w-full rounded', loadPercentage(callingPoint.loading)]}></div>
+				</div>
+			</div>
+		{/if}
 		<div
 			class={[
 				'flex flex-col items-center',
