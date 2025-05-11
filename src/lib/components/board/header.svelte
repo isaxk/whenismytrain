@@ -1,6 +1,13 @@
 <script lang="ts">
 	import type { Details } from '$lib/types/board';
-	import { ArrowDownRight, ArrowLeft, ArrowUpRight, ChevronRight, Clock } from 'lucide-svelte';
+	import {
+		ArrowDownRight,
+		ArrowLeft,
+		ArrowUpRight,
+		Calendar1,
+		ChevronRight,
+		Clock
+	} from 'lucide-svelte';
 	import { scrollY } from 'svelte/reactivity/window';
 	import { fade } from 'svelte/transition';
 
@@ -25,10 +32,16 @@
 				{details.name}
 			</div>
 		</div>
-		<div class="flex min-w-1/5 flex-col items-center justify-center">
-			<div class="flex h-[40px] items-center">
+		<div class="flex h-full min-w-1/5 flex-col items-center justify-center">
+			<div class="flex flex-grow items-center">
 				<ChevronRight />
 			</div>
+			{#if details.tomorrow}
+				<div class="text-foreground-muted flex items-center gap-1 pt-1 text-sm">
+					<Calendar1 size={12} />
+					tomorrow
+				</div>
+			{/if}
 			<div class="flex h-[16px] items-center">
 				{#if details.time}
 					<div class="text-foreground-muted flex items-center gap-1 text-sm">

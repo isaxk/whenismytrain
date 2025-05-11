@@ -143,7 +143,8 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		time: time && time != 'null' ? time.substring(0, 2) + ':' + time.substring(2, 4) : null,
 		filterName: data.filterLocationName ?? null,
 		filterCrs: to != null && to != 'null' ? to : null,
-		manager: data.stationManager
+		manager: data.stationManager,
+		tomorrow: tomorrow == 'true' ? true : false
 	};
 
 	trains = trains.filter((t) => t.operator !== 'LT');

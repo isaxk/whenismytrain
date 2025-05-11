@@ -39,6 +39,7 @@ export type Details = {
 	time: string | null;
 	notices: NoticeType[];
 	manager: string;
+	tomorrow: boolean;
 };
 
 export enum NoticeSeverity {
