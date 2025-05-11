@@ -17,6 +17,7 @@
 	import { fade } from 'svelte/transition';
 	import { Position } from '$lib/types';
 	import Skeleton from '$lib/components/ui/skeleton.svelte';
+	import { goto } from '$app/navigation';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
@@ -172,13 +173,25 @@
 					<div class="flex px-4 pb-4">
 						<a
 							href={earlierUrl}
-							onclick={() => (cancelVt.current = true)}
-							class="flex flex-grow items-center gap-1 text-blue-500"
+							onclick={(e) => {
+								cancelVt.current = true;
+								if (!md.current) {
+									e.preventDefault();
+									goto(earlierUrl, { replaceState: true });
+								}
+							}}
+							class="h flex flex-grow items-center gap-1 text-blue-500"
 							><ChevronUp size={18} /> Earlier trains</a
 						>
 						{#if data.time}
 							<a
-								onclick={() => (cancelVt.current = true)}
+								onclick={(e) => {
+									cancelVt.current = true;
+									if (!md.current) {
+										e.preventDefault();
+										goto(nowUrl, { replaceState: true });
+									}
+								}}
 								href={nowUrl}
 								class="text-foreground-muted flex items-center gap-1"
 								><Clock size={16} /> Back to now</a
@@ -193,11 +206,16 @@
 						{/each}
 					</Tooltip.Provider>
 					<div class="flex px-4 pt-4">
-						{#if // Always show if no trains
-						trains.length < 1 || !data.tomorrow || (data.tomorrow && dayjs(trains[trains.length - 1].times.estimated.departure ?? trains[trains.length - 1].times.scheduled.departure).diff(dayjs().startOf('day'), 'days') < 2)}
+						{#if trains.length < 1 || !data.tomorrow || (data.tomorrow && dayjs(trains[trains.length - 1].times.estimated.departure ?? trains[trains.length - 1].times.scheduled.departure).diff(dayjs().startOf('day'), 'days') < 2)}
 							<a
 								href={laterUrl}
-								onclick={() => (cancelVt.current = true)}
+								onclick={(e) => {
+									cancelVt.current = true;
+									if (!md.current) {
+										e.preventDefault();
+										goto(laterUrl, { replaceState: true });
+									}
+								}}
 								class="flex flex-grow items-center gap-1 text-blue-500"
 								><ChevronDown size={18} /> Later trains</a
 							>

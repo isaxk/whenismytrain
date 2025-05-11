@@ -18,38 +18,41 @@
 
 <div
 	bind:clientHeight
+	style:view-transition-name="header"
 	class={[
-		'bg-background fixed top-0 right-0 left-0 z-[1000] p-4 pb-6 transition-all md:static',
+		'bg-background fixed top-0 right-0 left-0 z-[1000] px-4 pt-2 pb-6 transition-all md:static',
 		(scrollY.current ?? 0) > 1 && 'drop-shadow-md'
 	]}
 	in:fade|global={{ duration: 150 }}
 >
-	<a href="/" class="flex pb-4"><ArrowLeft /></a>
-	<div class="flex gap-4">
+	<div class="flex min-h-16 items-center pb-4">
+		<a href="/" class="flex h-full w-16" style:view-transition-name="back-btn"><ArrowLeft /></a>
+	</div>
+	<div class="flex h-full gap-4">
 		<div class="w-full min-w-0 flex-grow">
 			<div class="text-4xl font-medium">{details.crs}</div>
 			<div class="truncate text-xs">
 				{details.name}
 			</div>
 		</div>
-		<div class="flex h-full min-w-1/5 flex-col items-center justify-center">
-			<div class="flex flex-grow items-center">
+		<div class="flex min-h-[30px] min-w-1/5 flex-col items-center justify-center">
+			<div class="flex min-h-[20px] items-center">
 				<ChevronRight />
 			</div>
 			{#if details.tomorrow}
-				<div class="text-foreground-muted flex items-center gap-1 pt-1 text-sm">
+				<div class="text-foreground-muted flex items-center gap-1 pt-1 text-xs">
 					<Calendar1 size={12} />
 					tomorrow
 				</div>
 			{/if}
-			<div class="flex h-[16px] items-center">
-				{#if details.time}
+			{#if details.time}
+				<div class="flex h-[16px] items-center">
 					<div class="text-foreground-muted flex items-center gap-1 text-sm">
 						<Clock size={12} />
 						{details.time}
 					</div>
-				{/if}
-			</div>
+				</div>
+			{/if}
 		</div>
 		<div class="w-full min-w-0 flex-grow text-right">
 			<div

@@ -30,8 +30,9 @@
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) return;
 
-		if (cancelVt.current) {
+		if (cancelVt.current || isIOSSwipeGesture) {
 			cancelVt.current = false;
+			isIOSSwipeGesture = false;
 			return;
 		}
 		return new Promise((resolve) => {
@@ -76,12 +77,22 @@
 		};
 	});
 
+	let toFillTime = $state(page.data.time ?? null);
+
 	$effect(() => {
 		if (page.data.crs) {
 			from = page.data.crs;
 		}
 		if (page.data.filter) {
 			to = page.data.filter;
+		}
+		if (page.data.time) {
+			console.log(page.data.time);
+			toFillTime = page.data.time;
+			time = page.data.time;
+		}
+		if (page.data.tomorrow == 'true') {
+			tomorrow = true;
 		}
 	});
 
@@ -128,7 +139,7 @@
 			<div class="p-2 text-3xl font-semibold">When is my train?</div>
 
 			<TimeInput
-				value={page.data.time ?? null}
+				value={toFillTime ?? null}
 				onChange={(v: string | null) => (time = v)}
 				bind:tomorrow
 			/>

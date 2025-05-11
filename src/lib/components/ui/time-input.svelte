@@ -21,8 +21,11 @@
 	$effect(() => {
 		if (radioVal === 'tomorrow') {
 			onChange(entered);
+			displayedTime = entered;
 			tomorrow = true;
 		} else if (radioVal === 'today') {
+			onChange(entered);
+			displayedTime = entered;
 			tomorrow = false;
 		} else if (radioVal === 'now') {
 			onChange(null);
@@ -30,17 +33,11 @@
 		}
 	});
 
-	$effect(() => {
-		if (now) {
-			onChange(null);
-		} else if (tomorrow) {
-			onChange(dayjs().format('HH:mm'));
-		}
-	});
-
 	let radioVal = $state('now');
 
-	let entered = $state(displayedTime);
+	let entered = $state(
+		value ? value.substring(0, 2) + ':' + value.substring(2, 4) : dayjs().format('HH:mm')
+	);
 </script>
 
 <div class="py-2">

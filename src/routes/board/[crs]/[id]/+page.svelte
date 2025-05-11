@@ -15,6 +15,7 @@
 	import dayjs from 'dayjs';
 	import {
 		Accessibility,
+		ArrowLeft,
 		ChevronDown,
 		ChevronUp,
 		ClockAlert,
@@ -96,12 +97,16 @@
 		]}
 	>
 		{#await data.train}
-			<div class="flex min-h-16 items-center gap-0">
+			<div class="flex min-h-16 items-center gap-0" style:view-transition-name="header">
 				<a
 					href={data.closeToHome ? '/' : `/board/${data.crs}${page.url.search}`}
 					class="flex h-full w-14 items-center justify-center"
 				>
-					<X />
+					{#if md.current}
+						<X />
+					{:else}
+						<ArrowLeft />
+					{/if}
 				</a>
 			</div>
 			<Skeleton class="h-42" />
@@ -154,6 +159,7 @@
 				} = train}
 
 				<div
+					style:view-transition-name="header"
 					class={[
 						'bg-background fixed top-0 right-0 left-0 z-[1000] md:static',
 						expandedMap.current && 'flex h-[85%] min-h-[400px] flex-col md:h-full md:w-2/3'
@@ -163,11 +169,17 @@
 				>
 					<div class="bg-background flex min-h-16 items-center gap-0">
 						<a
+							style:view-transition-name="back"
 							href={data.closeToHome ? '/' : `/board/${data.crs}${page.url.search}`}
-							class="flex h-full w-14 items-center justify-center"
+							class="flex h-14 w-14 items-center justify-center"
 						>
-							<X />
+							{#if md.current}
+								<X />
+							{:else}
+								<ArrowLeft />
+							{/if}
 						</a>
+
 						<div class="flex min-w-0 flex-grow flex-col items-center gap-0.5">
 							<div
 								class="rounded-lg px-2 py-0.5 text-[11px] text-nowrap"
