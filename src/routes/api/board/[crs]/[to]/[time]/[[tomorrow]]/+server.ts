@@ -19,6 +19,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 	const date = (
 		time != 'null'
 			? dayjs()
+					.tz('Europe/London')
 					.set('hour', parseInt(time.substring(0, 2)))
 					.set('minute', parseInt(time.substring(2, 4)))
 					.add(tomorrow == 'true' ? 1 : 0, 'day')
