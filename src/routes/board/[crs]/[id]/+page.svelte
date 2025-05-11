@@ -168,9 +168,9 @@
 					in:fade|global={{ duration: 150 }}
 				>
 					<div class="bg-background flex min-h-16 items-center gap-0">
-						<a
+						<button
 							style:view-transition-name="back"
-							href={data.closeToHome ? '/' : `/board/${data.crs}${page.url.search}`}
+							onclick={() => history.back()}
 							class="flex h-14 w-14 items-center justify-center"
 						>
 							{#if md.current}
@@ -178,7 +178,7 @@
 							{:else}
 								<ArrowLeft />
 							{/if}
-						</a>
+						</button>
 
 						<div class="flex min-w-0 flex-grow flex-col items-center gap-0.5">
 							<div

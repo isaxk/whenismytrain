@@ -26,7 +26,11 @@
 	in:fade|global={{ duration: 150 }}
 >
 	<div class="flex min-h-16 items-center pb-4">
-		<a href="/" class="flex h-full w-16" style:view-transition-name="back-btn"><ArrowLeft /></a>
+		<button
+			onclick={() => history.back()}
+			class="flex h-full w-16"
+			style:view-transition-name="back-btn"><ArrowLeft /></button
+		>
 	</div>
 	<div class="flex h-full gap-4">
 		<div class="w-full min-w-0 flex-grow">
