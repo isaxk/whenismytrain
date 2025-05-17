@@ -2,156 +2,191 @@ export const operatorList: Record<string, { name: string; bg: string; text: stri
 	GW: {
 		name: 'Great Western Railway',
 		bg: '#20483E',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	XR: {
 		name: 'Elizabeth Line',
 		bg: '#773dbd',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	LT: {
 		name: 'London Underground',
 		bg: '#C9382C',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	TW: {
 		name: 'Tyne and Wear Metro',
 		bg: '#00308F',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	IL: {
 		name: 'Island Line (SWR)',
 		bg: '#357AA9',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	CS: {
 		name: 'Caledonian Sleeper',
 		bg: '#12282E',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	ES: {
 		name: 'Eurostar',
 		bg: '#F6C544',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	HX: {
 		name: 'Heathrow Express',
 		bg: '#532E63',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	GR: {
 		name: 'LNER',
 		bg: '#BC2D35',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	GN: {
 		name: 'Great Northern',
 		bg: '#3E1959',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	HT: {
 		name: 'Hull Trains',
 		bg: '#BB2765',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	LD: {
 		name: 'Lumo',
 		bg: '#1B46C3',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	VT: {
 		name: 'Avanti West Coast',
 		bg: '#1F4E58',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	LM: {
 		name: 'West Midlands Trains',
 		bg: '#1E4B45',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	LO: {
 		name: 'London Overground',
 		bg: '#ef7b10',
-		text: '#fff'
+		text: '#ffffff'
+	},
+	LOMM: {
+		name: 'Mildmay (Overground)',
+		bg: '#008855',
+		text: '#ffffff'
+	},
+	LOWR: {
+		name: 'Windrush (Overground)',
+		bg: '#D95700',
+		text: '#ffffff'
+	},
+	LOSG: {
+		name: 'Suffragette (Overground)',
+		bg: '#693D90',
+		text: '#ffffff'
+	},
+	LOWV: {
+		name: 'Weaver (Overground)',
+		bg: '#970042',
+		text: '#ffffff'
+	},
+	LOLE: {
+		name: 'Lioness (Overground)',
+		bg: '#CE4800',
+		text: '#ffffff'
+	},
+	LOLT: {
+		name: 'Liberty (Overground)',
+		bg: '#5F8AC9',
+		text: '#ffffff'
 	},
 	GC: {
 		name: 'Grand Central',
 		bg: '#E18932',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	CC: {
 		name: 'c2c',
 		bg: '#AB267D',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	XC: {
 		name: 'Cross Country',
 		bg: '#B92C43',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	SW: {
 		name: 'South Western Railway',
 		bg: '#357AA9',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	SE: {
 		name: 'Southeastern',
 		bg: '#1E1E4D',
-		text: '#fff'
+		text: '#ffffff'
+	},
+	SEH: {
+		name: 'Southeastern Highspeed',
+		bg: '#1E1E4D',
+		text: '#fce077'
 	},
 	SN: {
 		name: 'Southern',
 		bg: '#8FC056',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	GX: {
 		name: 'Gatwick Express',
 		bg: '#CA2E2B',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	TL: {
 		name: 'Thameslink',
 		bg: '#D84B8A',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	CH: {
 		name: 'Chiltern',
 		bg: '#4699D0',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	NT: {
 		name: 'Northern',
 		bg: '#25225E',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	TP: {
 		name: 'Transpennine Express',
 		bg: '#8A448C',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	AW: {
 		name: 'Transport for Wales',
 		bg: '#D32D1F',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	SR: {
 		name: 'Scotrail',
 		bg: '#0B2560',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	EM: {
 		name: 'East Midlands',
 		bg: '#411838',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	LE: {
 		name: 'Greater Anglia',
 		bg: '#C52B31',
-		text: '#fff'
+		text: '#ffffff'
 	},
 	ME: {
 		name: 'MerseyRail',
 		bg: '#404745',
-		text: '#fff'
+		text: '#ffffff'
 	}
 };

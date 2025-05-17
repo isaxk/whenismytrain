@@ -198,7 +198,9 @@
 						style:background={crs === filter || crs === focus
 							? operatorList[operator].bg
 							: desaturateHex(operatorList[operator].bg, isCancelled ? 50 : 10)}
-						style:color={crs === filter || crs === focus ? '#fff' : '#ffffff99'}
+						style:color={crs === filter || crs === focus
+							? operatorList[operator].text
+							: `${operatorList[operator].text}E4`}
 					>
 						{crs}
 					</div>

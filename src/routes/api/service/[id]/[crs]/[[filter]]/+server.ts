@@ -8,6 +8,7 @@ import type { TrainFilter } from '$lib/types/board';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import tiplocsData from '$lib/data/tiplocs.json';
+import { overgroundLine } from '$lib/utils/overground-liner';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -710,6 +711,15 @@ export const GET: RequestHandler = async ({ params }) => {
 			};
 		});
 		console.log(formation);
+	}
+
+	console.log(data.operatorCode);
+
+	if (
+		data.operatorCode === 'SE' &&
+		(previous?.[0]?.crs === 'STP' || focusLoc.crs === 'STP' || destination.crs === 'STP')
+	) {
+		data.operatorCode = 'SEH';
 	}
 
 	const returnData: ServiceDetails = {
