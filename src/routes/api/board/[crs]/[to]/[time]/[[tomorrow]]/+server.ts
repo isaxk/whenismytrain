@@ -97,6 +97,9 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			},
 			platform: item.platform,
 			operator: item.operatorCode,
+			operatorColor: operatorList[item.operatorCode].bg,
+			operatorName: operatorList[item.operatorCode].name,
+			operatorText: operatorList[item.operatorCode].text,
 			filter,
 			times: {
 				estimated: {
