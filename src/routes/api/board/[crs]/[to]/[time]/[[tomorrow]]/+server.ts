@@ -83,6 +83,13 @@ export const GET: RequestHandler = async ({ params, request }) => {
 			};
 		}
 
+		if (
+			item.operatorCode === 'SE' &&
+			(item.origin[0]?.crs === 'STP' || item.destination[0]?.crs === 'STP')
+		) {
+			item.operatorCode = 'SEH';
+		}
+
 		return {
 			id: item.rid,
 			uid: item.uid,
