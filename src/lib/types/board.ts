@@ -16,6 +16,9 @@ export type BoardItem = {
 	origin: DestinationOrigin;
 	platform: string;
 	operator: string;
+	operatorColor: string;
+	operatorName: string;
+	operatorText: string;
 	filter: TrainFilter | null;
 	times: TimeObject;
 	isCancelled: boolean;

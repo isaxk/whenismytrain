@@ -46,6 +46,9 @@ export type ServiceDetails = {
 	grouped: GroupedCallingPoints;
 	filterDetails: TrainFilter;
 	operator: string;
+	operatorColor: string;
+	operatorName: string;
+	operatorText: string;
 	genAt: string;
 	lateReason: string | null;
 	cancelReason: string | null;

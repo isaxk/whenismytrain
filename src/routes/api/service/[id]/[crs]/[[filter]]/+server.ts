@@ -9,6 +9,7 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import tiplocsData from '$lib/data/tiplocs.json';
 import { overgroundLine } from '$lib/utils/overground-liner';
+import { operatorList } from '$lib/data/operators';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -729,6 +730,9 @@ export const GET: RequestHandler = async ({ params }) => {
 		allCallingPoints: callingPoints,
 		filterDetails,
 		operator: data.operatorCode,
+		operatorColor: operatorList[data.operatorCode].bg,
+		operatorName: operatorList[data.operatorCode].name,
+		operatorText: operatorList[data.operatorCode].text,
 		grouped: {
 			previous,
 			focus: focusLoc,
