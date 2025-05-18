@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	const data = await response.json();
 
 	const list = data.StationList.map((s) => {
-		return { ...s, popular: popular.includes(s.crs) };
+		return { ...s, popular: popular.findIndex(s.crs) ?? null };
 	});
 
 	return json(list);
