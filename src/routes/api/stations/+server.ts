@@ -20,10 +20,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	const list = data.StationList.map((s) => {
 		return {
 			...s,
-			popular:
-				popular.findIndex((p) => p.crs === s.crs) !== -1
-					? popular.findIndex((p) => p.crs === s.crs)
-					: null
+			popular: popular.findIndex((p) => p === s.crs)
 		};
 	});
 
