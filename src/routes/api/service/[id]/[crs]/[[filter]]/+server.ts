@@ -115,6 +115,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		}
 
 		return {
+			id: i,
 			name: l.locationName?.replace('(Elizabeth line)', '') ?? '',
 			crs: l.crs ?? null,
 			tiploc: l.tiploc ?? null,
@@ -138,7 +139,8 @@ export const GET: RequestHandler = async ({ params }) => {
 			divisionCallingPoints,
 			formedFrom,
 			progress,
-			loading
+			loading,
+			nolog: l.departureType === 'NoLog'
 		};
 	}
 
@@ -492,7 +494,33 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 
 	// Get all calling points from the final merged services
-	let callingPoints = locations.filter((l) => l.isCallingPoint);
+	const filtered = locations.filter((l) => l.isCallingPoint);
+
+	const callingPoints = filtered.map((c, i) => {
+		const currentInLoc = locations.findIndex((l) => l.id === c.id);
+		const nextCp = filtered[i + 1];
+		let progress = 0;
+		if (nextCp) {
+			const nextInLoc = locations.findIndex((l) => l.id === nextCp.id);
+			const intermediate = locations.slice(currentInLoc + 1, nextInLoc).filter((i) => !i.nolog);
+			if (intermediate.length === 0) progress = c.progress;
+			else {
+				console.log(intermediate.map((i) => [i.tiploc, Position[i.trainRelativePosition]]));
+				const passed = intermediate.reduce(
+					(acc, l) =>
+						acc + ([Position.ARRIVED, Position.DEPARTED].includes(l.trainRelativePosition) ? 1 : 0),
+					0
+				);
+				console.log(passed, intermediate.length);
+				progress = passed / intermediate.length;
+			}
+		}
+
+		return {
+			...c,
+			progress
+		};
+	});
 	console.log('Final calling points:', callingPoints.map((cp) => cp.crs).join(', '));
 
 	// Find focus and filter indices in the calling points
