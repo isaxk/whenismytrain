@@ -89,7 +89,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		// Calculate progress
 		const now = dayjs();
 		const next = allLocations[i + 1] ?? null;
-		const currentDeparture = l.atd ?? l.etd ?? l.std ?? null;
+		const currentDeparture = l.atd ?? l.etd ?? l.std ?? l.ata ?? l.eta ?? l.sta ?? null;
 		const nextTime =
 			next?.ata ?? next?.eta ?? next?.sta ?? next?.atd ?? next?.etd ?? next?.std ?? next;
 		let progress = 0;
@@ -102,7 +102,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			progress = Math.max(0, Math.min(0.95, elapsed / diff));
 		}
 
-		if (next && [Position.ARRIVED, Position.DEPARTED].includes(next.trainRelativePosition)) {
+		if (next && (next.ataSpecified || next.atdSpecified)) {
 			progress = 1;
 		}
 
