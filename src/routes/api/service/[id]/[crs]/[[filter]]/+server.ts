@@ -102,6 +102,10 @@ export const GET: RequestHandler = async ({ params }) => {
 			progress = Math.max(0, Math.min(0.95, elapsed / diff));
 		}
 
+		if (next && [Position.ARRIVED, Position.DEPARTED].includes(next.trainRelativePosition)) {
+			progress = 1;
+		}
+
 		const formation = data.formation.find((f) => f.tiploc === l.tiploc);
 		let loading: number | null = null;
 
