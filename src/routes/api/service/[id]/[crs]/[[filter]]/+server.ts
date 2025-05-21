@@ -504,15 +504,24 @@ export const GET: RequestHandler = async ({ params }) => {
 			const nextInLoc = locations.findIndex((l) => l.id === nextCp.id);
 			const intermediate = locations.slice(currentInLoc + 1, nextInLoc).filter((i) => !i.nolog);
 			if (intermediate.length === 0) progress = c.progress;
+			else if (
+				nextCp &&
+				[Position.ARRIVED, Position.DEPARTED].includes(nextCp.trainRelativePosition)
+			)
+				progress = 1;
+			else if (![Position.DEPARTED].includes(c.trainRelativePosition)) progress = 0;
 			else {
 				console.log(intermediate.map((i) => [i.tiploc, Position[i.trainRelativePosition]]));
 				const passed = intermediate.reduce(
 					(acc, l) =>
-						acc + ([Position.ARRIVED, Position.DEPARTED].includes(l.trainRelativePosition) ? 1 : 0),
+						acc +
+						([Position.ARRIVED, Position.DEPARTED].includes(l.trainRelativePosition)
+							? l.progress
+							: 0),
 					0
 				);
 				console.log(passed, intermediate.length);
-				progress = passed / intermediate.length;
+				progress = Math.max(0.1, Math.min(0.95, passed / intermediate.length));
 			}
 		}
 
