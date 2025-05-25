@@ -201,7 +201,7 @@
 					<Tooltip.Provider>
 						{#each trains as train, i (train.id + train.times.scheduled.departure)}
 							<div class="group" animate:flip={{ duration: 200 }}>
-								<BoardItem {i} {train} url="/board/{data.crs}/{train.id}{page.url.search ? page.url.search+'&dest='+dest : '?dest='+dest}" />
+								<BoardItem {i} {train} url="/board/{data.crs}/{train.id}{page.url.search ? page.url.search+'&dest='+train.destination.crs : '?dest='+train.destination.crs}" />
 							</div>
 						{/each}
 					</Tooltip.Provider>
