@@ -5,7 +5,9 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ params, url, fetch }) => {
 	const { id, crs } = params;
 
-	const to = url.searchParams.get('to') || null;
+    const dest = url.searchParams.get('dest') || null
+	const to = url.searchParams.get('to') ?? dest ?? null;
+    
 	const closeToHome = (url.searchParams.get('closeToHome') || 'false') === 'true';
 
 	const train: Promise<ServiceDetails> = new Promise<ServiceDetails>((resolve, reject) => {
