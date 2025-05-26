@@ -711,6 +711,8 @@ export const GET: RequestHandler = async ({ params }) => {
 		further = [];
 	}
 
+ further = further.filter((c)=>c.crs!=destination.crs)
+
 	if (focusIndex >= filterIndex) {
 		error(403, 'Focus cannot be after filter');
 	}
