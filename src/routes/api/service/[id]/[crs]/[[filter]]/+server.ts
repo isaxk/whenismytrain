@@ -232,7 +232,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			);
 
 			// Check if filter is in this associated service
-			const filterInAssoc = assocCallingPoints.some((l) => l.crs === filterCrs);
+			const filterInAssoc = assocCallingPoints.some((l) => l.crs === filterCrs) && !mainCallingPoints.some((l) => l.crs === filterCrs);
 			console.log(
 				`Filter station ${filterCrs} in associated service ${assoc.rid}: ${filterInAssoc}`
 			);
