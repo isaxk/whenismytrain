@@ -5,9 +5,9 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ params, url, fetch }) => {
 	const { id, crs } = params;
 
- const dest = url.searchParams.get('dest') || null;
-	const filter = url.searchParams.get('to') || null;
- const to = filter ?? dest ?? null;
+  const dest = url.searchParams.get('dest') || null;
+  const filter = url.searchParams.get('to') || null;
+  const to = filter ?? dest ?? null;
 
     
 	const closeToHome = (url.searchParams.get('closeToHome') || 'false') === 'true';
@@ -22,5 +22,5 @@ export const load: PageServerLoad = async ({ params, url, fetch }) => {
 			}
 		});
 	});
-	return { train, crs, train_id: id, filter, closeToHome };
+	return { train, crs, train_id: id, filter, closeToHome, dest };
 };
