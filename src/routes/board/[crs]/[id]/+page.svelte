@@ -203,7 +203,7 @@
 								</div>
 							</div>
 						</div>
-						<SaveToggle id={data.train_id} focus={data.crs} filter={data.to} />
+						<SaveToggle id={data.train_id} focus={data.crs} filter={data.to ?? data.dest} />
 					</div>
 					{#if (grouped.focus.isCancelled || grouped.filter.isCancelled) && cancelReason}
 						<div class="px-4 pb-2">
