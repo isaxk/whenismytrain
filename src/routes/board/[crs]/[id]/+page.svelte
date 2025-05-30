@@ -60,7 +60,7 @@
 					further: false
 				};
 				clearer = refresher.subscribe<ServiceDetails>(
-					`/api/service/${data.train_id}/${data.crs}/${data.filter}`,
+					`/api/service/${data.train_id}/${data.crs}/${data.filter??data.dest}`,
 					'page-data' + Date.now(),
 					(data) => {
 						train = data;
