@@ -1,4 +1,7 @@
-name = "whenismytrain"
+name = "whenismtrain"
+main = ".svelte-kit/cloudflare-workers/worker.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
 
-[assets]
-directory = "./sveltekit/"
+[build]
+command = "npm run build"
