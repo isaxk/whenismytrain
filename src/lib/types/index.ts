@@ -1,16 +1,16 @@
 export type DestinationOrigin = {
 	name: string;
-	crs: string;
+	crs: string[];
 };
 
 export type TimeObject = {
 	estimated: {
-		arrival: string;
-		departure: string;
+		arrival: string | null;
+		departure: string | null;
 	};
 	scheduled: {
-		arrival: string;
-		departure: string;
+		arrival: string | null;
+		departure: string | null;
 	};
 };
 

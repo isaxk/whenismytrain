@@ -1,7 +1,5 @@
 <script lang="ts">
 	import dayjs from 'dayjs';
-	import { onMount } from 'svelte';
-	import { PUBLIC_RTT_USERNAME, PUBLIC_RTT_PASSWORD } from '$env/static/public';
 	import { Check, Info } from 'lucide-svelte';
 	import { Tooltip } from 'bits-ui';
 

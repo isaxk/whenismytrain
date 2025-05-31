@@ -14,7 +14,7 @@ export type BoardItem = {
 	sdd: string;
 	destination: DestinationOrigin;
 	origin: DestinationOrigin;
-	platform: string;
+	platform: string | null;
 	operator: string;
 	operatorColor: string;
 	operatorName: string;

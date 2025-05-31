@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import type { RequestHandler } from './$types';
 import { error, json } from '@sveltejs/kit';
 import type { CallingPoint, Location, ServiceDetails } from '$lib/types/train';
-import { PUBLIC_QUERY_SERVICES_KEY, PUBLIC_REFERENCE_DATA_KEY } from '$env/static/public';
+import { QUERY_SERVICES_KEY, REFERENCE_DATA_KEY } from '$env/static/private';
 import { Position } from '$lib/types';
 import type { TrainFilter } from '$lib/types/board';
 import utc from 'dayjs/plugin/utc';
@@ -10,6 +10,7 @@ import timezone from 'dayjs/plugin/timezone';
 import tiplocsData from '$lib/data/tiplocs.json';
 import { overgroundLine } from '$lib/utils/overground-liner';
 import { operatorList } from '$lib/data/operators';
+import type { CoachData, FormationItem, ServiceLocation } from '$lib/types/ldbsvws';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -25,7 +26,7 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	const response = await fetch(url, {
 		headers: {
-			'x-apikey': PUBLIC_QUERY_SERVICES_KEY
+			'x-apikey': QUERY_SERVICES_KEY
 		}
 	});
 	const data = await response.json();
@@ -36,14 +37,14 @@ export const GET: RequestHandler = async ({ params }) => {
 	const tiplocData = (await tiplocResponse.json()).Tiplocs;
 
 	let tiplocs = tiplocsData
-		.filter((t) => data.locations.some((l) => l.tiploc === t.tiploc))
+		.filter((t) => data.locations.some((l: ServiceLocation) => l.tiploc === t.tiploc))
 		.map((t) => ({
 			tiploc: t.tiploc,
 			coords: [t.longitude, t.latitude]
 		}));
 
 	// Function to parse a location into our format
-	async function parseLocation(l, i, allLocations) {
+	async function parseLocation(l: ServiceLocation, i:number, allLocations: ServiceLocation[]) {
 		let trainRelativePosition = Position.AWAY;
 
 		if (l.isCancelled) {
@@ -91,7 +92,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		const next = allLocations[i + 1] ?? null;
 		const currentDeparture = l.atd ?? l.etd ?? l.std ?? l.ata ?? l.eta ?? l.sta ?? null;
 		const nextTime =
-			next?.ata ?? next?.eta ?? next?.sta ?? next?.atd ?? next?.etd ?? next?.std ?? next;
+			next?.ata ?? next?.eta ?? next?.sta ?? next?.atd ?? next?.etd ?? next?.std ?? null;
 		let progress = 0;
 
 		if (nextTime && currentDeparture) {
@@ -106,7 +107,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			progress = 1;
 		}
 
-		const formation = data.formation.find((f) => f.tiploc === l.tiploc);
+		const formation = data.formation.find((f: FormationItem) => f.tiploc === l.tiploc);
 		let loading: number | null = null;
 
 		if (formation && formation.serviceLoading?.loadingPercentage?.Value) {
@@ -146,7 +147,7 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	// Initial parsing of main service locations
 	let locations = await Promise.all(
-		data.locations.map((l, i) => parseLocation(l, i, data.locations))
+		data.locations.map((l: ServiceLocation, i:number) => parseLocation(l, i, data.locations))
 	);
 
 	// Get user destination - either explicit or default to last station
@@ -203,7 +204,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			const assocUrl = `https://api1.raildata.org.uk/1010-query-services-and-service-details1_0/LDBSVWS/api/20220120/GetServiceDetailsByRID/${assoc.rid}`;
 			const assocResponse = await fetch(assocUrl, {
 				headers: {
-					'x-apikey': PUBLIC_QUERY_SERVICES_KEY
+					'x-apikey': QUERY_SERVICES_KEY
 				}
 			});
 			const assocData = await assocResponse.json();
@@ -212,7 +213,7 @@ export const GET: RequestHandler = async ({ params }) => {
 
 			// Add tiplocs for the associated service
 			const assocTiplocs = tiplocsData
-				.filter((t) => assocData.locations.some((l) => l.tiploc === t.tiploc))
+				.filter((t) => assocData.locations.some((l: ServiceLocation) => l.tiploc === t.tiploc))
 				.map((t) => ({
 					tiploc: t.tiploc,
 					coords: [t.longitude, t.latitude]
@@ -222,7 +223,7 @@ export const GET: RequestHandler = async ({ params }) => {
 
 			// Parse associated service locations
 			const assocLocations = await Promise.all(
-				assocData.locations.map((l, i) => parseLocation(l, i, assocData.locations))
+				assocData.locations.map((l:ServiceLocation, i:number) => parseLocation(l, i, assocData.locations))
 			);
 
 			// Get the calling points from this associated service
@@ -724,7 +725,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		const url = `https://api1.raildata.org.uk/1010-reference-data1_0/LDBSVWS/api/ref/20211101/GetReasonCode/${data.cancelReason?.Value || data.delayReason?.Value}`;
 		const reasonResponse = await fetch(url, {
 			headers: {
-				'x-apikey': PUBLIC_REFERENCE_DATA_KEY
+				'x-apikey': REFERENCE_DATA_KEY
 			}
 		});
 		const reasonData = await reasonResponse.json();
@@ -733,17 +734,17 @@ export const GET: RequestHandler = async ({ params }) => {
 		cancelReason = reasonData.cancReason;
 	}
 
-	let focusFormationIndex = data.formation.findLastIndex((f) => {
-		return f.coaches?.some((c) => c.loading !== undefined);
+	let focusFormationIndex = data.formation.findLastIndex((f: FormationItem) => {
+		return f.coaches?.some((c: CoachData) => c.loading !== undefined);
 	});
 	focusFormationIndex =
 		focusFormationIndex !== -1
 			? focusFormationIndex
-			: data.formation.findIndex((f) => f.tiploc === focusLoc.tiploc);
+			: data.formation.findIndex((f: FormationItem) => f.tiploc === focusLoc.tiploc);
 	const focusFormation = focusFormationIndex !== -1 ? data.formation[focusFormationIndex] : null;
 	let formation = null;
 	if (focusFormation && focusFormation.coaches) {
-		formation = focusFormation.coaches.map((c) => {
+		formation = focusFormation.coaches.map((c: CoachData) => {
 			console.log(c.toilet?.Value);
 			return {
 				coachClass: c.coachClass,
