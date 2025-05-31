@@ -1,7 +1,9 @@
-import { RTT_PASSWORD, RTT_USERNAME } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { RTTLocation, RTTServiceResponse } from '$lib/types/rtt';
+
+const { RTT_USERNAME, RTT_PASSWORD } = env;
 
 export const GET: RequestHandler = async ({ params }) => {
     const { uid, y, m, d, crs } = params;

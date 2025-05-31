@@ -1,7 +1,9 @@
-import { REFERENCE_DATA_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { StationList } from '$lib/types/ldbsvws';
+
+const REFERENCE_DATA_KEY = env.REFERENCE_DATA_KEY;
 
 export const GET: RequestHandler = async () => {
     const popular = ['EUS', 'WAT', 'KGX', 'VIC', 'PAD', 'BHM', 'LDS', 'EDB', 'GLC'];

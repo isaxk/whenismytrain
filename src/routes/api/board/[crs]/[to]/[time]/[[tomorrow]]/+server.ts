@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { paramUrl } from '$lib/utils/url';
 import dayjs from 'dayjs';
-import { DEPARTURES_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { NoticeSeverity, type BoardItem, type Details, type TrainFilter } from '$lib/types/board';
 import { Position } from '$lib/types';
 import tiplocsData from '$lib/data/tiplocs.json';
@@ -13,6 +13,8 @@ import timezone from 'dayjs/plugin/timezone';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+const DEPARTURES_KEY = env.DEPARTURES_KEY;
 
 export const GET: RequestHandler = async ({ params }) => {
     const { crs, to, time, tomorrow } = params;

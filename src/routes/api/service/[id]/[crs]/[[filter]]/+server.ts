@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import type { RequestHandler } from './$types';
 import { error, json } from '@sveltejs/kit';
 import type { CallingPoint, Location, ServiceDetails } from '$lib/types/train';
-import { QUERY_SERVICES_KEY, REFERENCE_DATA_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { Position } from '$lib/types';
 import type { TrainFilter } from '$lib/types/board';
 import utc from 'dayjs/plugin/utc';
@@ -14,6 +14,8 @@ import type { CoachData, FormationItem, ServiceLocation } from '$lib/types/ldbsv
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+const { QUERY_SERVICES_KEY, REFERENCE_DATA_KEY } = env;
 
 // I'll be completely honest, claude wrote most of this file. Merging and joining trains are not pleasent.
 
