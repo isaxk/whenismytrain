@@ -6,8 +6,8 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		    "preview": "wrangler pages dev .svelte-kit/cloudflare-workers --compatibility-date=2024-01-01",
-    "deploy": "wrangler deploy",
+		"preview": "wrangler pages dev .svelte-kit/cloudflare-workers --compatibility-date=2024-01-01",
+		"deploy": "wrangler deploy",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -58,7 +58,8 @@
 		"lucide-svelte": "^0.503.0",
 		"maplibre-gl": "^5.4.0",
 		"svelte-maplibre": "^1.0.0",
-		"tinycolor2": "^1.6.0"
+		"tinycolor2": "^1.6.0",
+		"wrangler": "^4.18.0"
 	},
 	"packageManager": "pnpm@10.7.0+sha512.6b865ad4b62a1d9842b61d674a393903b871d9244954f652b8842c2b553c72176b278f64c463e52d40fff8aba385c235c8c9ecf5cc7de4fd78b8bb6d49633ab6"
 }
