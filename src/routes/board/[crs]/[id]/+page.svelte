@@ -60,7 +60,7 @@
 					further: false
 				};
 				clearer = refresher.subscribe<ServiceDetails>(
-					`/api/service/${data.train_id}/${data.crs}/${data.filter}`,
+					`/api/service/${data.train_id}/${data.crs}/${data.filter??data.dest}`,
 					'page-data' + Date.now(),
 					(data) => {
 						train = data;
@@ -203,7 +203,7 @@
 								</div>
 							</div>
 						</div>
-						<SaveToggle id={data.train_id} focus={data.crs} filter={data.to} />
+						<SaveToggle id={data.train_id} focus={data.crs} filter={data.to??data.dest} />
 					</div>
 					{#if (grouped.focus.isCancelled || grouped.filter.isCancelled) && cancelReason}
 						<div class="px-4 pb-2">
