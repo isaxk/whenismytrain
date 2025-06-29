@@ -22,7 +22,7 @@
 	const md = new MediaQuery('(min-width: 768px)');
 
 	let from = $state(page.data.from ?? null);
-	let to = $state(page.data.to ?? null);
+	let to = $state(page.data.filter ?? null);
 	let time: string | null = $state(page.data.time ?? null);
 	let tomorrow: boolean = $state(false);
 	let isIOSSwipeGesture = false;
