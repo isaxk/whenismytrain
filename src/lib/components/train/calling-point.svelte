@@ -144,9 +144,9 @@
 							{/if}
 						</div>
 						{#if (type === 'divide' && i === callingPoints.length - 1) || (type === 'join' && i === 0)}
-							<div class="font-medium text-black">{point.name}</div>
+							<div class="text-sm font-medium text-black">{point.name}</div>
 						{:else}
-							<div class="text-foreground-muted/80">{point.name}</div>
+							<div class="text-foreground-muted/80 text-sm">{point.name}</div>
 						{/if}
 					</div>
 				{/each}

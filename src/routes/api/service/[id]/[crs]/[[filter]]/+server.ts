@@ -1,52 +1,72 @@
 import dayjs from 'dayjs';
 import type { RequestHandler } from './$types';
 import { error, json } from '@sveltejs/kit';
-import type { CallingPoint, Location, ServiceDetails } from '$lib/types/train';
+import type { ServiceDetails } from '$lib/types/train';
 import { env } from '$env/dynamic/private';
 import { Position } from '$lib/types';
-import type { TrainFilter } from '$lib/types/board';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import tiplocsData from '$lib/data/tiplocs.json';
-import { overgroundLine } from '$lib/utils/overground-liner';
 import { operatorList } from '$lib/data/operators';
 import type { CoachData, FormationItem, ServiceLocation } from '$lib/types/ldbsvws';
+import { terminalGroups } from '$lib/data/terminal-groups';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+const londonTerminals = [
+	'PAD',
+	'LST',
+	'KGX',
+	'STP',
+	'WAT',
+	'EUS',
+	'LDB',
+	'BFR',
+	'VIC',
+	'FST',
+	'CST',
+	'CHX',
+	'MYB',
+	'MOG'
+];
 
 const { QUERY_SERVICES_KEY, REFERENCE_DATA_KEY } = env;
 
 // I'll be completely honest, claude wrote most of this file. Merging and joining trains are not pleasent.
 
-export const GET: RequestHandler = async ({ params }) => {
-	const { id, crs, filter: filterMaybe } = params;
-	console.log(`Processing service ${id} from ${crs} to ${filterMaybe}`);
+export const GET: RequestHandler = async ({ params, fetch }) => {
+	const { id, crs: crsConst, filter: filterConst } = params;
+	let filterMaybe: string | null = filterConst ?? null;
+	let crs = crsConst ?? '';
 
 	// Main service fetch
 	const url = `https://api1.raildata.org.uk/1010-query-services-and-service-details1_0/LDBSVWS/api/20220120/GetServiceDetailsByRID/${id}`;
+
+	console.log(url);
 
 	const response = await fetch(url, {
 		headers: {
 			'x-apikey': QUERY_SERVICES_KEY
 		}
 	});
+
 	const data = await response.json();
 	if (!data) return error(404, 'Service not found');
 
-	// Fetch tiploc data
-	const tiplocResponse = await fetch('https://json-993.pages.dev/tiploc.json');
-	const tiplocData = (await tiplocResponse.json()).Tiplocs;
+	const res = await fetch('/tiplocs.json');
+	const tiplocsData = (await res.json()).Tiplocs;
 
-	let tiplocs = tiplocsData
-		.filter((t) => data.locations.some((l: ServiceLocation) => l.tiploc === t.tiploc))
-		.map((t) => ({
-			tiploc: t.tiploc,
-			coords: [t.longitude, t.latitude]
-		}));
+	let tiplocs = data.locations.map((l: ServiceLocation) => {
+		const t = tiplocsData.find((t) => t.Tiploc === l.tiploc);
+
+		return {
+			tiploc: l.tiploc,
+			coords: [parseFloat(t.Longitude.toFixed(8)), parseFloat(t.Latitude.toFixed(8))]
+		};
+	});
 
 	// Function to parse a location into our format
-	async function parseLocation(l: ServiceLocation, i:number, allLocations: ServiceLocation[]) {
+	async function parseLocation(l: ServiceLocation, i: number, allLocations: ServiceLocation[]) {
 		let trainRelativePosition = Position.AWAY;
 
 		if (l.isCancelled) {
@@ -113,7 +133,6 @@ export const GET: RequestHandler = async ({ params }) => {
 		let loading: number | null = null;
 
 		if (formation && formation.serviceLoading?.loadingPercentage?.Value) {
-			console.log('ffff', formation);
 			loading = formation.serviceLoading.loadingPercentage.Value;
 		}
 
@@ -149,24 +168,50 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	// Initial parsing of main service locations
 	let locations = await Promise.all(
-		data.locations.map((l: ServiceLocation, i:number) => parseLocation(l, i, data.locations))
+		data.locations.map((l: ServiceLocation, i: number) => parseLocation(l, i, data.locations))
 	);
 
 	// Get user destination - either explicit or default to last station
-	let filterCrs =
+
+	let filterCrs = filterMaybe;
+
+	if (terminalGroups.some((g) => g.crs === filterMaybe)) {
+		console.log('filterMaybe is a group');
+		const group = terminalGroups.find((g) => g.crs === filterMaybe);
+		const terminal =
+			data.locations.find((l) => group?.mainStations.some((s) => s === l.crs))?.crs ??
+			data.locations.find((l) => group?.stations.some((s) => s === l.crs))?.crs;
+		if (terminal) {
+			filterMaybe = terminal;
+		} else {
+			filterMaybe = null;
+		}
+	}
+
+	if (terminalGroups.some((g) => g.crs === crs)) {
+		console.log('focus is a group');
+		const group = terminalGroups.find((g) => g.crs === crs);
+		const terminal =
+			data.locations.find((l) => group?.mainStations.some((s) => s === l.crs))?.crs ??
+			data.locations.find((l) => group?.stations.some((s) => s === l.crs)).crs;
+		if (terminal) {
+			crs = terminal;
+		} else {
+			filterMaybe = null;
+		}
+	}
+
+	filterCrs =
 		filterMaybe != 'null' && filterMaybe
 			? filterMaybe
 			: locations.filter((l) => l.isCallingPoint).slice(-1)[0]?.crs;
 
 	// Check if focus station is in the main service
 	let focusInMain = locations.some((l) => l.crs === crs);
-	console.log(`Focus station ${crs} in main service: ${focusInMain}`);
 
 	// Get all calling points from the main service (before processing associations)
 	let mainCallingPoints = locations.filter((l) => l.isCallingPoint);
 	let mainDestination = mainCallingPoints[mainCallingPoints.length - 1]?.crs;
-	console.log(`Main service destination: ${mainDestination}`);
-	console.log(`Main service calling points: ${mainCallingPoints.map((cp) => cp.crs).join(', ')}`);
 
 	// Variables to track ultimate destination for case 2c
 	let ultimateDestinationCrs = null;
@@ -191,9 +236,6 @@ export const GET: RequestHandler = async ({ params }) => {
 				});
 
 				// Log the association
-				console.log(
-					`Found ${assoc.category} association at ${location.crs || location.tiploc} with service ${assoc.rid}. Destination: ${assoc.destination} (${assoc.destinationCRS})`
-				);
 			}
 		}
 	}
@@ -215,38 +257,33 @@ export const GET: RequestHandler = async ({ params }) => {
 
 			// Add tiplocs for the associated service
 			const assocTiplocs = tiplocsData
-				.filter((t) => assocData.locations.some((l: ServiceLocation) => l.tiploc === t.tiploc))
+				.filter((t) => assocData.locations.some((l: ServiceLocation) => l.tiploc === t.Tiploc))
 				.map((t) => ({
-					tiploc: t.tiploc,
-					coords: [t.longitude, t.latitude]
+					tiploc: t.Tiploc,
+					coords: [t.Longitude, t.Latitude]
 				}));
 
 			tiplocs = [...tiplocs, ...assocTiplocs];
 
 			// Parse associated service locations
 			const assocLocations = await Promise.all(
-				assocData.locations.map((l:ServiceLocation, i:number) => parseLocation(l, i, assocData.locations))
+				assocData.locations.map((l: ServiceLocation, i: number) =>
+					parseLocation(l, i, assocData.locations)
+				)
 			);
 
 			// Get the calling points from this associated service
 			const assocCallingPoints = assocLocations.filter((l) => l.isCallingPoint);
-			console.log(
-				`Associated service ${assoc.rid} calling points: ${assocCallingPoints.map((cp) => cp.crs).join(', ')}`
-			);
 
 			// Check if filter is in this associated service
-			const filterInAssoc = assocCallingPoints.some((l) => l.crs === filterCrs) && !mainCallingPoints.some((l) => l.crs === filterCrs);
-			console.log(
-				`Filter station ${filterCrs} in associated service ${assoc.rid}: ${filterInAssoc}`
-			);
+			const filterInAssoc =
+				assocCallingPoints.some((l) => l.crs === filterCrs) &&
+				!mainCallingPoints.some((l) => l.crs === filterCrs);
 
 			// For join services, capture the ultimate destination for case 2c
 			if (assoc.type === 'join') {
 				const lastStation = assocCallingPoints[assocCallingPoints.length - 1];
 				if (lastStation) {
-					console.log(
-						`Join service ultimate destination: ${lastStation.crs} (${lastStation.name})`
-					);
 					ultimateDestinationCrs = lastStation.crs;
 					ultimateDestinationName = lastStation.name;
 
@@ -258,7 +295,6 @@ export const GET: RequestHandler = async ({ params }) => {
 					if (joinPointIndexAssoc >= 0) {
 						const afterJoin = assocLocations.slice(joinPointIndexAssoc + 1);
 						stationsAfterJoin = afterJoin.filter((l) => l.isCallingPoint);
-						console.log(`Found ${stationsAfterJoin.length} stations after join point`);
 					}
 				}
 			}
@@ -282,7 +318,6 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	// Case 2a: Focus in main service, filter is main destination
 	if (focusInMain && filterCrs === mainDestination) {
-		console.log(`Case 2a detected: Focus in main service, filter is main destination`);
 		// Use main service with division data
 
 		// Add division data for any join points
@@ -313,8 +348,6 @@ export const GET: RequestHandler = async ({ params }) => {
 	else if (focusInMain) {
 		for (const assoc of associatedServices) {
 			if (assoc.assoc.type === 'join' && assoc.hasFilter) {
-				console.log(`Case 2b detected: Focus in main service, filter in joined service`);
-
 				// Find join points in both services
 				const joinPointMain = locations.findIndex((l) => l.tiploc === assoc.assoc.tiploc);
 				const joinPointAssoc = assoc.locations.findIndex((l) => l.tiploc === assoc.assoc.tiploc);
@@ -356,8 +389,6 @@ export const GET: RequestHandler = async ({ params }) => {
 		if (!needsMerging) {
 			for (const assoc of associatedServices) {
 				if (assoc.assoc.type === 'divide' && assoc.hasFilter) {
-					console.log(`Case 1b detected: Focus in main, filter in division service`);
-
 					// Find division points in both services
 					const divPointMain = locations.findIndex((l) => l.tiploc === assoc.assoc.tiploc);
 					const divPointDiv = assoc.locations.findIndex((l) => l.tiploc === assoc.assoc.tiploc);
@@ -397,8 +428,6 @@ export const GET: RequestHandler = async ({ params }) => {
 			const focusInAssoc = assoc.callingPoints.some((l) => l.crs === crs);
 
 			if (focusInAssoc && assoc.assoc.type === 'join') {
-				console.log(`Focus station ${crs} found in joining service ${assoc.assoc.rid}`);
-
 				// Find join points in both services
 				const joinPointMain = locations.findIndex((l) => l.tiploc === assoc.assoc.tiploc);
 				const joinPointAssoc = assoc.locations.findIndex((l) => l.tiploc === assoc.assoc.tiploc);
@@ -410,11 +439,11 @@ export const GET: RequestHandler = async ({ params }) => {
 						.some((l) => l.crs === filterCrs);
 					const filterInAssoc = assoc.callingPoints.some((l) => l.crs === filterCrs);
 
-					if (filterInMainAfterJoin) {
-						console.log(`Case 2b detected: Focus in joining service, filter in main after join`);
-					} else if (filterInAssoc) {
-						console.log(`Case 2c detected: Focus and filter in joining service`);
-					}
+					// if (filterInMainAfterJoin) {
+					// 	console.log(`Case 2b detected: Focus in joining service, filter in main after join`);
+					// } else if (filterInAssoc) {
+					// 	console.log(`Case 2c detected: Focus and filter in joining service`);
+					// }
 
 					if (filterInMainAfterJoin || filterInAssoc) {
 						// For both cases, merge: assoc before join + main after join
@@ -447,12 +476,12 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	// Apply merged locations if any merging was done
 	if (needsMerging && mergedLocations) {
-		console.log(`Applying merged service`);
+		// console.log(`Applying merged service`);
 		locations = mergedLocations;
 	}
 	// If no merging was needed, still add division data for display
 	else if (!needsMerging) {
-		console.log(`No special merging needed, adding division data only`);
+		// console.log(`No special merging needed, adding division data only`);
 
 		for (const assoc of associatedServices) {
 			const junctionPoint = assoc.assoc.location;
@@ -514,7 +543,7 @@ export const GET: RequestHandler = async ({ params }) => {
 				progress = 1;
 			else if (![Position.DEPARTED].includes(c.trainRelativePosition)) progress = 0;
 			else {
-				console.log(intermediate.map((i) => [i.tiploc, Position[i.trainRelativePosition]]));
+				// console.log(intermediate.map((i) => [i.tiploc, Position[i.trainRelativePosition]]));
 				const passed = intermediate.reduce(
 					(acc, l) =>
 						acc +
@@ -523,7 +552,7 @@ export const GET: RequestHandler = async ({ params }) => {
 							: 0),
 					0
 				);
-				console.log(passed, intermediate.length);
+				// console.log(passed, intermediate.length);
 				progress = Math.max(0.1, Math.min(0.95, passed / intermediate.length));
 			}
 		}
@@ -533,12 +562,12 @@ export const GET: RequestHandler = async ({ params }) => {
 			progress
 		};
 	});
-	console.log('Final calling points:', callingPoints.map((cp) => cp.crs).join(', '));
+	// console.log('Final calling points:', callingPoints.map((cp) => cp.crs).join(', '));
 
 	// Find focus and filter indices in the calling points
 	let focusIndex = callingPoints.findIndex((l) => l.crs === crs);
 	let filterIndex = callingPoints.findIndex((l) => l.crs === filterCrs);
-	console.log(`Initial focus index: ${focusIndex}, filter index: ${filterIndex}`);
+	// console.log(`Initial focus index: ${focusIndex}, filter index: ${filterIndex}`);
 
 	// Check if we found both stations
 	if (focusIndex < 0) {
@@ -551,9 +580,9 @@ export const GET: RequestHandler = async ({ params }) => {
 		// If filter is a destination of one of the associated services, use the last calling point
 		for (const assoc of associatedServices) {
 			if (assoc.assoc.destinationCRS === filterCrs) {
-				console.log(
-					`Filter ${filterCrs} is the destination of an associated service. Using last calling point.`
-				);
+				// console.log(
+				// 	`Filter ${filterCrs} is the destination of an associated service. Using last calling point.`
+				// );
 				filterIndex = callingPoints.length - 1;
 				// Update the filter CRS to match the last calling point (since we couldn't find the actual filter)
 				filterCrs = callingPoints[filterIndex].crs;
@@ -565,7 +594,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		// use the last calling point
 		if (filterIndex < 0) {
 			if (!filterMaybe) {
-				console.log(`Using last calling point as filter since no specific filter was requested`);
+				// console.log(`Using last calling point as filter since no specific filter was requested`);
 				filterIndex = callingPoints.length - 1;
 				// Update the filter CRS to match the last calling point
 				filterCrs = callingPoints[filterIndex].crs;
@@ -586,7 +615,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		);
 		if (laterFilterIndex >= 0) {
 			filterIndex = laterFilterIndex;
-			console.log(`Adjusted filter index to be after focus: ${filterIndex}`);
+			// console.log(`Adjusted filter index to be after focus: ${filterIndex}`);
 		}
 	}
 
@@ -595,7 +624,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		const lastFocusIndex = callingPoints.findLastIndex((l, i) => l.crs === crs && i < filterIndex);
 		if (lastFocusIndex >= 0) {
 			focusIndex = lastFocusIndex;
-			console.log(`Using last occurrence of focus before filter: ${focusIndex}`);
+			// console.log(`Using last occurrence of focus before filter: ${focusIndex}`);
 		}
 	}
 
@@ -630,7 +659,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	// If focus is at a division point, add "formed from" information
 	for (const assoc of associatedServices) {
 		if (assoc.assoc.type === 'divide' && assoc.assoc.crs === crs) {
-			console.log(`Focus station is at a division point. Adding formed from information.`);
+			// console.log(`Focus station is at a division point. Adding formed from information.`);
 
 			// Find division point in associated service
 			const divPointAssoc = assoc.locations.findIndex((l) => l.tiploc === assoc.assoc.tiploc);
@@ -660,7 +689,7 @@ export const GET: RequestHandler = async ({ params }) => {
 					};
 				}
 
-				console.log(`Added ${beforeDivideCalling.length} stations from service before division`);
+				// console.log(`Added ${beforeDivideCalling.length} stations from service before division`);
 				break;
 			}
 		}
@@ -677,16 +706,16 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	// For case 2c, include the stations after join in the further list
 	if (isCase2c) {
-		console.log(
-			`Case 2c detected with ultimate destination ${ultimateDestinationCrs}. Adding after-join stations to further list.`
-		);
+		// console.log(
+		// 	`Case 2c detected with ultimate destination ${ultimateDestinationCrs}. Adding after-join stations to further list.`
+		// );
 		// Find the join point
 		const joinIndex = callingPoints.findIndex(
 			(cp) => cp.divisionType === 'join' && cp.division && cp.division.callingPoints.length > 0
 		);
 
 		if (joinIndex >= 0 && joinIndex > filterIndex) {
-			console.log(`Join point found at ${callingPoints[joinIndex].crs}`);
+			// console.log(`Join point found at ${callingPoints[joinIndex].crs}`);
 			// Add stations after join, EXCEPT the ultimate destination (which will be set separately)
 			further = [...further, ...stationsAfterJoin.slice(0, -1)];
 		}
@@ -695,7 +724,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	// Determine destination - either last calling point or ultimate destination for case 2c
 	let destination = callingPoints[callingPoints.length - 1] || filterLoc;
 
-	console.log(isCase2c);
+	// console.log(isCase2c);
 
 	// For case 2c, set the destination to the ultimate destination after join
 	if (isCase2c && ultimateDestinationCrs && ultimateDestinationName) {
@@ -707,14 +736,14 @@ export const GET: RequestHandler = async ({ params }) => {
 				name: ultimateDestinationName
 			};
 		}
-		console.log(`Set destination to ${destination.crs} (${destination.name})`);
+		// console.log(`Set destination to ${destination.crs} (${destination.name})`);
 	}
 
 	if (further.length > 0 && further[0].crs === destination.crs) {
 		further = [];
 	}
 
- further = further.filter((c)=>c.crs!=destination.crs)
+	further = further.filter((c) => c.crs != destination.crs);
 
 	if (focusIndex >= filterIndex) {
 		error(403, 'Focus cannot be after filter');
@@ -731,7 +760,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			}
 		});
 		const reasonData = await reasonResponse.json();
-		console.log(reasonData);
+		// console.log(reasonData);
 		lateReason = reasonData.lateReason;
 		cancelReason = reasonData.cancReason;
 	}
@@ -747,7 +776,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	let formation = null;
 	if (focusFormation && focusFormation.coaches) {
 		formation = focusFormation.coaches.map((c: CoachData) => {
-			console.log(c.toilet?.Value);
+			// console.log(c.toilet?.Value);
 			return {
 				coachClass: c.coachClass,
 				number: c.number,
@@ -757,10 +786,10 @@ export const GET: RequestHandler = async ({ params }) => {
 				loading: c.loading?.Value ?? null
 			};
 		});
-		console.log(formation);
+		// console.log(formation);
 	}
 
-	console.log(data.operatorCode);
+	// console.log(data.operatorCode);
 
 	if (
 		data.operatorCode === 'SE' &&

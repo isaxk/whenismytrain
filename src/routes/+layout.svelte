@@ -16,6 +16,7 @@
 	import { flip } from 'svelte/animate';
 	import { localStore } from '$lib/utils/localStore.svelte';
 	import TimeInput from '$lib/components/ui/time-input.svelte';
+	import { terminalGroups } from '$lib/data/terminal-groups';
 
 	let { children, data } = $props();
 
@@ -161,7 +162,7 @@
 				{/if}
 			</div>
 
-			{#if from}
+			{#if ((from && !terminalGroups.some((g) => g.crs === from)) || (from && to)) && from !== to}
 				{@const timeQ = time ? time.replace(':', '') : null}
 				<a
 					type="submit"

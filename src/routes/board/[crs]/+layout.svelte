@@ -13,9 +13,7 @@
 	import NoticeList from '$lib/components/board/notice-list.svelte';
 	import { flip } from 'svelte/animate';
 	import { cancelVt, expandedMap } from '$lib/data/saved.svelte';
-	import SpiderMap from '$lib/components/board/spider-map.svelte';
 	import { fade } from 'svelte/transition';
-	import { Position } from '$lib/types';
 	import Skeleton from '$lib/components/ui/skeleton.svelte';
 	import { goto } from '$app/navigation';
 
@@ -31,9 +29,11 @@
 	$effect(() => {
 		if (clearer) clearer();
 		data.board.then((board) => {
+			if (clearer) clearer();
 			console.log(board.trains);
 
 			trains = board.trains;
+			console.log(board.trains);
 			details = board.details;
 			clearer = refresher.subscribe<{ details: Details; trains: Train[] }>(
 				`/api/board/${data.crs}/${data.to}/${data.time}/${data.tomorrow}`,
@@ -43,10 +43,9 @@
 				}
 			);
 		});
-	});
-
-	onDestroy(() => {
-		clearer();
+		return () => {
+			if (clearer) clearer();
+		};
 	});
 
 	const laterUrl = $derived.by(() => {
@@ -115,6 +114,18 @@
 			return `/board/${data.crs}`;
 		}
 	});
+
+	function createUrl(train_id?: string, dest?: string) {
+		const url = `/board/${data.crs}/${train_id}`;
+		const currentSearch = new URLSearchParams(page.url.search);
+
+		if (dest) {
+			currentSearch.set('dest', dest);
+		}
+
+		const searchParams = currentSearch.toString();
+		return url + (searchParams ? `?${searchParams}` : '');
+	}
 </script>
 
 {#if (!page.data.train_id || md.current) && !expandedMap.current}
@@ -200,8 +211,9 @@
 					</div>
 					<Tooltip.Provider>
 						{#each trains as train, i (train.id + train.times.scheduled.departure)}
+							{@const url = createUrl(train.id, train.destination.crs[0])}
 							<div class="group" animate:flip={{ duration: 200 }}>
-								<BoardItem {i} {train} url="/board/{data.crs}/{train.id}{page.url.search ? page.url.search+'&dest='+train.destination.crs[0] : '?dest='+train.destination.crs[0]}" />
+								<BoardItem {i} {train} {url} crs={data.crs} filter={data.to} />
 							</div>
 						{/each}
 					</Tooltip.Provider>

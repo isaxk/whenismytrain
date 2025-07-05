@@ -37,6 +37,9 @@ export const refresher = {
 	subscribe: <T>(api: string, key: string, callback: (data: T) => void) => {
 		const existingSubscription = subscriptions.find((sub) => sub.api === api);
 		if (existingSubscription) {
+			existingSubscription.callbacks = existingSubscription.callbacks.filter(
+				(cb) => cb.key !== key
+			);
 			existingSubscription.callbacks.push({ key, fn: callback as <T>(data: T) => void });
 		} else {
 			subscriptions.push({ api, callbacks: [{ key, fn: callback as <T>(data: T) => void }] });

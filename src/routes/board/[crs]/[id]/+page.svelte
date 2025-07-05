@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { page } from '$app/state';
 	import CallingPoint from '$lib/components/train/calling-point.svelte';
+	import CollapsableSectionTrigger from '$lib/components/train/collapsable-section-trigger.svelte';
 	import Map from '$lib/components/train/map.svelte';
 	import SaveToggle from '$lib/components/train/save-toggle.svelte';
-	import Skeleton from '$lib/components/ui/skeleton.svelte';
+	import TrainPageSkel from '$lib/components/train/train-page-skel.svelte';
+	import InfoCard from '$lib/components/ui/info-card.svelte';
 	import { operatorList } from '$lib/data/operators';
 	import { refresher } from '$lib/data/refresh.svelte.js';
 	import { expandedMap } from '$lib/data/saved.svelte.js';
@@ -19,12 +19,10 @@
 		ChevronDown,
 		ChevronUp,
 		ClockAlert,
-		Info,
 		Toilet,
 		X
 	} from 'lucide-svelte';
 	import { onDestroy } from 'svelte';
-	import { linear } from 'svelte/easing';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { fade, slide } from 'svelte/transition';
 
@@ -37,7 +35,6 @@
 		subsequent: false,
 		further: false
 	});
-	let expandMap = $state(false);
 
 	let train: ServiceDetails | null = $state(null);
 
@@ -60,7 +57,7 @@
 					further: false
 				};
 				clearer = refresher.subscribe<ServiceDetails>(
-					`/api/service/${data.train_id}/${data.crs}/${data.filter??data.dest}`,
+					`/api/service/${data.train_id}/${data.crs}/${data.filter ?? data.dest}`,
 					'page-data' + Date.now(),
 					(data) => {
 						train = data;
@@ -97,55 +94,7 @@
 		]}
 	>
 		{#await data.train}
-			<div class="flex min-h-16 items-center gap-0" style:view-transition-name="header">
-				<a
-					href={data.closeToHome ? '/' : `/board/${data.crs}${page.url.search}`}
-					class="flex h-full w-14 items-center justify-center"
-				>
-					{#if md.current}
-						<X />
-					{:else}
-						<ArrowLeft />
-					{/if}
-				</a>
-			</div>
-			<Skeleton class="h-42" />
-			<div class="flex h-10 items-center gap-2 px-4">
-				<div class="min-w-14"></div>
-				<Skeleton class="h-full w-2" />
-				<div class="pl-2"></div>
-				<Skeleton class="h-4 w-24 rounded-full" />
-			</div>
-			<div class="flex h-14 items-center gap-2 px-4">
-				<div class="min-w-14">
-					<Skeleton class="h-4 w-12 rounded-full" />
-				</div>
-				<Skeleton class="h-full w-2" />
-				<div class="pl-2"></div>
-				<Skeleton class="h-4 w-24 rounded-full" />
-			</div>
-			<div class="flex h-14 items-center gap-2 px-4">
-				<div class="min-w-14"></div>
-				<Skeleton class="h-full w-2" />
-				<div class="pl-2"></div>
-				<Skeleton class="h-4 w-24 rounded-full" />
-			</div>
-			<div class="flex h-14 items-center gap-2 px-4">
-				<div class="min-w-14">
-					<Skeleton class="h-4 w-12 rounded-full" />
-				</div>
-				<Skeleton class="h-full w-2" />
-				<div class="pl-2"></div>
-				<Skeleton class="h-4 w-24 rounded-full" />
-			</div>
-			<div class="flex h-14 items-center gap-2 px-4">
-				<div class="min-w-14">
-					<Skeleton class="h-4 w-12 rounded-full" />
-				</div>
-				<Skeleton class="h-full w-2 rounded-full" />
-				<div class="pl-2"></div>
-				<Skeleton class="h-4 w-24 rounded-full" />
-			</div>
+			<TrainPageSkel />
 		{:then}
 			{#if train}
 				{@const {
@@ -170,7 +119,10 @@
 					<div class="bg-background flex min-h-16 items-center gap-0">
 						<button
 							style:view-transition-name="back"
-							onclick={() => history.back()}
+							onclick={() => {
+								history.back();
+								expandedMap.current = false;
+							}}
 							class="flex h-14 w-14 items-center justify-center"
 						>
 							{#if md.current}
@@ -203,49 +155,17 @@
 								</div>
 							</div>
 						</div>
-						<SaveToggle id={data.train_id} focus={data.crs} filter={data.to??data.dest} />
+						<SaveToggle id={data.train_id} focus={data.crs} filter={data.to ?? data.dest} />
 					</div>
 					{#if (grouped.focus.isCancelled || grouped.filter.isCancelled) && cancelReason}
-						<div class="px-4 pb-2">
-							<div
-								class="flex min-h-8 items-center gap-2 rounded border border-red-600 bg-red-100 p-1 px-3 text-xs"
-							>
-								<div>
-									<X size={16} />
-								</div>
-								<div>
-									{cancelReason}
-								</div>
-							</div>
-						</div>
+						<InfoCard icon={X} style="danger" message={cancelReason} />
 					{:else if lateReason}
-						<div class="px-4 pb-2">
-							<div
-								class="flex min-h-8 items-center gap-2 rounded border border-yellow-600 bg-amber-100 p-1 px-3 text-xs"
-							>
-								<div>
-									<ClockAlert size={16} />
-								</div>
-								<div>
-									{lateReason}
-								</div>
-							</div>
-						</div>
+						<InfoCard icon={ClockAlert} style="warning" message={lateReason} />
 					{/if}
 					{#if locations.some((l) => l.divisionType)}
-						<div class="px-4 pb-2">
-							<div
-								class="flex min-h-8 items-center gap-2 rounded border border-blue-600 bg-blue-100 p-1 px-3 text-xs"
-							>
-								<div>
-									<Info size={16} />
-								</div>
-								<div>
-									This service divides, please check departure boards to ensure you are in the
-									correct carriage
-								</div>
-							</div>
-						</div>
+						<InfoCard
+							message="This service divides, please check departure boards to ensure you are in the correct carriage"
+						/>
 					{/if}
 					<div
 						in:fade={{ duration: 200 }}
@@ -337,34 +257,20 @@
 							</div>
 						{/if}
 						{#if grouped.previous.length > 0}
-							<button
-								onclick={() => (show.previous = !show.previous)}
-								class="text-foreground-tint flex h-10 items-center gap-2 px-4"
-							>
-								<div class="w-12"></div>
-								<div class="flex h-full flex-col pr-4">
-									{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.focus.trainRelativePosition)}
-										<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
-									{:else if grouped.previous.some((l) => l.trainRelativePosition === Position.DEPARTED) && !show.previous}
-										<div
-											class="w-2 flex-grow"
-											style:background="linear-gradient(to bottom, {operatorList[operator].bg} 50%, {operatorList[
-												operator
-											].bg}B3 100%)"
-										></div>
-									{:else}
-										<div
-											class="w-2 flex-grow"
-											style:background="{operatorList[operator].bg}B3"
-										></div>
-									{/if}
-								</div>
-								{#if show.previous}
-									<div class="flex items-center gap-1">Hide previous <ChevronUp size={20} /></div>
-								{:else}
-									<div class="flex items-center gap-1">Show previous <ChevronDown size={20} /></div>
-								{/if}
-							</button>
+							<CollapsableSectionTrigger
+								color={operatorList[operator].bg}
+								bind:show={show.previous}
+								openedText="Hide previous"
+								closedText="Show previous"
+								progressState={[Position.ARRIVED, Position.DEPARTED].includes(
+									grouped.focus.trainRelativePosition
+								)
+									? 'full'
+									: grouped.previous.some((l) => l.trainRelativePosition === Position.DEPARTED) &&
+										  !show.previous
+										? 'partial'
+										: 'none'}
+							/>
 						{/if}
 						<CallingPoint
 							uid={train.uid}
@@ -394,37 +300,25 @@
 							</div>
 						{/if}
 						{#if grouped.subsequent.length > 0}
-							<button
-								onclick={() => (show.subsequent = !show.subsequent)}
-								class="text-foreground-tint flex h-10 items-center gap-2 px-4"
-							>
-								<div class="w-12"></div>
-								<div class="flex h-full flex-col pr-4">
-									{#if [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
-										<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
-									{:else if ([Position.ARRIVED, Position.DEPARTED].includes(grouped.subsequent[0].trainRelativePosition) && !show.subsequent) || [Position.ARRIVED, Position.DEPARTED].includes(grouped.filter.trainRelativePosition)}
-										<div
-											class="w-2 flex-grow"
-											style:background="linear-gradient(to bottom, {operatorList[operator].bg}, {operatorList[
-												operator
-											].bg}B3)"
-										></div>
-									{:else}
-										<div
-											class="w-2 flex-grow"
-											style:background="{operatorList[operator].bg}B3"
-										></div>
-									{/if}
-								</div>
-								{#if show.subsequent}
-									<div class="flex items-center gap-1">Hide stops <ChevronUp size={20} /></div>
-								{:else}
-									<div class="flex items-center gap-1">
-										{filterDetails.stops} stops - {filterDetails.duration}
-										<ChevronDown size={20} />
-									</div>
-								{/if}
-							</button>
+							<CollapsableSectionTrigger
+								color={operatorList[operator].bg}
+								bind:show={show.subsequent}
+								openedText="Hide stops"
+								closedText="{filterDetails.stops} stops - {filterDetails.duration}"
+								progressState={[Position.ARRIVED, Position.DEPARTED].includes(
+									grouped.filter.trainRelativePosition
+								)
+									? 'full'
+									: ([Position.ARRIVED, Position.DEPARTED].includes(
+												grouped.subsequent[0].trainRelativePosition
+										  ) &&
+												!show.subsequent) ||
+										  [Position.ARRIVED, Position.DEPARTED].includes(
+												grouped.filter.trainRelativePosition
+										  )
+										? 'partial'
+										: 'none'}
+							/>
 						{:else}
 							<div class="text-foreground-tint flex h-10 items-center gap-2 px-4">
 								<div class="w-12"></div>
@@ -467,34 +361,21 @@
 							</div>
 						{/if}
 						{#if grouped.further.length > 0}
-							<button
-								onclick={() => (show.further = !show.further)}
-								class="text-foreground-tint flex h-10 items-center gap-2 px-4"
-							>
-								<div class="w-12"></div>
-								<div class="flex h-full flex-col pr-4">
-									{#if [Position.DEPARTED, Position.ARRIVED].includes(grouped.destination.trainRelativePosition)}
-										<div class="w-2 flex-grow" style:background={operatorList[operator].bg}></div>
-									{:else if [Position.DEPARTED, Position.ARRIVED].includes(grouped.further[0].trainRelativePosition) && !show.further}
-										<div
-											class="w-2 flex-grow"
-											style:background="linear-gradient(to bottom, {operatorList[operator].bg}, {operatorList[
-												operator
-											].bg}B3)"
-										></div>
-									{:else}
-										<div
-											class="w-2 flex-grow"
-											style:background="{operatorList[operator].bg}B3"
-										></div>
-									{/if}
-								</div>
-								{#if show.further}
-									<div class="flex items-center gap-1">Hide further <ChevronUp size={20} /></div>
-								{:else}
-									<div class="flex items-center gap-1">Show further <ChevronDown size={20} /></div>
-								{/if}
-							</button>
+							<CollapsableSectionTrigger
+								color={operatorList[operator].bg}
+								bind:show={show.further}
+								openedText="Hide further"
+								closedText="Show further"
+								progressState={[Position.DEPARTED, Position.ARRIVED].includes(
+									grouped.destination.trainRelativePosition
+								)
+									? 'full'
+									: [Position.DEPARTED, Position.ARRIVED].includes(
+												grouped.further[0].trainRelativePosition
+										  ) && !show.further
+										? 'partial'
+										: 'none'}
+							/>
 						{/if}
 						{#if grouped.destination.crs !== grouped.filter.crs}
 							<CallingPoint

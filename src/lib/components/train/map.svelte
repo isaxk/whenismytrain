@@ -10,7 +10,6 @@
 	import type { Map, LngLatBoundsLike } from 'maplibre-gl';
 	import { onMount, untrack } from 'svelte';
 	import { Tween } from 'svelte/motion';
-	import ALLStationsJSON from '$lib/data/stations.json';
 
 	let {
 		locations,
@@ -121,7 +120,7 @@
 			oldExpanded = expanded;
 			setTimeout(() => {
 				setBounds(formattedPrimaryLineBbox);
-			}, 50);
+			}, 100);
 		}
 		if (mapObj && formattedPrimaryLineBbox && untrack(() => !once)) {
 			setBounds(formattedPrimaryLineBbox);
@@ -136,6 +135,8 @@
 			coords.set(trainPos);
 		}
 	});
+
+	console.log('location', locations);
 </script>
 
 <div class={['h-full w-full']}>
@@ -144,10 +145,7 @@
 			setBounds(formattedPrimaryLineBbox);
 			once = true;
 		}}
-		center={[
-			ALLStationsJSON.find((c) => c.crsCode === focus)?.long ?? 0,
-			ALLStationsJSON.find((c) => c.crsCode === focus)?.lat ?? 50
-		]}
+		center={untrack(() => locations.find((l) => l.crs === focus)?.coordinates ?? [0, 52])}
 		zoom={10}
 		style="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
 		class="relative h-full w-full"

@@ -7,8 +7,14 @@
 	let {
 		position,
 		arrival,
-		departure
-	}: { position: Position; arrival: string | null; departure: string | null } = $props();
+		departure,
+		cancelledAtFilter = null
+	}: {
+		position: Position;
+		arrival: string | null;
+		departure: string | null;
+		cancelledAtFilter?: string | null;
+	} = $props();
 
 	let now = $state(dayjs());
 
@@ -29,6 +35,11 @@
 	<div class="flex items-center gap-1 text-red-600">
 		<X size={12} />
 		<div class="text-red-600">Cancelled</div>
+	</div>
+{:else if cancelledAtFilter}
+	<div class="flex items-center gap-1 text-red-600">
+		<X size={12} />
+		<div class="text-red-600">Cancelled at {cancelledAtFilter}</div>
 	</div>
 {:else if position === Position.DEPARTED}
 	<div class="flex items-center gap-1"><Check size={12} />Departed</div>

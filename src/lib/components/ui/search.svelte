@@ -2,7 +2,6 @@
 	import Fuse from 'fuse.js';
 	import format from 'format-fuse.js';
 	import { crossfade, scale } from 'svelte/transition';
-	import AllStationsJSON from '$lib/data/stations.json';
 	import { browser } from '$app/environment';
 	import Highlight from './highlight.svelte';
 	import { X } from 'lucide-svelte';

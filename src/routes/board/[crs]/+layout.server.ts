@@ -1,6 +1,23 @@
 import type { BoardItem, Details } from '$lib/types/board';
 import type { LayoutServerLoad } from './$types';
 
+const londonTerminals = [
+	'PAD',
+	'LST',
+	'KGX',
+	'STP',
+	'WAT',
+	'EUS',
+	'LDB',
+	'BFR',
+	'VIC',
+	'FST',
+	'CST',
+	'CHX',
+	'MYB',
+	'MOG'
+];
+
 export const load: LayoutServerLoad = async ({ params, url, fetch }) => {
 	const { crs } = params;
 
