@@ -10,6 +10,7 @@
 	import { destination, flip } from '@turf/turf';
 	import { Position } from '$lib/types';
 	import { terminalGroups } from '$lib/data/terminal-groups';
+	import type { Station } from '$lib/types/ldbsvws';
 
 	let {
 		i,
@@ -21,10 +22,41 @@
 
 	const md = new MediaQuery('(min-width: 768px)');
 
-	let stations = $state(null);
+	let stations: Station[] | null = $state(null);
 
 	page.data.stations.then((s) => {
 		stations = s;
+	});
+
+	const showTerminalOrigin = $derived(train.terminal?.origin && crs != train.terminal?.origin);
+	const showTerminalDestination = $derived(
+		train.terminal?.destination &&
+			train.destination.crs[0] != train.terminal?.destination &&
+			train.terminal?.destination != filter
+	);
+
+	const originGroup = $derived(terminalGroups.find((g) => g.crs === crs));
+	const destGroup = $derived(terminalGroups.find((g) => g.crs === filter));
+
+	const originTerminals = $derived.by<string[]>(() => {
+		if (!originGroup || stations === null || !train.terminal?.origin) return '';
+		const names = train.terminal.origin.map((t) =>
+			stations?.find((s) => s.crs == t)?.Value?.replace(originGroup.shortReplace, '')
+		);
+		return names;
+	});
+	const destinationTerminals = $derived.by<string[] | null>(() => {
+		console.log('terminal', train.terminal);
+		if (!destGroup || stations === null || !train.terminal?.destination) return '';
+
+		const names = train.terminal.destination
+			.filter((t) => t !== train.destination.crs[0])
+			.map((t) => stations?.find((s) => s.crs === t)?.Value?.replace(destGroup.shortReplace, ''));
+		if (names.length > 0) {
+			return names;
+		} else {
+			return null;
+		}
 	});
 </script>
 
@@ -32,12 +64,7 @@
 	href={url}
 	class={[
 		'flex items-center transition-all',
-		(train.terminal?.origin && crs != train.terminal?.origin) ||
-		(train.terminal?.destination &&
-			train.destination.crs != train.terminal?.destination &&
-			!train.isCancelledAtFilter)
-			? 'h-24'
-			: 'h-20',
+		originTerminals || destinationTerminals ? 'h-24' : 'h-20',
 		page.data.train_id === train.id
 			? 'bg-foreground-tint/20'
 			: 'group-odd:bg-muted/70 bg-background'
@@ -64,30 +91,38 @@
 				</div>
 			</div>
 		</div>
-		{#if stations && train.terminal && ((train.terminal.origin && crs != train.terminal.origin) || (train.terminal.destination && train.destination.crs != train.terminal.destination && !train.isCancelledAtFilter))}
+		{#if stations && train.terminal && (originTerminals || destinationTerminals)}
 			<div
 				class={[
-					'text-foreground-muted/90 flex w-full items-center gap-1 px-4 text-xs/4',
+					'text-foreground-muted/90 flex w-full items-center gap-1 pr-2 pl-4 text-xs/4',
 					train.position === Position.DEPARTED && 'opacity-60'
 				]}
 			>
-				via
-				{#if train.terminal.origin && crs != train.terminal.origin}
-					<div>
-						<span class="font-medium text-black">
-							{stations.find((s) => s.crs === train.terminal.origin)?.Value}</span
-						>{#if train.terminal.destination && train.destination.crs != train.terminal.destination && !train.isCancelledAtFilter}
-							,
-						{/if}
+				{#if originTerminals}
+					<div class="text-nowrap">
+						from <span class="text-foreground font-medium"
+							>{originGroup?.shortReplace}{originTerminals[0]}</span
+						>{#if originTerminals.length > 1},{/if}
 					</div>
+					{#if originTerminals.length > 1}
+						<div class="text-foreground min-w-0 truncate font-medium">
+							{originTerminals.slice(1).join(', ')}
+						</div>
+					{/if}
 				{/if}
 
-				{#if train.terminal.destination && train.destination.crs != train.terminal.destination && !train.isCancelledAtFilter}
-					<div>
-						<span class="font-medium text-black"
-							>{stations.find((s) => s.crs === train.terminal.destination)?.Value}</span
-						>
+				{#if destinationTerminals}
+					<div class="text-nowrap">
+						via
+						<span class="text-foreground font-medium"
+							>{destGroup?.shortReplace}{destinationTerminals[0]}</span
+						>{#if destinationTerminals.length > 1},{/if}
 					</div>
+					{#if destinationTerminals.length > 1}
+						<div class="text-foreground min-w-0 truncate font-medium">
+							{destinationTerminals.slice(1).join(', ')}
+						</div>
+					{/if}
 				{/if}
 			</div>
 		{/if}
@@ -97,12 +132,14 @@
 				train.position === Position.DEPARTED && 'opacity-60'
 			]}
 		>
-			<RelativeTimeDisplay
-				departure={train.times.estimated.departure}
-				arrival={train.times.estimated.arrival}
-				position={train.position}
-				cancelledAtFilter={train.isCancelledAtFilter ? train.filter?.name : null}
-			/>
+			{#if !originTerminals || originTerminals.length == 1}
+				<RelativeTimeDisplay
+					departure={train.times.estimated.departure}
+					arrival={train.times.estimated.arrival}
+					position={train.position}
+					cancelledAtFilter={train.isCancelledAtFilter ? train.filter?.name : null}
+				/>
+			{/if}
 			{#if train.filter && !train.isCancelled && !train.isCancelledAtFilter}
 				<div class="text-foreground-muted/70 flex items-center gap-1">
 					<Clock size={12} />

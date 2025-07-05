@@ -10,6 +10,7 @@ import type { StationBoard, ServiceItemWithLocations } from '$lib/types/ldbsvws'
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { terminalGroups } from '$lib/data/terminal-groups';
+import { destination } from '@turf/turf';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -50,6 +51,7 @@ async function getBoard(
 			timeWindow: '480'
 		}
 	);
+	console.log(reqUrl.toString());
 
 	const response = await fetch(reqUrl.toString(), {
 		headers: {
@@ -107,6 +109,15 @@ async function getBoard(
 			item.operatorCode = 'SEH';
 		}
 
+		const originGroup = terminalGroups.find((t) => t.crs == groupOrigin);
+		const destGroup = terminalGroups.find((t) => t.crs == groupDestination);
+
+		console.log(
+			[...(item.previousLocations ?? []), { crs: crs }, ...(item.subsequentLocations ?? [])]
+				?.filter((p) => originGroup?.stations?.some((s) => s == p.crs))
+				.map((l) => l.crs)
+		);
+
 		return {
 			id: item.rid,
 			uid: item.uid,
@@ -144,15 +155,18 @@ async function getBoard(
 			},
 			position,
 			terminal:
-				groupOrigin || groupDestination
+				originGroup || destGroup
 					? {
-							origin: crs,
-							destination:
-								(item.subsequentLocations ?? []).find((l) =>
-									terminalGroups
-										.find((t) => t.crs == groupDestination)
-										?.mainStations?.some((s) => s == l.crs)
-								)?.crs ?? to
+							origin: [
+								...(item.previousLocations ?? []),
+								{ crs: crs },
+								...(item.subsequentLocations ?? []).filter((_, i) => i < filterIndex)
+							]
+								?.filter((p, i) => originGroup?.stations?.some((s) => s == p.crs))
+								.map((l) => l.crs),
+							destination: [...(item.subsequentLocations ?? [])]
+								?.filter((p, i) => destGroup?.stations?.some((s) => s == p.crs))
+								.map((l) => l.crs)
 						}
 					: null
 		};
@@ -228,7 +242,28 @@ export const GET: RequestHandler = async ({ params }) => {
 		const fns = iterator.map(({ origin, destination }) =>
 			getBoard(origin, date, destination, time, tomorrow ?? false, crs, to).then(async (r) => {
 				(r.trains ?? []).forEach((train: BoardItem) => {
-					trainsMap.set(train.id, train);
+					const existing = trainsMap.get(train.id);
+					if (!existing) {
+						trainsMap.set(train.id, train);
+					} else {
+						const longestOriginTerminals =
+							train.terminal.origin.length > existing.terminal.origin.length
+								? train.terminal.origin
+								: existing.terminal.origin;
+						const longestDestinationTerminals =
+							train.terminal.destination.length > existing.terminal.destination.length
+								? train.terminal.destination
+								: existing.terminal.destination;
+						trainsMap.set(train.id, {
+							...(train.terminal.origin.length > existing.terminal.origin.length
+								? train
+								: existing),
+							terminal: {
+								origin: longestOriginTerminals,
+								destination: longestDestinationTerminals
+							}
+						});
+					}
 				});
 				detailsTemp = r.details as Details;
 			})

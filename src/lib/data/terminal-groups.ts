@@ -1,6 +1,7 @@
 export const terminalGroups = [
 	{
 		name: 'London (any)',
+		shortReplace: 'London ',
 		crs: 'LONx',
 		stations: [
 			'PAD',
@@ -9,14 +10,15 @@ export const terminalGroups = [
 			'STP',
 			'WAT',
 			'EUS',
-			'LDB',
+			'LBG',
 			'BFR',
 			'VIC',
 			'FST',
 			'CST',
 			'CHX',
 			'MYB',
-			'MOG'
+			'MOG',
+			'WAE'
 		],
 		mainStations: [
 			'PAD',
@@ -37,30 +39,35 @@ export const terminalGroups = [
 	},
 	{
 		name: 'Glasgow (any)',
+		shortReplace: 'Glasgow ',
 		crs: 'GLAx',
 		stations: ['GLC', 'GLQ'],
 		mainStations: ['GLC', 'GLQ']
 	},
 	{
 		name: 'Croydon (any)',
+		shortReplace: '',
 		crs: 'CROx',
 		stations: ['ECR', 'WCY'],
 		mainStations: ['ECR', 'WCY']
 	},
 	{
 		name: 'Birmingham (any)',
+		shortReplace: 'Birmingham ',
 		crs: 'BIRx',
 		stations: ['BHM', 'BMO', 'BSW'],
 		mainStations: ['BHM', 'BMO']
 	},
 	{
 		name: 'Manchester (any)',
+		shortReplace: 'Manchester ',
 		crs: 'MANx',
 		stations: ['MAN', 'MCV', 'MCO'],
 		mainStations: ['MAN', 'MCV']
 	},
 	{
 		name: 'Blackpool (any)',
+		shortReplace: 'Blackpool ',
 		crs: 'BLAx',
 		stations: ['BPN', 'BPS'],
 		mainStations: ['BPN', 'BPS']

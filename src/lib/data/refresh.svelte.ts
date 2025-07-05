@@ -11,6 +11,8 @@ async function runRefresh(duration: number) {
 		await navigating.complete;
 	}
 
+	console.log('subs', subscriptions);
+
 	refreshing.value = true;
 
 	setTimeout(async () => {
