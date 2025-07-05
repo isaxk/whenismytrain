@@ -192,8 +192,12 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 		console.log('focus is a group');
 		const group = terminalGroups.find((g) => g.crs === crs);
 		const terminal =
-			data.locations.findLast((l) => group?.mainStations.some((s) => s === l.crs))?.crs ??
-			data.locations.findLast((l) => group?.stations.some((s) => s === l.crs)).crs;
+			data.locations.find((l) => group?.mainStations.some((s) => s === l.crs) && !l.atdSpecified)
+				?.crs ??
+			data.locations.find((l) => group?.stations.some((s) => s === l.crs && !l.atdSpecified))
+				?.crs ??
+			data.locations.find((l) => group?.mainStations.some((s) => s === l.crs)).crs ??
+			data.locations.find((l) => group?.stations.some((s) => s === l.crs)).crs;
 		if (terminal) {
 			crs = terminal;
 		} else {

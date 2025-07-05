@@ -105,7 +105,7 @@
 						>{#if originTerminals.length > 1},{/if}
 					</div>
 					{#if originTerminals.length > 1}
-						<div class="text-foreground min-w-0 truncate font-medium">
+						<div class="min-w-0 truncate font-medium">
 							{originTerminals.slice(1).join(', ')}
 						</div>
 					{/if}
@@ -132,14 +132,12 @@
 				train.position === Position.DEPARTED && 'opacity-60'
 			]}
 		>
-			{#if !originTerminals || originTerminals.length == 1 || train.position === Position.CANCELLED || train.isCancelledAtFilter}
-				<RelativeTimeDisplay
-					departure={train.times.estimated.departure}
-					arrival={train.times.estimated.arrival}
-					position={train.position}
-					cancelledAtFilter={train.isCancelledAtFilter ? train.filter?.name : null}
-				/>
-			{/if}
+			<RelativeTimeDisplay
+				departure={train.times.estimated.departure}
+				arrival={train.times.estimated.arrival}
+				position={train.position}
+				cancelledAtFilter={train.isCancelledAtFilter ? train.filter?.name : null}
+			/>
 			{#if train.filter && !train.isCancelled && !train.isCancelledAtFilter}
 				<div class="text-foreground-muted/70 flex items-center gap-1">
 					<Clock size={12} />

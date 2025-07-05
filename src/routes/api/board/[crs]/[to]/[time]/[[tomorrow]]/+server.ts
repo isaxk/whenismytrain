@@ -255,7 +255,9 @@ export const GET: RequestHandler = async ({ params }) => {
 								? train.terminal.destination
 								: existing.terminal.destination;
 						trainsMap.set(train.id, {
-							...(train.terminal.origin.length > existing.terminal.origin.length
+							...(dayjs(train.times.scheduled.departure).isBefore(
+								dayjs(existing.times.scheduled.departure)
+							)
 								? train
 								: existing),
 							terminal: {
