@@ -132,7 +132,7 @@
 				train.position === Position.DEPARTED && 'opacity-60'
 			]}
 		>
-			{#if !originTerminals || originTerminals.length == 1}
+			{#if !originTerminals || originTerminals.length == 1 || train.position === Position.CANCELLED || train.isCancelledAtFilter}
 				<RelativeTimeDisplay
 					departure={train.times.estimated.departure}
 					arrival={train.times.estimated.arrival}
