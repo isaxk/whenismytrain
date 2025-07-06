@@ -71,5 +71,12 @@ export const terminalGroups = [
 		crs: 'BLAx',
 		stations: ['BPN', 'BPS'],
 		mainStations: ['BPN', 'BPS']
+	},
+	{
+		name: 'Cardiff (any)',
+		shortReplace: 'Cardiff ',
+		crs: 'CARx',
+		stations: ['CDF', 'CDQ', 'CDB'],
+		mainStations: ['CDF', 'CDQ']
 	}
 ];

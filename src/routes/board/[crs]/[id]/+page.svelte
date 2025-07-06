@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import CallingPoint from '$lib/components/train/calling-point.svelte';
 	import CollapsableSectionTrigger from '$lib/components/train/collapsable-section-trigger.svelte';
 	import Map from '$lib/components/train/map.svelte';
@@ -122,7 +124,11 @@
 						<button
 							style:view-transition-name="back"
 							onclick={() => {
-								history.back();
+								if (md.current) {
+									goto(`/board/${data.crs}${page.url.search}`);
+								} else {
+									history.back();
+								}
 								expandedMap.current = false;
 							}}
 							class="flex h-14 w-14 items-center justify-center"

@@ -6,6 +6,7 @@ export type TrainFilter = {
 	time: string;
 	crs: string;
 	name: string;
+	rawDuration: number;
 };
 
 export type BoardItem = {
@@ -34,6 +35,7 @@ export type BoardItem = {
 		destination: string[] | null;
 	} | null;
 	arrivesFirst: boolean;
+	shortestJourney: boolean;
 };
 
 export type SpiderMap = {

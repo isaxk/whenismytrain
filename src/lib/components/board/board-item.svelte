@@ -63,14 +63,13 @@
 <a
 	href={url}
 	class={[
-		'flex items-center transition-all',
-		originTerminals || destinationTerminals ? 'h-24' : 'h-20',
+		'relative flex items-center py-4 pl-2 transition-all',
 		page.data.train_id === train.id
 			? 'bg-foreground-tint/20'
 			: 'group-odd:bg-muted/40 bg-background'
 	]}
 >
-	<div class="h-full min-w-2" style:background={train.operatorColor}></div>
+	<div class="absolute top-0 left-0 h-full w-1.5" style:background={train.operatorColor}></div>
 	<div class="flex h-full min-w-0 flex-grow flex-col justify-center gap-1">
 		<div
 			class={[
@@ -94,7 +93,7 @@
 		{#if stations && train.terminal && (originTerminals || destinationTerminals)}
 			<div
 				class={[
-					'text-foreground-muted/90 flex w-full items-center gap-1 pr-2 pl-4 text-xs/4',
+					'text-foreground-muted/90 flex w-full items-center gap-1 pr-2 pl-4 text-xs',
 					train.position === Position.DEPARTED && 'opacity-60'
 				]}
 			>
@@ -128,7 +127,7 @@
 		{/if}
 		<div
 			class={[
-				'text-foreground-muted/90 flex min-h-4 w-full items-center gap-2 pl-4 text-xs/4',
+				'text-foreground-muted/90 flex min-h-4 w-full items-center gap-2 pl-4 text-xs',
 				train.position === Position.DEPARTED && 'opacity-60'
 			]}
 		>
@@ -152,15 +151,25 @@
 							{#if train.filter.stops}({train.filter.stops} stops){:else}(non-stop){/if}
 						</div>
 					</div>
-					{#if train.arrivesFirst}
-						<div class="flex items-center gap-1 text-green-600">
-							<Zap size={12} />
-							<div class="text-xs/3">Fastest</div>
-						</div>
-					{/if}
 				{/if}
 			{/if}
 		</div>
+		{#if train.arrivesFirst || train.shortestJourney}
+			<div class="gap-2 px-4 text-xs">
+				{#if train.arrivesFirst}
+					<div class="flex items-center gap-1 text-green-600">
+						<Zap size={12} />
+						<div class="text-xs">Arrives First</div>
+					</div>
+				{/if}
+				{#if train.shortestJourney}
+					<div class="flex items-center gap-1 text-green-600">
+						<Clock size={12} />
+						<div class="text-xs">Shortest Journey</div>
+					</div>
+				{/if}
+			</div>
+		{/if}
 	</div>
 	<div
 		class={[

@@ -119,7 +119,8 @@ async function getBoard(
 				name: filterLocationName,
 				stops: filterIndex,
 				time: filterLocation.ata ?? filterLocation.eta ?? filterLocation.sta ?? '?',
-				duration: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+				duration: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`,
+				rawDuration: durations
 			};
 		}
 
@@ -158,6 +159,8 @@ async function getBoard(
 			uid: item.uid,
 			sdd: item.sdd,
 			type: 'train',
+			arrivesFirst: false,
+			shortestJourney: false,
 			destination: {
 				name: item.destination.map((d: any) => d.locationName).join(', '),
 				crs: item.destination.map((d: any) => d.crs)
@@ -421,12 +424,27 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 
 	const notYetDeparted = trains.filter((l) => l.position !== Position.DEPARTED);
-	const notUnknownArrival = notYetDeparted.filter((t) => t.times.estimated.departure !== null);
-	const arrivesFirst = notUnknownArrival.reduce((m, x) =>
-		dayjs(m.filter?.time).isBefore(dayjs(x.filter?.time)) ? m : x
-	);
-	const arrivesFirstIndex = notYetDeparted.findIndex((l) => l.id === arrivesFirst.id);
-	notYetDeparted[arrivesFirstIndex].arrivesFirst = to != 'null' ? true : false;
+	if (notYetDeparted.length > 0) {
+		const notUnknownArrival = notYetDeparted.filter((t) => t.times.estimated.departure !== null);
+		const arrivesFirst = notUnknownArrival.reduce((m, x) =>
+			dayjs(m.filter?.time).isBefore(dayjs(x.filter?.time)) ? m : x
+		);
+		const shortestJourney = notUnknownArrival.reduce((m, x) =>
+			(m.filter?.rawDuration ?? 99) < (x.filter?.rawDuration ?? 0) ? m : x
+		);
+		const arrivesFirstIndex = notYetDeparted.findIndex((l) => l.id === arrivesFirst.id);
+		const shortestJourneyIndex = notYetDeparted.findIndex((l) => l.id === shortestJourney.id);
+		notYetDeparted[arrivesFirstIndex].arrivesFirst = to != 'null' ? true : false;
+		if (
+			shortestJourneyIndex !== arrivesFirstIndex &&
+			(arrivesFirst.filter?.rawDuration ?? 0) - (shortestJourney.filter?.rawDuration ?? 0) > 5
+		) {
+			console.log(
+				(arrivesFirst.filter?.rawDuration ?? 0) - (shortestJourney.filter?.rawDuration ?? 0)
+			);
+			notYetDeparted[shortestJourneyIndex].shortestJourney = true;
+		}
+	}
 
 	return json({
 		details,
