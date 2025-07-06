@@ -355,8 +355,10 @@ export const GET: RequestHandler = async ({ params }) => {
 					if (!existing) {
 						trainsMap.set(train.id, train);
 					} else {
-						let longestOriginTerminals: string[] = [];
-						let longestDestinationTerminals: string[] = [];
+						let longestOriginTerminals: string[] | null =
+							train.terminal?.origin ?? existing.terminal?.origin ?? null;
+						let longestDestinationTerminals: string[] | null =
+							train.terminal?.destination ?? existing.terminal?.destination ?? null;
 
 						if (
 							train.terminal &&
@@ -381,8 +383,8 @@ export const GET: RequestHandler = async ({ params }) => {
 									: existing.terminal.destination;
 						}
 						trainsMap.set(train.id, {
-							...(dayjs(train.times.scheduled.departure).isBefore(
-								dayjs(existing.times.scheduled.departure)
+							...(dayjs(train.times.scheduled.departure ?? undefined).isBefore(
+								dayjs(existing.times.scheduled.departure ?? undefined)
 							)
 								? train
 								: existing),
