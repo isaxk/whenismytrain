@@ -288,14 +288,7 @@ async function getBoard(
 
 	trains = trains.filter((t) => t.operator !== 'LT');
 
-	const all = trains
-		.concat(buses)
-		.toSorted((a, b) =>
-			dayjs(a.times.scheduled.departure ?? undefined).diff(
-				dayjs(b.times.scheduled.departure ?? undefined),
-				'minutes'
-			)
-		);
+	const all = trains;
 
 	return { trains: all, details };
 }
