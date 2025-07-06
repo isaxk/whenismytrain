@@ -56,13 +56,13 @@ async function getBoard(
 
 	let busServices = [];
 
-	const busUrl = paramUrl(
-		`https://huxley2.azurewebsites.net/staffdepartures/${crs}/${to != 'null' ? 'to/' + to : ''}`,
-		{
-			timeOffset: offset.toString(),
-			timeWindow: '120'
-		}
-	);
+	// const busUrl = paramUrl(
+	// 	`https://huxley2.azurewebsites.net/staffdepartures/${crs}/${to != 'null' ? 'to/' + to : ''}`,
+	// 	{
+	// 		timeOffset: offset.toString(),
+	// 		timeWindow: '120'
+	// 	}
+	// );
 
 	const response = await fetch(reqUrl.toString(), {
 		headers: {
@@ -70,12 +70,12 @@ async function getBoard(
 		}
 	});
 
-	console.log(busUrl.toString());
+	// console.log(busUrl.toString());
 
 	// if (!(groupOrigin && groupDestination)) {
-	const busResponse = await fetch(busUrl.toString());
-	busServices = (await busResponse.json()).busServices ?? [];
-	console.log(busServices);
+	// const busResponse = await fetch(busUrl.toString());
+	// busServices = (await busResponse.json()).busServices ?? [];
+	// console.log(busServices);
 	// }
 
 	const data = (await response.json()) as StationBoard;
@@ -262,7 +262,7 @@ async function getBoard(
 		};
 	}
 	let trains = (data.trainServices ?? []).map(parseService);
-	const buses = (busServices ?? []).map(parseBus);
+	const buses = [];
 	console.log(buses);
 
 	const notices =
@@ -323,7 +323,9 @@ export const GET: RequestHandler = async ({ params }) => {
 			const destination = terminalGroups.find((g) => g.crs === to);
 			origin?.stations.forEach((o) => {
 				destination?.stations.forEach((d) => {
-					iterator.push({ origin: o, destination: d });
+					if (o !== d) {
+						iterator.push({ origin: o, destination: d });
+					}
 				});
 			});
 		} else if (terminalGroups.some((g) => g.crs === to)) {
