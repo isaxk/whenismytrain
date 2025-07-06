@@ -54,7 +54,7 @@ async function getBoard(
 
 	const offset = dayjs(date).diff(dayjs(), 'minutes');
 
-	let busServices = null;
+	let busServices = [];
 
 	const busUrl = paramUrl(
 		`https://huxley2.azurewebsites.net/staffdepartures/${crs}/${to != 'null' ? '/to/' + to : ''}`,
@@ -293,7 +293,10 @@ async function getBoard(
 	const all = trains
 		.concat(buses)
 		.toSorted((a, b) =>
-			dayjs(a.times.scheduled.departure).diff(dayjs(b.times.scheduled.departure), 'minutes')
+			dayjs(a.times.scheduled.departure ?? undefined).diff(
+				dayjs(b.times.scheduled.departure ?? undefined),
+				'minutes'
+			)
 		);
 
 	return { trains: all, details };
