@@ -129,30 +129,28 @@ async function getBoard(
 			item.operatorCode = 'SEH';
 		}
 
-		const originGroup = terminalGroups.find((t) => t.crs == groupOrigin);
-		const destGroup = terminalGroups.find((t) => t.crs == groupDestination);
+		const originGroup = groupOrigin ? terminalGroups.find((t) => t.crs == groupOrigin) : null;
+		const destGroup = groupDestination
+			? terminalGroups.find((t) => t.crs == groupDestination)
+			: null;
 
-		let originsList = [
-			{ crs: crs, atdSpecified: item.atdSpecified ?? false },
-			...(item.subsequentLocations ?? []).filter((l, i) => i < filterIndex && !l.atdSpecified)
-		]
-			?.filter((p, i) => originGroup?.stations?.some((s) => s == p.crs))
-			.map((l) => l.crs);
+		let originsList = originGroup
+			? [
+					{ crs: crs, atdSpecified: item.atdSpecified ?? false },
+					...(item.subsequentLocations ?? []).filter((l, i) => i < filterIndex && !l.atdSpecified)
+				]
+					?.filter((p, i) => originGroup?.stations?.some((s) => s == p.crs))
+					.map((l) => l.crs ?? '')
+			: null;
 
-		if (originsList.length < 1) {
+		if (originsList && originsList.length < 1) {
 			originsList = [
 				{ crs: crs, atdSpecified: item.atdSpecified ?? false },
 				...(item.subsequentLocations ?? []).filter((l, i) => i < filterIndex)
 			]
 				?.filter((p, i) => originGroup?.stations?.some((s) => s == p.crs))
-				.map((l) => l.crs);
+				.map((l) => l.crs ?? '');
 		}
-
-		console.log(
-			[...(item.previousLocations ?? []), { crs: crs }, ...(item.subsequentLocations ?? [])]
-				?.filter((p) => originGroup?.stations?.some((s) => s == p.crs))
-				.map((l) => l.crs)
-		);
 
 		return {
 			id: item.rid,
@@ -197,7 +195,7 @@ async function getBoard(
 							origin: originsList,
 							destination: [...(item.subsequentLocations ?? [])]
 								?.filter((p, i) => destGroup?.stations?.some((s) => s == p.crs))
-								.map((l) => l.crs)
+								.map((l) => l.crs ?? '')
 						}
 					: null
 		};
@@ -349,22 +347,39 @@ export const GET: RequestHandler = async ({ params }) => {
 				destination,
 				time,
 				tomorrow ?? false,
-				terminalGroups.some((g) => g.crs === crs) ? crs : null,
-				terminalGroups.some((g) => g.crs === to) ? to : null
+				terminalGroups.some((g) => g.crs == crs) ? crs : null,
+				terminalGroups.some((g) => g.crs == to) ? to : null
 			).then(async (r) => {
 				(r.trains ?? []).forEach((train: BoardItem) => {
 					const existing = trainsMap.get(train.id);
 					if (!existing) {
 						trainsMap.set(train.id, train);
 					} else {
-						const longestOriginTerminals =
-							train.terminal?.origin.length > existing.terminal.origin.length
-								? train.terminal.origin
-								: existing.terminal.origin;
-						const longestDestinationTerminals =
-							train.terminal.destination.length > existing.terminal.destination.length
-								? train.terminal.destination
-								: existing.terminal.destination;
+						let longestOriginTerminals: string[] = [];
+						let longestDestinationTerminals: string[] = [];
+
+						if (
+							train.terminal &&
+							train.terminal.origin &&
+							existing.terminal &&
+							existing.terminal.origin
+						) {
+							longestOriginTerminals =
+								train.terminal.origin.length > existing.terminal.origin.length
+									? train.terminal.origin
+									: existing.terminal.origin;
+						}
+						if (
+							train.terminal &&
+							train.terminal.destination &&
+							existing.terminal &&
+							existing.terminal.destination
+						) {
+							longestDestinationTerminals =
+								train.terminal.destination.length > existing.terminal.destination.length
+									? train.terminal.destination
+									: existing.terminal.destination;
+						}
 						trainsMap.set(train.id, {
 							...(dayjs(train.times.scheduled.departure).isBefore(
 								dayjs(existing.times.scheduled.departure)
@@ -382,6 +397,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			})
 		);
 		await Promise.all(fns);
+		detailsTemp = detailsTemp as Details | null;
 		if (detailsTemp) {
 			details = {
 				...(detailsTemp as Details),
