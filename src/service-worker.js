@@ -1,4 +1,6 @@
 /// <reference types="@sveltejs/kit" />
+/// <reference lib="webworker" />
+
 import { build, files, version } from '$service-worker';
 
 // Create a unique cache name for this deployment
@@ -9,7 +11,13 @@ const ASSETS = [
     ...files  // everything in `static`
 ];
 
-self.addEventListener('install', (event) => {
+// Custom notification actions
+const ACTIONS: Record<string, string> = {
+    DISMISS: 'dismiss',
+    VIEW_DETAILS: 'view-details'
+};
+
+self.addEventListener('install', (event: ExtendableEvent) => {
     // Create a new cache and add all files to it
     async function addFilesToCache() {
         const cache = await caches.open(CACHE);
@@ -23,7 +31,7 @@ self.addEventListener('install', (event) => {
     event.waitUntil(addFilesToCache());
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', (event: ExtendableEvent) => {
     // Remove previous cached data from disk
     async function deleteOldCaches() {
         for (const key of await caches.keys()) {
@@ -34,11 +42,11 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(deleteOldCaches());
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', (event: FetchEvent) => {
     // ignore POST requests etc
     if (event.request.method !== 'GET') return;
 
-    async function respond() {
+    async function respond(): Promise<Response> {
         const url = new URL(event.request.url);
         const cache = await caches.open(CACHE);
 
@@ -85,8 +93,94 @@ self.addEventListener('fetch', (event) => {
 });
 
 // Listen for messages from the client
-self.addEventListener('message', (event) => {
+self.addEventListener('message', (event: ExtendableMessageEvent) => {
     if (event.data === 'skipWaiting') {
         self.skipWaiting();
     }
+});
+
+// Define interfaces for notification data
+interface NotificationData {
+    title?: string;
+    body?: string;
+    tag?: string;
+    renotify?: boolean;
+    data?: {
+        url?: string;
+        serviceId?: string;
+        [key: string]: any;
+    };
+}
+
+// Handle push notifications
+self.addEventListener('push', (event: PushEvent) => {
+    if (!event.data) return;
+    
+    try {
+        const data: NotificationData = event.data.json();
+        
+        const title = data.title || 'Train Update';
+        const options: NotificationOptions = {
+            body: data.body || 'There has been an update to your train service.',
+            icon: '/favicon.png',
+            badge: '/notification-badge.png',
+            data: data.data || {},
+            tag: data.tag || 'train-notification',
+            actions: [
+                {
+                    action: ACTIONS.VIEW_DETAILS,
+                    title: 'View Details'
+                },
+                {
+                    action: ACTIONS.DISMISS,
+                    title: 'Dismiss'
+                }
+            ],
+            vibrate: [100, 50, 100],
+            renotify: data.renotify === true
+        };
+        
+        event.waitUntil(self.registration.showNotification(title, options));
+    } catch (error) {
+        console.error('Error showing notification:', error);
+    }
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
+    event.notification.close();
+
+    const action = event.action;
+    const notification = event.notification;
+    const data = notification.data || {};
+    let url = '/';
+
+    if (data.url) {
+        url = data.url;
+    } else if (data.serviceId) {
+        url = `/service/${data.serviceId}`;
+    }
+
+    if (action === ACTIONS.VIEW_DETAILS) {
+        // User clicked the "View Details" action
+        event.waitUntil(clients.openWindow(url));
+    } else if (!action) {
+        // User clicked the notification itself (not a specific action)
+        event.waitUntil(
+            clients.matchAll({ type: 'window', includeUncontrolled: true })
+                .then((clientList) => {
+                    // If a window client is already open, focus it
+                    for (const client of clientList) {
+                        if (client.url.includes(self.location.origin) && 'focus' in client) {
+                            client.navigate(url);
+                            return client.focus();
+                        }
+                    }
+                    
+                    // Otherwise open a new window
+                    return clients.openWindow(url);
+                })
+        );
+    }
+    // For ACTIONS.DISMISS, we just close the notification (already done above)
 });
