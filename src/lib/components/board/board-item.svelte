@@ -6,7 +6,7 @@
 	import RelativeTimeDisplay from '../ui/relative-time-display.svelte';
 	import TimeDisplay from '../ui/time-display.svelte';
 	import RttPlatform from '../train/rtt-platform.svelte';
-	import { BusFront, BusFrontIcon, Clock } from 'lucide-svelte';
+	import { Bolt, BusFront, BusFrontIcon, Clock, Zap } from 'lucide-svelte';
 	import { destination, flip } from '@turf/turf';
 	import { Position } from '$lib/types';
 	import { terminalGroups } from '$lib/data/terminal-groups';
@@ -67,7 +67,7 @@
 		originTerminals || destinationTerminals ? 'h-24' : 'h-20',
 		page.data.train_id === train.id
 			? 'bg-foreground-tint/20'
-			: 'group-odd:bg-muted/70 bg-background'
+			: 'group-odd:bg-muted/40 bg-background'
 	]}
 >
 	<div class="h-full min-w-2" style:background={train.operatorColor}></div>
@@ -128,7 +128,7 @@
 		{/if}
 		<div
 			class={[
-				'text-foreground-muted/90 flex min-h-4 w-full items-center gap-2 px-4 text-xs/4',
+				'text-foreground-muted/90 flex min-h-4 w-full items-center gap-2 pl-4 text-xs/4',
 				train.position === Position.DEPARTED && 'opacity-60'
 			]}
 		>
@@ -152,6 +152,12 @@
 							{#if train.filter.stops}({train.filter.stops} stops){:else}(non-stop){/if}
 						</div>
 					</div>
+					{#if train.arrivesFirst}
+						<div class="flex items-center gap-1 text-green-600">
+							<Zap size={12} />
+							<div class="text-xs/3">Fastest</div>
+						</div>
+					{/if}
 				{/if}
 			{/if}
 		</div>

@@ -46,9 +46,9 @@
 {:else if position === Position.ARRIVED}
 	<div class="flex items-center gap-1"><Check size={12} /> Arrived</div>
 	{#if relativeDeparture !== null}
-		<div class="flex items-center gap-1">
+		<div class="flex items-center gap-0.5">
 			<ArrowUpRight size={12} />
-			{#if relativeDeparture < 1}Departing soon{:else}Departing in {relativeDeparture}m{/if}
+			{#if relativeDeparture < 1}&lt;1m{:else}{relativeDeparture}m{/if}
 		</div>
 	{/if}
 {:else if position === Position.STARTS_HERE}
@@ -64,7 +64,7 @@
 {:else if position === Position.AWAY && relativeArrival !== null && (relativeArrival ?? 0) < 15}
 	<div class="flex items-center gap-1">
 		<ArrowDownRight size={12} />
-		{#if relativeArrival < 1}Arriving soon{:else}Arriving in {relativeArrival}m{/if}
+		{#if relativeArrival < 1}Arriving in &lt;1m{:else}Arriving in {relativeArrival}m{/if}
 	</div>
 	{#if relativeDeparture}
 		<div class="flex items-center gap-1">
@@ -75,6 +75,6 @@
 {:else if relativeDeparture && (relativeDeparture ?? 0) < 15}
 	<div class="flex items-center gap-1">
 		<ArrowUpRight size={12} />
-		{#if relativeDeparture < 1}Departing soon{:else}Departing in {relativeDeparture}m{/if}
+		{#if relativeDeparture < 1}&lt;1m{:else}Departing in {relativeDeparture}m{/if}
 	</div>
 {/if}

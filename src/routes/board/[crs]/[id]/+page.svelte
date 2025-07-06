@@ -16,9 +16,11 @@
 	import {
 		Accessibility,
 		ArrowLeft,
+		Briefcase,
 		ChevronDown,
 		ChevronUp,
 		ClockAlert,
+		Star,
 		Toilet,
 		X
 	} from 'lucide-svelte';
@@ -203,19 +205,24 @@
 						<div class="flex min-h-16 w-full gap-1 overflow-x-scroll px-4 pt-4 pb-1">
 							{#each formation as coach (JSON.stringify(coach))}
 								<div
-									class="border-border relative flex min-w-10 flex-col items-center justify-center rounded-lg border py-1"
+									class="border-border relative flex min-w-12 flex-col items-center justify-center rounded-lg border py-1"
 								>
 									<div class="z-[10] flex flex-col items-center">
 										<div>
 											{coach.number}
 										</div>
 										{#if formation.some((f) => f.toilet)}
-											<div class="flex h-4">
+											<div class="flex h-4 items-center gap-0.5">
 												{#if coach.toilet}
 													<Toilet size={12} />
 													{#if coach.toiletIsAccessible}
 														<Accessibility size={12} />
 													{/if}
+												{/if}
+												{#if coach.coachClass === 'First'}
+													<div class="text-xs font-semibold">
+														1<span class="text-[10px] font-normal">st</span>
+													</div>
 												{/if}
 											</div>
 										{/if}

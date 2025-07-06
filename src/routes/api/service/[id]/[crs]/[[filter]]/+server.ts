@@ -793,6 +793,41 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 		// console.log(formation);
 	}
 
+	if (data.operatorCode === 'GW') {
+		const response = await fetch(
+			`https://railinfo-api.gwr.com/trainoccupancy?trainUid=${data.uid}&date=${data.sdd}`
+		);
+		if (response.ok) {
+			const gwFormation = await response.json();
+			const portion = gwFormation.Portions.find((p) => p.StationsCrsCodes.includes(focusLoc.crs));
+			let carriages = [];
+			if (portion) {
+				portion.Assemblies.forEach((assembly) => {
+					console.log(assembly);
+					carriages = [...carriages, ...assembly.Vehicles];
+				});
+				formation = carriages.toReversed().map((c) => {
+					console.log(c);
+					return {
+						coachClass: c.IsFirstClass ? 'First' : 'Standard',
+						number: c.CoachLetter,
+						toilet: c.Facilities.Toilet,
+						toiletIsAccessible: c.Facilities.WheelchairSpace,
+						toiletStatus: 'Unknown',
+						loading:
+							c.SeatAvailability === 'Low'
+								? 70
+								: c.SeatAvailability === 'Medium'
+									? 50
+									: c.SeatAvailability === 'High'
+										? 20
+										: null
+					};
+				});
+			}
+		}
+	}
+
 	// console.log(data.operatorCode);
 
 	if (

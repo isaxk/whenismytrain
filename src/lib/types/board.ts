@@ -33,6 +33,7 @@ export type BoardItem = {
 		origin: string[] | null;
 		destination: string[] | null;
 	} | null;
+	arrivesFirst: boolean;
 };
 
 export type SpiderMap = {

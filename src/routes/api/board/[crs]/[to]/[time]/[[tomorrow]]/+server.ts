@@ -76,7 +76,6 @@ async function getBoard(
 		const busResponse = await fetch(busUrl.toString());
 		if (busResponse.ok) {
 			busServices = (await busResponse.json()).busServices ?? [];
-			console.log(busServices);
 		}
 	}
 
@@ -265,7 +264,6 @@ async function getBoard(
 	}
 	let trains = (data.trainServices ?? []).map(parseService);
 	const buses = busServices.map(parseBus);
-	console.log(buses);
 
 	const notices =
 		data.nrccMessages?.map((m) => {
@@ -418,7 +416,7 @@ export const GET: RequestHandler = async ({ params }) => {
 			.toSorted((a, b) =>
 				dayjs(a.times.scheduled.departure).diff(b.times.scheduled.departure, 'second')
 			)
-			.slice(0, 15);
+			.slice(0, 10);
 	} else {
 		const r = await getBoard(crs, date, to, time, tomorrow ?? false, null, null);
 		details = r.details;
@@ -429,10 +427,15 @@ export const GET: RequestHandler = async ({ params }) => {
 		error(500, 'An error occurred');
 	}
 
+	const notYetDeparted = trains.filter((l) => l.position !== Position.DEPARTED);
+	const arrivesFirst = notYetDeparted.reduce((m, x) =>
+		dayjs(m.filter?.time).isBefore(dayjs(x.filter?.time)) ? m : x
+	);
+	const arrivesFirstIndex = notYetDeparted.findIndex((l) => l.id === arrivesFirst.id);
+	notYetDeparted[arrivesFirstIndex].arrivesFirst = to != 'null' ? true : false;
+
 	return json({
 		details,
-		trains: trains
-			.filter((l) => l.position === Position.DEPARTED)
-			.concat(trains.filter((l) => l.position !== Position.DEPARTED))
+		trains: trains.filter((l) => l.position === Position.DEPARTED).concat(notYetDeparted)
 	});
 };
