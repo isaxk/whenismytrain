@@ -132,7 +132,7 @@ export const operatorList: Record<string, { name: string; bg: string; text: stri
 	SEH: {
 		name: 'Southeastern Highspeed',
 		bg: '#1E1E4D',
-		text: '#fce077'
+		text: '#fff5d1'
 	},
 	SN: {
 		name: 'Southern',

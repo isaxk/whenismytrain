@@ -421,7 +421,8 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 
 	const notYetDeparted = trains.filter((l) => l.position !== Position.DEPARTED);
-	const arrivesFirst = notYetDeparted.reduce((m, x) =>
+	const notUnknownArrival = notYetDeparted.filter((t) => t.times.estimated.departure !== null);
+	const arrivesFirst = notUnknownArrival.reduce((m, x) =>
 		dayjs(m.filter?.time).isBefore(dayjs(x.filter?.time)) ? m : x
 	);
 	const arrivesFirstIndex = notYetDeparted.findIndex((l) => l.id === arrivesFirst.id);
