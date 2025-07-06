@@ -54,13 +54,13 @@ async function getBoard(
 
 	const offset = dayjs(date).diff(dayjs(), 'minutes');
 
-	const busUrl = paramUrl(
-		`https://huxley2.azurewebsites.net/staffdepartures/${crs}/${to != 'null' ? 'to/' + to : ''}`,
-		{
-			timeOffset: offset.toString(),
-			timeWindow: '120'
-		}
-	);
+	// const busUrl = paramUrl(
+	// 	`https://huxley2.azurewebsites.net/staffdepartures/${crs}/${to != 'null' ? 'to/' + to : ''}`,
+	// 	{
+	// 		timeOffset: offset.toString(),
+	// 		timeWindow: '120'
+	// 	}
+	// );
 
 	const response = await fetch(reqUrl.toString(), {
 		headers: {
@@ -70,14 +70,14 @@ async function getBoard(
 
 	// console.log(busUrl.toString());
 	//
-	let busServices = [];
+	// const busServices = [];
 
-	if (!(groupOrigin && groupDestination)) {
-		const busResponse = await fetch(busUrl.toString());
-		if (busResponse.ok) {
-			busServices = (await busResponse.json()).busServices ?? [];
-		}
-	}
+	// if (!(groupOrigin && groupDestination)) {
+	// 	const busResponse = await fetch(busUrl.toString());
+	// 	if (busResponse.ok) {
+	// 		busServices = (await busResponse.json()).busServices ?? [];
+	// 	}
+	// }
 
 	const data = (await response.json()) as StationBoard;
 
@@ -202,68 +202,68 @@ async function getBoard(
 		};
 	}
 
-	function parseBus(item: any): BoardItem {
-		if (item.sta === '0001-01-01T00:00:00') {
-			item.sta = null;
-		}
-		if (item.eta === '0001-01-01T00:00:00') {
-			item.eta = null;
-		}
-		if (item.ata === '0001-01-01T00:00:00') {
-			item.ata = null;
-		}
-		if (item.std === '0001-01-01T00:00:00') {
-			item.std = null;
-		}
-		if (item.etd === '0001-01-01T00:00:00') {
-			item.etd = null;
-		}
-		if (item.atd === '0001-01-01T00:00:00') {
-			item.atd = null;
-		}
+	// function parseBus(item: any): BoardItem {
+	// 	if (item.sta === '0001-01-01T00:00:00') {
+	// 		item.sta = null;
+	// 	}
+	// 	if (item.eta === '0001-01-01T00:00:00') {
+	// 		item.eta = null;
+	// 	}
+	// 	if (item.ata === '0001-01-01T00:00:00') {
+	// 		item.ata = null;
+	// 	}
+	// 	if (item.std === '0001-01-01T00:00:00') {
+	// 		item.std = null;
+	// 	}
+	// 	if (item.etd === '0001-01-01T00:00:00') {
+	// 		item.etd = null;
+	// 	}
+	// 	if (item.atd === '0001-01-01T00:00:00') {
+	// 		item.atd = null;
+	// 	}
 
-		return {
-			id: item.rid,
-			type: 'bus',
-			uid: item.uid,
-			sdd: item.sdd,
-			filter: null,
-			operator: item.operator,
-			operatorColor: operatorList[item.operatorCode].bg,
-			operatorName: operatorList[item.operatorCode].name,
-			operatorText: operatorList[item.operatorCode].text,
-			platform: item.platform,
-			destination: {
-				name: item.destination.map((d: any) => d.locationName).join(', '),
-				crs: item.destination.map((d: any) => d.crs)
-			},
-			origin: {
-				name: item.origin.map((d: any) => d.locationName).join(', '),
-				crs: item.origin.map((d: any) => d.crs)
-			},
-			times: {
-				estimated: {
-					arrival: item.ata ?? item.eta ?? null,
-					departure: item.atd ?? item.etd ?? null
-				},
-				scheduled: {
-					arrival: item.sta ?? null,
-					departure: item.std ?? null
-				}
-			},
-			isCancelled: item.isCancelled ?? false,
-			isCancelledAtFilter:
-				item.subsequentLocations?.find((l) => l.crs === to)?.isCancelled ?? false,
-			relativeTimes: {
-				arrival: null,
-				departure: null
-			},
-			position: Position.UNKNOWN,
-			terminal: null
-		};
-	}
+	// 	return {
+	// 		id: item.rid,
+	// 		type: 'bus',
+	// 		uid: item.uid,
+	// 		sdd: item.sdd,
+	// 		filter: null,
+	// 		operator: item.operator,
+	// 		operatorColor: operatorList[item.operatorCode].bg,
+	// 		operatorName: operatorList[item.operatorCode].name,
+	// 		operatorText: operatorList[item.operatorCode].text,
+	// 		platform: item.platform,
+	// 		destination: {
+	// 			name: item.destination.map((d: any) => d.locationName).join(', '),
+	// 			crs: item.destination.map((d: any) => d.crs)
+	// 		},
+	// 		origin: {
+	// 			name: item.origin.map((d: any) => d.locationName).join(', '),
+	// 			crs: item.origin.map((d: any) => d.crs)
+	// 		},
+	// 		times: {
+	// 			estimated: {
+	// 				arrival: item.ata ?? item.eta ?? null,
+	// 				departure: item.atd ?? item.etd ?? null
+	// 			},
+	// 			scheduled: {
+	// 				arrival: item.sta ?? null,
+	// 				departure: item.std ?? null
+	// 			}
+	// 		},
+	// 		isCancelled: item.isCancelled ?? false,
+	// 		isCancelledAtFilter:
+	// 			item.subsequentLocations?.find((l) => l.crs === to)?.isCancelled ?? false,
+	// 		relativeTimes: {
+	// 			arrival: null,
+	// 			departure: null
+	// 		},
+	// 		position: Position.UNKNOWN,
+	// 		terminal: null
+	// 	};
+	// }
 	let trains = (data.trainServices ?? []).map(parseService);
-	const buses = busServices.map(parseBus);
+	// const buses = busServices.map(parseBus);
 
 	const notices =
 		data.nrccMessages?.map((m) => {
