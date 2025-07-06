@@ -57,7 +57,7 @@ async function getBoard(
 	let busServices = [];
 
 	const busUrl = paramUrl(
-		`https://huxley2.azurewebsites.net/staffdepartures/${crs}/${to != 'null' ? '/to/' + to : ''}`,
+		`https://huxley2.azurewebsites.net/staffdepartures/${crs}/${to != 'null' ? 'to/' + to : ''}`,
 		{
 			timeOffset: offset.toString(),
 			timeWindow: '120'
@@ -72,11 +72,11 @@ async function getBoard(
 
 	console.log(busUrl.toString());
 
-	if (!(groupOrigin && groupDestination)) {
-		const busResponse = await fetch(busUrl.toString());
-		busServices = (await busResponse.json()).busServices ?? [];
-		console.log(busServices);
-	}
+	// if (!(groupOrigin && groupDestination)) {
+	const busResponse = await fetch(busUrl.toString());
+	busServices = (await busResponse.json()).busServices ?? [];
+	console.log(busServices);
+	// }
 
 	const data = (await response.json()) as StationBoard;
 
