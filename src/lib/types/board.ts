@@ -12,6 +12,7 @@ export type BoardItem = {
 	id: string;
 	uid: string;
 	sdd: string;
+	type: 'bus' | 'train';
 	destination: DestinationOrigin;
 	origin: DestinationOrigin;
 	platform: string | null;
@@ -22,11 +23,16 @@ export type BoardItem = {
 	filter: TrainFilter | null;
 	times: TimeObject;
 	isCancelled: boolean;
+	isCancelledAtFilter: boolean;
 	relativeTimes: {
 		arrival: number | null;
 		departure: number | null;
 	};
 	position: Position;
+	terminal: {
+		origin: string[] | null;
+		destination: string[] | null;
+	} | null;
 };
 
 export type SpiderMap = {

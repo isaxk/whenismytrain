@@ -6,7 +6,7 @@
 	import RelativeTimeDisplay from '../ui/relative-time-display.svelte';
 	import TimeDisplay from '../ui/time-display.svelte';
 	import RttPlatform from '../train/rtt-platform.svelte';
-	import { Clock } from 'lucide-svelte';
+	import { BusFront, BusFrontIcon, Clock } from 'lucide-svelte';
 	import { destination, flip } from '@turf/turf';
 	import { Position } from '$lib/types';
 	import { terminalGroups } from '$lib/data/terminal-groups';
@@ -70,7 +70,7 @@
 			: 'group-odd:bg-muted/70 bg-background'
 	]}
 >
-	<div class="h-full min-w-2" style:background={operatorList[train.operator].bg}></div>
+	<div class="h-full min-w-2" style:background={train.operatorColor}></div>
 	<div class="flex h-full min-w-0 flex-grow flex-col justify-center gap-1">
 		<div
 			class={[
@@ -132,20 +132,27 @@
 				train.position === Position.DEPARTED && 'opacity-60'
 			]}
 		>
-			<RelativeTimeDisplay
-				departure={train.times.estimated.departure}
-				arrival={train.times.estimated.arrival}
-				position={train.position}
-				cancelledAtFilter={train.isCancelledAtFilter ? train.filter?.name : null}
-			/>
-			{#if train.filter && !train.isCancelled && !train.isCancelledAtFilter}
-				<div class="text-foreground-muted/70 flex items-center gap-1">
-					<Clock size={12} />
-					<div class="text-xs/3">
-						{train.filter.duration}
-						{#if train.filter.stops}({train.filter.stops} stops){:else}(non-stop){/if}
-					</div>
+			{#if train.type === 'bus'}
+				<div class="flex items-center gap-1 text-red-600">
+					<BusFront size={12} />
+					Rail replacement bus
 				</div>
+			{:else}
+				<RelativeTimeDisplay
+					departure={train.times.estimated.departure}
+					arrival={train.times.estimated.arrival}
+					position={train.position}
+					cancelledAtFilter={train.isCancelledAtFilter ? train.filter?.name : null}
+				/>
+				{#if train.filter && !train.isCancelled && !train.isCancelledAtFilter}
+					<div class="text-foreground-muted/70 flex items-center gap-1">
+						<Clock size={12} />
+						<div class="text-xs/3">
+							{train.filter.duration}
+							{#if train.filter.stops}({train.filter.stops} stops){:else}(non-stop){/if}
+						</div>
+					</div>
+				{/if}
 			{/if}
 		</div>
 	</div>
@@ -155,17 +162,19 @@
 			train.position === Position.DEPARTED && 'opacity-60'
 		]}
 	>
-		<div class="text-foreground-muted text-[10px]">Platform</div>
-		<div class="bg-muted relative flex size-6 items-center justify-center rounded-full text-xs">
-			{#if train.platform}
-				{train.platform}
-			{:else if !train.isCancelled}
-				<RttPlatform
-					uid={train.uid}
-					sdd={train.sdd}
-					crs={train.terminal?.origin ?? page.data.crs}
-				/>
-			{/if}
-		</div>
+		{#if train.type !== 'bus'}
+			<div class="text-foreground-muted text-[10px]">Platform</div>
+			<div class="bg-muted relative flex size-6 items-center justify-center rounded-full text-xs">
+				{#if train.platform}
+					{train.platform}
+				{:else if !train.isCancelled}
+					<RttPlatform
+						uid={train.uid}
+						sdd={train.sdd}
+						crs={train.terminal?.origin ?? page.data.crs}
+					/>
+				{/if}
+			</div>
+		{/if}
 	</div>
 </a>
