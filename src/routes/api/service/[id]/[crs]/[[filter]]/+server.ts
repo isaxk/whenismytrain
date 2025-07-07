@@ -34,7 +34,7 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 	});
 
 	if (!response.ok) {
-		error(500, 'Error fetching service');
+		error(500, 'Error fetching service: ' + response.statusText);
 	}
 
 	const data = await response.json();
