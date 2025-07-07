@@ -13,23 +13,6 @@ import { terminalGroups } from '$lib/data/terminal-groups';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const londonTerminals = [
-	'PAD',
-	'LST',
-	'KGX',
-	'STP',
-	'WAT',
-	'EUS',
-	'LDB',
-	'BFR',
-	'VIC',
-	'FST',
-	'CST',
-	'CHX',
-	'MYB',
-	'MOG'
-];
-
 const { QUERY_SERVICES_KEY, REFERENCE_DATA_KEY } = env;
 
 // I'll be completely honest, claude wrote most of this file. Merging and joining trains are not pleasent.
@@ -50,7 +33,12 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 		}
 	});
 
+	if (!response.ok) {
+		error(500, 'Error fetching service');
+	}
+
 	const data = await response.json();
+
 	if (!data) return error(404, 'Service not found');
 
 	const res = await fetch('/tiplocs.json');
@@ -255,6 +243,9 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 					'x-apikey': QUERY_SERVICES_KEY
 				}
 			});
+			if (!assocResponse.ok) {
+				error(500, 'Error fetching associated service');
+			}
 			const assocData = await assocResponse.json();
 
 			if (!assocData) continue;
@@ -763,6 +754,9 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 				'x-apikey': REFERENCE_DATA_KEY
 			}
 		});
+		if (!reasonResponse.ok) {
+			error(500, 'Error fetching reason code');
+		}
 		const reasonData = await reasonResponse.json();
 		// console.log(reasonData);
 		lateReason = reasonData.lateReason;
