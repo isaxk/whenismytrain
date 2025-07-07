@@ -1,7 +1,10 @@
 name = "whenismtrain"
-main = ".svelte-kit/cloudflare-workers/worker.js"
+main = "./.cloudflare/worker.js"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [build]
 command = "npm run build"
+
+[site]
+bucket = "./.cloudflare/public"
