@@ -9,6 +9,7 @@ import timezone from 'dayjs/plugin/timezone';
 import { operatorList } from '$lib/data/operators';
 import type { CoachData, FormationItem, ServiceLocation } from '$lib/types/ldbsvws';
 import { terminalGroups } from '$lib/data/terminal-groups';
+import { tiplocData } from '$lib/data/tiplocs';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -45,13 +46,10 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 
 		if (!data) return error(404, 'Service not found');
 
-		const res = await fetch(
-			'https://cdn.jsdelivr.net/gh/isaxk/whenismytrain@prod/assets/tiplocs.json'
-		);
-		const tiplocsData = (await res.json()).Tiplocs;
-
 		let tiplocs = data.locations.map((l: ServiceLocation) => {
-			const t = tiplocsData.find((t) => t.Tiploc === l.tiploc);
+			const t = tiplocData.find((t) => t.Tiploc === l.tiploc);
+
+			if (!t) return [0, 52];
 
 			return {
 				tiploc: l.tiploc,
