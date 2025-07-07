@@ -45,7 +45,9 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 
 		if (!data) return error(404, 'Service not found');
 
-		const res = await fetch('/tiplocs.json');
+		const res = await fetch(
+			'https://cdn.jsdelivr.net/gh/isaxk/whenismytrain@prod/assets/tiplocs.json'
+		);
 		const tiplocsData = (await res.json()).Tiplocs;
 
 		let tiplocs = data.locations.map((l: ServiceLocation) => {
