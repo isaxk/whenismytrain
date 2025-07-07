@@ -32,6 +32,9 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 			headers: {
 				'x-apikey': QUERY_SERVICES_KEY
 			}
+		}).catch((e) => {
+			console.error(e);
+			error(500, 'Error fetching service: ' + e.message);
 		});
 
 		if (!response.ok) {
