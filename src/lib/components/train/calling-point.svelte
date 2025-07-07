@@ -2,7 +2,7 @@
 	import type { CallingPoint } from '$lib/types/train';
 	import { fade, slide } from 'svelte/transition';
 	import TimeDisplay from '../ui/time-display.svelte';
-	import { ChevronDown, ChevronUp, PersonStanding, Train, Users } from 'lucide-svelte';
+	import { ChevronDown, ChevronUp, Users } from 'lucide-svelte';
 	import RelativeTimeDisplay from '../ui/relative-time-display.svelte';
 	import RttPlatform from './rtt-platform.svelte';
 	import { Position } from '$lib/types';
@@ -34,12 +34,6 @@
 	} = $props();
 
 	let showDiv = $state(false);
-
-	console.log(uid);
-
-	if (callingPoint.divisionType) {
-		console.log(callingPoint.times);
-	}
 
 	function loadPercentage(p: number) {
 		if (p < 40) {

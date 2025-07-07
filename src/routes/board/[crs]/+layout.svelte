@@ -16,6 +16,7 @@
 	import { fade } from 'svelte/transition';
 	import Skeleton from '$lib/components/ui/skeleton.svelte';
 	import { goto } from '$app/navigation';
+	import { terminalGroups } from '$lib/data/terminal-groups';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
@@ -39,7 +40,14 @@
 				`/api/board/${data.crs}/${data.to}/${data.time}/${data.tomorrow}`,
 				'board-page',
 				(data) => {
-					trains = data.trains;
+					if (
+						data.details.crs === details?.crs &&
+						data.details.filterCrs === details.filterCrs &&
+						data.details.time === details.time &&
+						data.details.tomorrow === details.tomorrow
+					) {
+						trains = data.trains;
+					}
 				}
 			);
 		});
@@ -213,7 +221,14 @@
 						{#each trains as train, i (train.id + train.times.scheduled.departure)}
 							{@const url = createUrl(train.id, train.destination.crs[0])}
 							<div class="group" animate:flip={{ duration: 200 }}>
-								<BoardItem {i} {train} {url} crs={data.crs} filter={data.to} />
+								<BoardItem
+									{i}
+									{train}
+									{url}
+									crs={data.crs}
+									filter={data.to}
+									filterName={details.filterName}
+								/>
 							</div>
 						{/each}
 					</Tooltip.Provider>
@@ -272,10 +287,14 @@
 					</div>
 				{/if}
 				<div class="p-4 text-sm">
-					<div>Station managed by {details.manager}</div>
-					<a class="text-xs text-blue-600" href="https://www.nationalrail.co.uk/stations/{data.crs}"
-						>National Rail Station Information</a
-					>
+					{#if !terminalGroups.some((g) => g.crs == data.crs)}
+						<div>Station managed by {details.manager}</div>
+						<a
+							class="text-xs text-blue-600"
+							href="https://www.nationalrail.co.uk/stations/{data.crs}"
+							>National Rail Station Information</a
+						>
+					{/if}
 				</div>
 			</div>
 		{/await}

@@ -650,7 +650,7 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 	const filterDetails = {
 		crs: filterCrs,
 		name: filterLoc.name,
-		stops: filterIndex - focusIndex - 1,
+		stops: filterIndex - focusIndex,
 		duration: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`,
 		time: filterArrival
 	};

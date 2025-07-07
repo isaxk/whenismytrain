@@ -23,6 +23,7 @@ export type Location = {
 		destination: DestinationOrigin;
 	} | null;
 	progress: number;
+	loading: number | null;
 };
 
 export type CallingPoint = Omit<Location, 'crs'> & {
@@ -38,6 +39,15 @@ export type GroupedCallingPoints = {
 	destination: CallingPoint;
 };
 
+export type Formation = {
+	number: string;
+	coachClass: string;
+	toilet: boolean;
+	toiletIsAccessible: boolean;
+	loading: number | null;
+	toiletStatus: 'Unknown' | 'InService' | 'NotInService';
+}[];
+
 export type ServiceDetails = {
 	uid: string;
 	sdd: string;
@@ -52,12 +62,5 @@ export type ServiceDetails = {
 	genAt: string;
 	lateReason: string | null;
 	cancelReason: string | null;
-	formation: {
-		number: string;
-		coachClass: string;
-		toilet: boolean;
-		toiletIsAccessible: boolean;
-		loading: number | null;
-		toiletStatus: 'Unknown' | 'InService' | 'NotInService';
-	}[];
+	formation: Formation;
 };

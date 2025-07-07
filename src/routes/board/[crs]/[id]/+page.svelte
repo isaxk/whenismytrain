@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import CallingPoint from '$lib/components/train/calling-point.svelte';
+	import CarriageDiagram from '$lib/components/train/carriage-diagram.svelte';
 	import CollapsableSectionTrigger from '$lib/components/train/collapsable-section-trigger.svelte';
 	import Map from '$lib/components/train/map.svelte';
 	import SaveToggle from '$lib/components/train/save-toggle.svelte';
@@ -18,11 +19,13 @@
 	import {
 		Accessibility,
 		ArrowLeft,
-		Briefcase,
 		ChevronDown,
 		ChevronUp,
+		Clock1,
+		Clock4,
+		Clock5,
+		Clock6,
 		ClockAlert,
-		Star,
 		Toilet,
 		X
 	} from 'lucide-svelte';
@@ -74,18 +77,6 @@
 	});
 
 	let clientHeight = $state();
-
-	function loadPercentage(p: number) {
-		if (p < 40) {
-			return 'bg-green-200/60';
-		} else if (p < 60) {
-			return 'bg-yellow-200/60';
-		} else if (p < 80) {
-			return 'bg-orange-200/60';
-		} else {
-			return 'bg-red-200/60';
-		}
-	}
 </script>
 
 <svelte:window onscroll={() => (expandedMap.current = false)} />
@@ -158,8 +149,14 @@
 											).format('DD MMM YYYY')}
 										</span> -
 									{/if}
-									{dayjs(grouped.focus.times.scheduled.departure).format('HH:mm')} to {grouped
-										.destination.name}
+									{dayjs(grouped.focus.times.scheduled.departure).format('HH:mm')} to
+									{#if grouped.destination.crs !== page.data.dest}
+										{#await data.stations then stations}
+											{stations.find((s) => s.crs === page.data.dest)?.Value}
+										{/await}
+									{:else}
+										{grouped.destination.name}
+									{/if}
 								</div>
 							</div>
 						</div>
@@ -208,60 +205,7 @@
 				{/if}
 				<div class="flex min-h-0 flex-grow flex-col">
 					{#if formation && formation.length > 0}
-						<div class="flex min-h-16 w-full gap-0.5 overflow-x-scroll px-4 pt-4 pb-1">
-							<!-- right angle at bottom-left -->
-							<div class="h-16 min-w-8 overflow-hidden rounded-r-sm text-zinc-100">
-								<svg
-									class="h-full w-full"
-									viewBox="0 0 100 100"
-									preserveAspectRatio="none"
-									xmlns="http://www.w3.org/2000/svg"
-								>
-									<path
-										class="fill-current stroke-zinc-200 stroke-2"
-										d="M60 0 L100 0 L100 100 L40 100 A10 10 0 0 1 30 90 L50 10 A10 10 0 0 1 60 0 Z"
-									/>
-								</svg>
-							</div>
-							{#each formation as coach, i (JSON.stringify(coach) + i)}
-								<div class="group flex first:-ml-4">
-									<div
-										class="relative flex min-w-12 flex-col items-center justify-center rounded border border-zinc-200 py-1"
-									>
-										<div class="z-[10] flex flex-col items-center">
-											<div>
-												{coach.number}
-											</div>
-											{#if formation.some((f) => f.toilet)}
-												<div class="flex h-4 items-center gap-0.5">
-													{#if coach.toilet}
-														<Toilet size={12} />
-														{#if coach.toiletIsAccessible}
-															<Accessibility size={12} />
-														{/if}
-													{/if}
-													{#if coach.coachClass === 'First'}
-														<div class="text-xs font-semibold">
-															1<span class="text-[10px] font-normal">st</span>
-														</div>
-													{/if}
-												</div>
-											{/if}
-										</div>
-
-										{#if coach.loading}
-											<div
-												class={[
-													'absolute right-0 bottom-0  left-0 min-h-2 w-full',
-													loadPercentage(coach.loading)
-												]}
-												style:height="{coach.loading}%"
-											></div>
-										{/if}
-									</div>
-								</div>
-							{/each}
-						</div>
+						<CarriageDiagram {formation} />
 					{/if}
 					{#if formation?.some((f) => f.loading) || locations?.some((l) => l.loading)}
 						<div class="px-4 pb-2 text-xs">
@@ -333,7 +277,7 @@
 								color={operatorList[operator].bg}
 								bind:show={show.subsequent}
 								openedText="Hide stops"
-								closedText="{filterDetails.stops} stops - {filterDetails.duration}"
+								closedText=""
 								progressState={[Position.ARRIVED, Position.DEPARTED].includes(
 									grouped.filter.trainRelativePosition
 								)
@@ -347,7 +291,15 @@
 										  )
 										? 'partial'
 										: 'none'}
-							/>
+							>
+								{#snippet closedTextSnippet()}
+									<div class="text-foreground/80 flex items-center gap-1.5">
+										<Clock4 size={14} />
+										{filterDetails.duration} - {filterDetails.stops} stops
+									</div>
+									<div class="text-xs">Show {grouped.subsequent.length} intermediate stops</div>
+								{/snippet}
+							</CollapsableSectionTrigger>
 						{:else}
 							<div class="text-foreground-tint flex h-10 items-center gap-2 px-4">
 								<div class="w-12"></div>
@@ -406,7 +358,40 @@
 										: 'none'}
 							/>
 						{/if}
-						{#if grouped.destination.crs !== grouped.filter.crs}
+						{#if grouped.destination.crs !== data.dest && data.dest !== grouped.filter.crs && !show.further && !grouped.subsequent.some((s) => s.crs === data.dest)}
+							<CallingPoint
+								uid={train.uid}
+								sdd={train.sdd}
+								callingPoint={locations.find((l) => l.crs === data.dest)}
+								i={0}
+								hideDetails={!show.further && grouped.further.length > 0}
+								color={operatorList[operator].bg}
+								order="destination"
+								next={null}
+							/>
+						{/if}
+
+						{#if !show.further && grouped.destination.crs !== grouped.filter.crs && grouped.destination.crs !== data.dest && !grouped.subsequent.some((s) => s.crs === data.dest)}
+							<div class="text-foreground-tint flex h-6 items-center gap-2 px-4">
+								<div class="w-12"></div>
+								<div class="flex h-full flex-col pr-4">
+									{#if [Position.DEPARTED].includes(locations.find((l) => l.crs === data.dest)?.trainRelativePosition ?? Position.UNKNOWN)}
+										<div
+											class="w-2 flex-grow"
+											style:background="linear-gradient(to bottom, {operatorList[operator].bg},
+											transparent)"
+										></div>
+									{:else}
+										<div
+											class="w-2 flex-grow"
+											style:background="linear-gradient(to bottom, {operatorList[operator].bg}B3,
+											transparent)"
+										></div>
+									{/if}
+								</div>
+							</div>
+						{/if}
+						{#if grouped.destination.crs !== grouped.filter.crs && !(grouped.destination.crs !== data.dest && !show.further && !grouped.subsequent.some((s) => s.crs === data.dest))}
 							<CallingPoint
 								uid={train.uid}
 								sdd={train.sdd}

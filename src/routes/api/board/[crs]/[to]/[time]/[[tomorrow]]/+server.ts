@@ -1,16 +1,17 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { paramUrl } from '$lib/utils/url';
+import { paramUrl } from '$lib/utils';
 import dayjs from 'dayjs';
 import { env } from '$env/dynamic/private';
 import { NoticeSeverity, type BoardItem, type Details, type TrainFilter } from '$lib/types/board';
 import { Position } from '$lib/types';
 import { operatorList } from '$lib/data/operators';
-import type { StationBoard, ServiceItemWithLocations } from '$lib/types/ldbsvws';
+import type { StationBoard, ServiceItemWithLocations, ServiceDetails } from '$lib/types/ldbsvws';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { terminalGroups } from '$lib/data/terminal-groups';
 import { destination } from '@turf/turf';
+import { QUERY_SERVICES_KEY } from '$env/static/private';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -43,7 +44,6 @@ async function getBoard(
 	groupOrigin: string | null,
 	groupDestination: string | null
 ) {
-	console.log(crs, to);
 	const reqUrl = paramUrl(
 		`https://api1.raildata.org.uk/1010-live-departure-board---staff-version1_0/LDBSVWS/api/20220120/GetDepBoardWithDetails/${crs}/${date}`,
 		{
@@ -68,6 +68,11 @@ async function getBoard(
 		}
 	});
 
+	if (!response.ok) {
+		console.log('Fetch failed');
+		console.log(await response.json());
+	}
+
 	// console.log(busUrl.toString());
 	//
 	// const busServices = [];
@@ -81,7 +86,7 @@ async function getBoard(
 
 	const data = (await response.json()) as StationBoard;
 
-	function parseService(item: ServiceItemWithLocations, i: number): BoardItem {
+	async function parseService(item: ServiceItemWithLocations, i: number): BoardItem {
 		let position = Position.AWAY;
 		let filter: TrainFilter | null = null;
 
@@ -105,7 +110,39 @@ async function getBoard(
 
 		const callingPoints = (item.subsequentLocations ?? []).filter((p) => p.crs && !p.isPass);
 		const filterIndex = callingPoints.findIndex((p) => p.crs === filterCrs);
-		const filterLocation = filterIndex !== -1 ? callingPoints[filterIndex] : null;
+		let filterLocation = filterIndex !== -1 ? callingPoints[filterIndex] : null;
+		let stops = filterIndex + 1;
+
+		if (filterIndex === -1 && item.subsequentLocations) {
+			const assocIndex = item.subsequentLocations.findIndex((l) =>
+				l.associations?.some((l) => l.category === 'divide')
+			);
+			const assocLoc = assocIndex !== -1 ? item.subsequentLocations[assocIndex] : null;
+			const assoc = assocLoc?.associations?.find((a) => a.category === 'divide');
+			if (assoc) {
+				const res = await fetch(
+					`https://api1.raildata.org.uk/1010-query-services-and-service-details1_0/LDBSVWS/api/20220120/GetServiceDetailsByRID/${assoc.rid}`,
+					{
+						headers: {
+							'x-apikey': QUERY_SERVICES_KEY
+						}
+					}
+				);
+				if (res.ok) {
+					const data: ServiceDetails = await res.json();
+					if (data.locations) {
+						const assocCallingPoints = data.locations.filter((p) => p.crs && !p.isPass);
+						const posInCallingPoints = callingPoints.findIndex((p) => p.crs === assocLoc?.crs);
+						const filterIndex = assocCallingPoints.findIndex((p) => p.crs === filterCrs);
+						console.log('assocFilterIndex', filterIndex);
+						stops = posInCallingPoints + filterIndex + 1;
+						filterLocation = filterIndex !== -1 ? assocCallingPoints[filterIndex] : null;
+					}
+				} else {
+					console.log('error', await res.text());
+				}
+			}
+		}
 
 		if (filterLocation && filterLocationName) {
 			const durations = dayjs(filterLocation.ata ?? filterLocation.eta ?? filterLocation.sta).diff(
@@ -117,7 +154,7 @@ async function getBoard(
 			filter = {
 				crs: filterCrs,
 				name: filterLocationName,
-				stops: filterIndex,
+				stops,
 				time: filterLocation.ata ?? filterLocation.eta ?? filterLocation.sta ?? '?',
 				duration: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`,
 				rawDuration: durations
@@ -154,6 +191,12 @@ async function getBoard(
 				.map((l) => l.crs ?? '');
 		}
 
+		const destList = destGroup
+			? [...(item.subsequentLocations ?? [])]
+					?.filter((p, i) => destGroup?.stations?.some((s) => s == p.crs))
+					.map((l) => l.crs ?? '')
+			: null;
+
 		return {
 			id: item.rid,
 			uid: item.uid,
@@ -163,6 +206,7 @@ async function getBoard(
 			shortestJourney: false,
 			destination: {
 				name: item.destination.map((d: any) => d.locationName).join(', '),
+				via: item.destination[0].via,
 				crs: item.destination.map((d: any) => d.crs)
 			},
 			origin: {
@@ -196,10 +240,16 @@ async function getBoard(
 			terminal:
 				originGroup || destGroup
 					? {
-							origin: originsList,
-							destination: [...(item.subsequentLocations ?? [])]
-								?.filter((p, i) => destGroup?.stations?.some((s) => s == p.crs))
-								.map((l) => l.crs ?? '')
+							origin: originsList
+								? originsList
+										?.filter((l) => originGroup?.mainStations?.includes(l))
+										.concat(originsList?.filter((l) => !originGroup?.mainStations?.includes(l)))
+								: [],
+							destination: destList
+								? destList
+										?.filter((l) => destGroup?.mainStations?.includes(l))
+										.concat(destList?.filter((l) => !destGroup?.mainStations?.includes(l)))
+								: []
 						}
 					: null
 		};
@@ -265,7 +315,7 @@ async function getBoard(
 	// 		terminal: null
 	// 	};
 	// }
-	let trains = (data.trainServices ?? []).map(parseService);
+	let trains = await Promise.all((data.trainServices ?? []).map(parseService));
 	// const buses = busServices.map(parseBus);
 
 	const notices =
@@ -313,7 +363,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	let trains: BoardItem[];
 
 	if (terminalGroups.some((g) => g.crs === to || g.crs === crs)) {
-		const iterator: { origin: string; destination: string }[] = [];
+		let iterator: { origin: string; destination: string }[] = [];
 		if (terminalGroups.some((g) => g.crs === to) && terminalGroups.some((g) => g.crs === crs)) {
 			const origin = terminalGroups.find((g) => g.crs === crs);
 			const destination = terminalGroups.find((g) => g.crs === to);
@@ -336,8 +386,34 @@ export const GET: RequestHandler = async ({ params }) => {
 			});
 		}
 
+		iterator = iterator.filter(({ origin, destination }) => {
+			if (terminalGroups.some((g) => g.crs === crs) && terminalGroups.some((g) => g.crs === to)) {
+				if (crs === 'LONx') {
+					const allowedDestinations =
+						terminalGroups.find((g) => g.crs === to)?.allowedLondonStations ?? [];
+					console.log(origin, allowedDestinations, allowedDestinations.includes(origin));
+					if (!allowedDestinations) return false;
+					return allowedDestinations.includes(origin);
+				} else if (to === 'LONx') {
+					const allowedOrigins =
+						terminalGroups.find((g) => g.crs === crs)?.allowedLondonStations ?? [];
+					if (!allowedOrigins) return false;
+					console.log(destination, allowedOrigins, allowedOrigins.includes(destination));
+					return allowedOrigins.includes(destination);
+				} else {
+					return true;
+				}
+			} else {
+				return true;
+			}
+		});
+
+		console.log(iterator);
+
 		const trainsMap = new Map<string, BoardItem>();
 		let detailsTemp: Details | null = null;
+		console.log();
+		console.log('Fetching multi-boards.');
 		const fns = iterator.map(({ origin, destination }) =>
 			getBoard(
 				origin,
@@ -348,6 +424,7 @@ export const GET: RequestHandler = async ({ params }) => {
 				terminalGroups.some((g) => g.crs == crs) ? crs : null,
 				terminalGroups.some((g) => g.crs == to) ? to : null
 			).then(async (r) => {
+				console.log(origin, destination, r.trains.length);
 				(r.trains ?? []).forEach((train: BoardItem) => {
 					const existing = trainsMap.get(train.id);
 					if (!existing) {
@@ -380,6 +457,27 @@ export const GET: RequestHandler = async ({ params }) => {
 									? train.terminal.destination
 									: existing.terminal.destination;
 						}
+
+						let earlierFilterArrival = train.filter;
+
+						if (terminalGroups.some((g) => g.crs == to)) {
+							const group = terminalGroups.find((g) => g.crs == to);
+							if (
+								group?.mainStations.includes(train.filter?.crs ?? '') &&
+								group?.mainStations.includes(existing.filter?.crs ?? '')
+							) {
+								if (dayjs(train.filter?.time).isBefore(dayjs(existing.filter?.time))) {
+									earlierFilterArrival = train.filter;
+								} else if (dayjs(train.filter?.time).isAfter(dayjs(existing.filter?.time))) {
+									earlierFilterArrival = existing.filter;
+								}
+							} else if (terminalGroups.some((g) => g.crs == train.filter?.crs)) {
+								earlierFilterArrival = train.filter;
+							} else if (terminalGroups.some((g) => g.crs == existing.filter?.crs)) {
+								earlierFilterArrival = existing.filter;
+							}
+						}
+
 						trainsMap.set(train.id, {
 							...(dayjs(train.times.scheduled.departure ?? undefined).isBefore(
 								dayjs(existing.times.scheduled.departure ?? undefined)
@@ -389,7 +487,8 @@ export const GET: RequestHandler = async ({ params }) => {
 							terminal: {
 								origin: longestOriginTerminals,
 								destination: longestDestinationTerminals
-							}
+							},
+							filter: earlierFilterArrival
 						});
 					}
 				});
@@ -424,25 +523,33 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 
 	const notYetDeparted = trains.filter((l) => l.position !== Position.DEPARTED);
-	if (notYetDeparted.length > 0) {
+	if (notYetDeparted.length > 0 && to) {
 		const notUnknownArrival = notYetDeparted.filter((t) => t.times.estimated.departure !== null);
 		const arrivesFirst = notUnknownArrival.reduce((m, x) =>
 			dayjs(m.filter?.time).isBefore(dayjs(x.filter?.time)) ? m : x
 		);
+
 		const shortestJourney = notUnknownArrival.reduce((m, x) =>
 			(m.filter?.rawDuration ?? 99) < (x.filter?.rawDuration ?? 0) ? m : x
 		);
 		const arrivesFirstIndex = notYetDeparted.findIndex((l) => l.id === arrivesFirst.id);
 		const shortestJourneyIndex = notYetDeparted.findIndex((l) => l.id === shortestJourney.id);
-		notYetDeparted[arrivesFirstIndex].arrivesFirst = to != 'null' ? true : false;
+		console.log(arrivesFirstIndex, shortestJourneyIndex);
+		if (
+			arrivesFirstIndex !== -1 &&
+			shortestJourney.filter?.rawDuration &&
+			shortestJourney.filter?.time
+		) {
+			notYetDeparted[arrivesFirstIndex].arrivesFirst = to != 'null' ? true : false;
+		}
 		if (
 			shortestJourneyIndex !== arrivesFirstIndex &&
+			shortestJourneyIndex !== -1 &&
+			shortestJourney.filter?.rawDuration &&
+			shortestJourney.filter?.time &&
 			(arrivesFirst.filter?.rawDuration ?? 0) - (shortestJourney.filter?.rawDuration ?? 0) > 5
 		) {
-			console.log(
-				(arrivesFirst.filter?.rawDuration ?? 0) - (shortestJourney.filter?.rawDuration ?? 0)
-			);
-			notYetDeparted[shortestJourneyIndex].shortestJourney = true;
+			notYetDeparted[shortestJourneyIndex].shortestJourney = to != 'null' ? true : false;
 		}
 	}
 

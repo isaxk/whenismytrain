@@ -11,14 +11,17 @@
 	import { Position } from '$lib/types';
 	import { terminalGroups } from '$lib/data/terminal-groups';
 	import type { Station } from '$lib/types/ldbsvws';
+	import { abbreviate, cfg } from '$lib/utils';
 
 	let {
 		i,
 		train,
 		url,
 		crs,
-		filter
-	}: { i: number; train: BoardItem; url: string; crs: string; filter: string } = $props();
+		filter,
+		filterName
+	}: { i: number; train: BoardItem; url: string; crs: string; filter: string; filterName: string } =
+		$props();
 
 	const md = new MediaQuery('(min-width: 768px)');
 
@@ -85,8 +88,24 @@
 						isCancelled={train.isCancelled}
 					/>
 				</div>
-				<div class={['min-w-0 flex-grow truncate text-lg/6 font-semibold']}>
-					{train.destination.name}
+				<div
+					class={['text-foreground-muted/80 min-w-0 flex-grow truncate pr-2 text-xs wrap-normal']}
+				>
+					<span
+						class={[
+							train.destination.name.concat(train.destination.via).length > 38
+								? 'text-base/6'
+								: 'text-lg/6',
+							'text-foreground font-semibold'
+						]}
+					>
+						{#if train.destination.name.concat(train.destination.via).length > 40}
+							{abbreviate(train.destination.name, cfg)}
+						{:else}
+							{train.destination.name}
+						{/if}
+					</span>
+					<span class="text-foreground-muted/80 text-xs font-normal">{train.destination.via}</span>
 				</div>
 			</div>
 		</div>
@@ -104,7 +123,7 @@
 						>{#if originTerminals.length > 1},{/if}
 					</div>
 					{#if originTerminals.length > 1}
-						<div class="min-w-0 truncate font-medium">
+						<div class="min-w-0 truncate">
 							{originTerminals.slice(1).join(', ')}
 						</div>
 					{/if}
@@ -112,13 +131,13 @@
 
 				{#if destinationTerminals}
 					<div class="text-nowrap">
-						via
+						to
 						<span class="text-foreground font-medium"
 							>{destGroup?.shortReplace}{destinationTerminals[0]}</span
 						>{#if destinationTerminals.length > 1},{/if}
 					</div>
 					{#if destinationTerminals.length > 1}
-						<div class="text-foreground min-w-0 truncate font-medium">
+						<div class="text-foreground-muted/90 min-w-0 truncate">
 							{destinationTerminals.slice(1).join(', ')}
 						</div>
 					{/if}
@@ -148,7 +167,7 @@
 						<Clock size={12} />
 						<div class="text-xs/3">
 							{train.filter.duration}
-							{#if train.filter.stops}({train.filter.stops} stops){:else}(non-stop){/if}
+							{#if train.filter.stops > 1}({train.filter.stops} stops){:else}(non-stop){/if}
 						</div>
 					</div>
 				{/if}
@@ -159,7 +178,7 @@
 				{#if train.arrivesFirst}
 					<div class="flex items-center gap-1 text-green-600">
 						<Zap size={12} />
-						<div class="text-xs">Arrives First</div>
+						<div class="text-xs">Arrives first (at {filterName?.replace(' (any)', '')})</div>
 					</div>
 				{/if}
 				{#if train.shortestJourney}

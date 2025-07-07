@@ -97,14 +97,30 @@
 		}
 	});
 
+	const submitUrl = $derived.by(() => {
+		const timeQ = time ? time.replace(':', '') : null;
+		if (from && (!terminalGroups.some((g) => g.crs === from) || to) && from !== to) {
+			const fGroup = terminalGroups.find((g) => g.crs === from);
+			const tGroup = terminalGroups.find((g) => g.crs === to);
+			if (
+				(fGroup && to && fGroup.stations.includes(to)) ||
+				(tGroup && from && tGroup.stations.includes(from))
+			) {
+				return null;
+			}
+			if (to) {
+				return `/board/${from}?to=${to ?? ''}${timeQ ? `&time=${timeQ}` : ''}&tomorrow=${tomorrow ?? false}`;
+			} else {
+				return `/board/${from}${timeQ ? `?time=${timeQ}&tomorrow=${tomorrow ?? false}` : `?tomorrow=${tomorrow}`}`;
+			}
+		} else {
+			return null;
+		}
+	});
+
 	$effect(() => {
-		if (from || to) {
-			const timeQ = time ? time.replace(':', '') : null;
-			preloadData(
-				to
-					? `/board/${from}?to=${to ?? ''}${timeQ ? `&time=${timeQ}` : ''}`
-					: `/board/${from}${timeQ ? `?time=${timeQ}` : ''}`
-			);
+		if (submitUrl) {
+			preloadData(submitUrl);
 		}
 	});
 
@@ -162,14 +178,11 @@
 				{/if}
 			</div>
 
-			{#if ((from && !terminalGroups.some((g) => g.crs === from)) || (from && to)) && from !== to}
-				{@const timeQ = time ? time.replace(':', '') : null}
+			{#if submitUrl}
 				<a
 					type="submit"
 					in:fade={{ duration: 200 }}
-					href={to
-						? `/board/${from}?to=${to ?? ''}${timeQ ? `&time=${timeQ}` : ''}&tomorrow=${tomorrow ?? false}`
-						: `/board/${from}${timeQ ? `?time=${timeQ}&tomorrow=${tomorrow ?? false}` : `?tomorrow=${tomorrow}`}`}
+					href={submitUrl}
 					class="flex w-full transform-gpu justify-center rounded-lg bg-blue-500 px-3 py-2 font-medium text-white drop-shadow-sm"
 					>Go</a
 				>
@@ -177,11 +190,9 @@
 					type="submit"
 					class="hidden"
 					onclick={() => {
-						goto(
-							to
-								? `/board/${from}?to=${to ?? ''}${timeQ ? `&time=${timeQ}` : ''}`
-								: `/board/${from}${timeQ ? `?time=${timeQ}` : ''}`
-						);
+						if (submitUrl) {
+							goto(submitUrl);
+						}
 					}}>Submit</button
 				>
 			{:else}
