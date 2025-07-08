@@ -52,7 +52,7 @@ export const terminalGroups = [
 		crs: 'CROx',
 		stations: ['ECR', 'WCY'],
 		mainStations: ['ECR', 'WCY'],
-		allowedLondonStations: ['LBG', 'BFR', 'VIC', 'WAT']
+		allowedLondonStations: ['LBG', 'BFR', 'VIC', 'WAT', 'STP']
 	},
 	{
 		name: 'Birmingham (any)',
