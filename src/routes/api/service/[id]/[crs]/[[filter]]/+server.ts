@@ -255,12 +255,17 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 				if (!assocData) continue;
 
 				// Add tiplocs for the associated service
-				const assocTiplocs = tiplocsData
-					.filter((t) => assocData.locations.some((l: ServiceLocation) => l.tiploc === t.Tiploc))
-					.map((t) => ({
-						tiploc: t.Tiploc,
-						coords: [t.Longitude, t.Latitude]
-					}));
+
+				const assocTiplocs = assocData.locations.map((l: ServiceLocation) => {
+					const t = tiplocData.find((t) => t.Tiploc === l.tiploc);
+
+					if (!t) return [0, 52];
+
+					return {
+						tiploc: l.tiploc,
+						coords: [parseFloat(t.Longitude.toFixed(8)), parseFloat(t.Latitude.toFixed(8))]
+					};
+				});
 
 				tiplocs = [...tiplocs, ...assocTiplocs];
 
